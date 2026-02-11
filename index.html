@@ -3,243 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V41 - Aggressive</title>
+    <title>Scanner V36 - Anchor Lock</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { 
-            font-family: -apple-system, sans-serif; margin: 0; background: #f2f2f7; 
-            height: 100vh; display: flex; flex-direction: column; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; background: #000; height: 100vh; overflow: hidden; 
+            display: flex; flex-direction: column;
         }
 
-        /* ZONA CAMERA */
-        .cam-box { 
-            position: relative; height: 35vh; background: #000; 
-            display: flex; align-items: center; justify-content: center; flex-direction: column;
+        .cam-view { 
+            position: relative; flex: 1; overflow: hidden; background: #000;
         }
-        video { 
-            width: 100%; height: 100%; object-fit: cover; 
+        video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Mirino Ciano Tecnico */
+        .guide { 
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            width: 95%; height: 25%; 
+            border: 3px solid #00E0FF; 
+            border-radius: 6px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.85);
+            z-index: 10;
+        }
+        .guide::after {
+            content: "CENTRA LA RIGA 'C<ITA...'";
+            position: absolute; bottom: -25px; width: 100%; text-align: center;
+            color: #00E0FF; font-size: 12px; font-weight: bold; letter-spacing: 1px;
+            text-shadow: 0 1px 2px black;
         }
 
-        /* MENU CAMERA (visibile solo se serve) */
-        #cam-select {
-            position: absolute; top: 10px; left: 10px; z-index: 100;
-            padding: 8px; background: rgba(255,255,255,0.9); border-radius: 8px; border: none;
-            display: none; font-size: 12px;
-        }
-
-        /* TASTO EMERGENZA */
-        #btn-force-start {
-            padding: 15px 30px; background: #FF3B30; color: white; border: none; 
-            border-radius: 50px; font-weight: bold; z-index: 50; cursor: pointer;
-        }
-
-        /* Mirino */
-        .guide-box { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 95%; height: 35%; 
-            border: 3px solid #34C759; border-radius: 8px; /* Verde acceso */
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); pointer-events: none;
-        }
-
-        /* ZONA DATI */
-        .form-box { 
-            flex: 1; background: #fff; padding: 15px; border-radius: 20px 20px 0 0; 
-            margin-top: -20px; z-index: 20; overflow-y: auto; 
-            display: flex; flex-direction: column; gap: 8px;
+        /* Pannello controlli scuro e fisso */
+        .panel { 
+            height: 40vh; background: #121212; 
+            border-top: 2px solid #333;
+            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
+            z-index: 20; color: white;
         }
 
         .btn-scan { 
-            background: #007AFF; color: white; width: 100%; padding: 15px; 
-            border: none; border-radius: 12px; font-size: 18px; font-weight: 700; 
-            margin-bottom: 5px; flex-shrink: 0; cursor: pointer;
+            background: #00E0FF; color: #000; width: 100%; padding: 16px; 
+            border: none; border-radius: 8px; font-size: 18px; font-weight: 800; 
+            text-transform: uppercase; cursor: pointer; margin-bottom: 20px;
         }
+        .btn-scan:active { opacity: 0.8; }
 
-        .row { display: flex; gap: 10px; }
-        .field { flex: 1; background: #f5f5f7; padding: 8px; border-radius: 8px; border: 1px solid #ddd; }
-        .field.full { width: 100%; }
-        
-        label { font-size: 10px; color: #888; font-weight: bold; display: block; }
-        input { 
-            width: 100%; background: transparent; border: none; 
-            font-size: 15px; font-weight: 600; font-family: monospace; color: #333;
+        .result-row { 
+            display: flex; justify-content: space-between; align-items: center;
+            background: #1E1E1E; padding: 12px; margin-bottom: 8px; border-radius: 6px;
+            border-left: 4px solid #555;
         }
+        /* Stile verde successo */
+        .result-row.ok { border-left-color: #32d74b; background: #1a2e1e; }
 
-        .filled { background: #e8fce8; border-color: #34C759; }
+        .lbl { font-size: 11px; color: #888; font-weight: bold; }
+        .val { font-size: 16px; font-family: monospace; font-weight: bold; letter-spacing: 1px; }
+
+        #debug-log { font-size: 10px; color: #555; text-align: center; margin-top: auto; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="cam-box">
-        <select id="cam-select"></select>
-        <button id="btn-force-start">AVVIA FOTOCAMERA</button>
-        <video id="webcam" autoplay playsinline muted></video>
-        <div class="guide-box"></div>
+    <div class="cam-view">
+        <video id="webcam" autoplay playsinline></video>
+        <div class="guide"></div>
     </div>
 
-    <div class="form-box">
-        <button class="btn-scan" id="scan-action">SCATTA E ANALIZZA</button>
-        <div id="log" style="text-align:center; font-size:11px; color:#555; margin-bottom:5px;">Attiva la fotocamera</div>
+    <div class="panel">
+        <button class="btn-scan" id="btn-snap">SCANSIONA MRZ</button>
+        
+        <div class="result-row" id="row-doc">
+            <span class="lbl">DOCUMENTO</span>
+            <span class="val" id="out-doc">---</span>
+        </div>
+        <div class="result-row" id="row-dob">
+            <span class="lbl">NASCITA</span>
+            <span class="val" id="out-dob">---</span>
+        </div>
+        <div class="result-row" id="row-name">
+            <span class="lbl">NOME</span>
+            <span class="val" id="out-name">---</span>
+        </div>
 
-        <div class="field full"><label>TIPO DOCUMENTO</label><input type="text" value="CARTA D'IDENTITÀ" readonly></div>
-        <div class="row">
-            <div class="field" id="c-doc"><label>NUMERO DOC</label><input type="text" id="out-doc"></div>
-            <div class="field" id="c-cit"><label>CITTADINANZA</label><input type="text" id="out-cit"></div>
-        </div>
-        <div class="row">
-            <div class="field" id="c-cog"><label>COGNOME</label><input type="text" id="out-cog"></div>
-            <div class="field" id="c-nom"><label>NOME</label><input type="text" id="out-nom"></div>
-        </div>
-        <div class="row">
-            <div class="field" id="c-dob"><label>NASCITA</label><input type="text" id="out-dob"></div>
-            <div class="field" id="c-sex"><label>SESSO</label><input type="text" id="out-sex"></div>
-        </div>
-        <div class="field full" id="c-exp"><label>SCADENZA</label><input type="text" id="out-exp"></div>
+        <div id="debug-log">Pronto</div>
     </div>
 
-    <canvas id="cvs"></canvas>
+    <canvas id="hidden-cvs"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
-        const startBtn = document.getElementById('btn-force-start');
-        const camSelect = document.getElementById('cam-select');
-        const log = document.getElementById('log');
-        const canvas = document.getElementById('cvs');
+        const canvas = document.getElementById('hidden-cvs');
+        const log = document.getElementById('debug-log');
 
-        async function startCamera(deviceId = null) {
-            startBtn.style.display = 'none';
-            log.innerText = "Avvio camera...";
-            const constraints = { video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" } };
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment", width: { ideal: 1920 } } 
+        }).then(s => video.srcObject = s);
 
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                video.style.display = 'block';
-                log.innerText = "Pronto. Centra il retro e premi il tasto blu.";
-                
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const vDevs = devices.filter(d => d.kind === 'videoinput');
-                if (vDevs.length > 1) {
-                    camSelect.style.display = 'block';
-                    camSelect.innerHTML = "";
-                    vDevs.forEach(d => {
-                        const opt = document.createElement('option');
-                        opt.value = d.deviceId;
-                        opt.text = d.label || `Cam ${camSelect.length + 1}`;
-                        camSelect.appendChild(opt);
-                    });
-                    camSelect.onchange = () => startCamera(camSelect.value);
-                }
-            } catch (err) {
-                alert("Errore Camera: " + err.message);
-                startBtn.style.display = 'block';
-            }
-        }
-        startBtn.addEventListener('click', () => startCamera());
-
-        document.getElementById('scan-action').addEventListener('click', async () => {
-            log.innerText = "Analisi profonda...";
+        document.getElementById('btn-snap').addEventListener('click', async () => {
+            log.innerText = "Analisi Anchor Lock...";
             const ctx = canvas.getContext('2d');
-            const w = video.videoWidth;
-            const h = video.videoHeight;
             
-            if(w === 0) return;
+            // Ritaglio che combacia col mirino ciano
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+            const cw = vw * 0.95; 
+            const ch = vh * 0.25;
+            const cx = (vw - cw) / 2;
+            const cy = (vh * 0.40) - (ch / 2);
 
-            // Ritaglio
-            const cw = w * 0.95; // Più largo
-            const ch = h * 0.40; // Più alto
-            const cx = (w - cw) / 2;
-            const cy = (h - ch) / 2;
-
-            canvas.width = cw * 2; 
+            // Zoom 2x per massima nitidezza
+            canvas.width = cw * 2;
             canvas.height = ch * 2;
             
-            // FILTRO AGGRESSIVO: Aumenta molto il contrasto per leggere il numero
-            ctx.filter = 'grayscale(100%) contrast(300%) brightness(110%)';
+            // Filtro Binarizzato
+            ctx.filter = 'grayscale(100%) contrast(300%)';
             ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
                 });
-                parseData(text);
-                log.innerText = "Scansione terminata.";
-            } catch (e) { log.innerText = "Riprova."; }
+                parseV36(text);
+                log.innerText = "Scan terminato";
+            } catch (e) { log.innerText = "Errore OCR"; }
         });
 
-        // Helpers di pulizia
-        function fix(s, t) {
+        // Correzione CIE (Lettere vs Numeri)
+        function fix(s, type) {
             if(!s) return "";
-            if(t==='N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
-            if(t==='L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
+            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
             return s;
         }
-        function fmtDate(s) {
-            if(!s || s.length<6) return s;
-            let y=parseInt(s.substr(0,2));
-            let fy=(y>40)?'19'+y:'20'+y;
-            return `${s.substr(4,2)}/${s.substr(2,2)}/${fy}`;
-        }
 
-        function parseData(raw) {
+        function parseV36(raw) {
             const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
-            console.log(lines);
-
-            // 1. NUMERO DOCUMENTO (LOGICA AGGRESSIVA)
-            // Cerchiamo C<IT... OPPURE direttamente il pattern CA50322TW
-            let docRow = lines.find(l => (l.includes('IT') || l.includes('1T')) && l.includes('<') && l.match(/\d/));
             
-            // Se non trova la riga standard, cerca qualsiasi riga con il pattern del documento (2L 5N 2L)
-            if (!docRow) {
-                docRow = lines.find(l => l.match(/[A-Z]{2}[0-9]{5}[A-Z]{2}/));
-            }
+            // 1. NUMERO DOCUMENTO (LOGICA "ANCHOR LOCK")
+            // Cerca ESPLICITAMENTE "ITA", "1TA" o "IT4"
+            let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA') || l.includes('IT4')) && l.length > 10);
+            
+            let foundDoc = false;
+            if (docLine) {
+                let anchor = docLine.match(/(ITA|1TA|IT4)/);
+                if (anchor) {
+                    let idx = anchor.index;
+                    // Prendi i 9 caratteri SUBITO DOPO l'ancora
+                    let rawCode = docLine.substr(idx + 3, 9);
+                    
+                    if (rawCode.length === 9) {
+                        let p1 = fix(rawCode.substr(0,2), 'L');
+                        let p2 = fix(rawCode.substr(2,5), 'N');
+                        let p3 = fix(rawCode.substr(7,2), 'L');
+                        let finalCode = p1 + p2 + p3;
 
-            if(docRow) {
-                // Tentativo 1: Standard CIE
-                let m = docRow.match(/IT([A-Z0-9]{9})/);
-                if(!m) m = docRow.match(/1T([A-Z0-9]{9})/);
-                
-                // Tentativo 2: Pattern Puro (se manca IT)
-                if(!m) m = docRow.match(/([A-Z]{2}[0-9]{5}[A-Z]{2})/);
-
-                if(m) {
-                    let c = m[1];
-                    let final = fix(c.substr(0,2),'L')+fix(c.substr(2,5),'N')+fix(c.substr(7,2),'L');
-                    document.getElementById('out-doc').value = final;
-                    document.getElementById('c-doc').classList.add('filled');
-                    document.getElementById('out-cit').value = "ITALIA";
+                        // VALIDAZIONE: Deve rispettare LL NNNNN LL
+                        if(finalCode.match(/^[A-Z]{2}\d{5}[A-Z]{2}$/)) {
+                            document.getElementById('out-doc').innerText = finalCode;
+                            document.getElementById('row-doc').classList.add('ok');
+                            foundDoc = true;
+                        }
+                    }
                 }
             }
+            if (!foundDoc) {
+                document.getElementById('out-doc').innerText = "Centra 'ITA'";
+                document.getElementById('row-doc').classList.remove('ok');
+            }
 
-            // 2. DATI, SESSO, SCADENZA
-            let datRow = lines.find(l => l.match(/^\d{6}/) && (l.includes('M')||l.includes('F')));
-            if(datRow) {
-                let dob = fix(datRow.substr(0,6), 'N');
-                document.getElementById('out-dob').value = fmtDate(dob);
-                document.getElementById('c-dob').classList.add('filled');
-
-                let sex = datRow.match(/[0-9]([MF])/);
-                if(sex) {
-                    document.getElementById('out-sex').value = sex[1];
-                    document.getElementById('c-sex').classList.add('filled');
-                }
-
-                let parts = datRow.split(/[MF]/);
-                if(parts[1] && parts[1].length>=6) {
-                    let exp = fix(parts[1].substr(0,6),'N');
-                    document.getElementById('out-exp').value = fmtDate(exp);
-                    document.getElementById('c-exp').classList.add('filled');
+            // 2. DATA DI NASCITA
+            let dateLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
+            if (dateLine) {
+                let dobRaw = fix(dateLine.substr(0, 6), 'N');
+                let y = parseInt(dobRaw.substr(0,2));
+                let m = parseInt(dobRaw.substr(2,2));
+                let d = parseInt(dobRaw.substr(4,2));
+                if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                    let fullY = (y > 40) ? '19'+y : '20'+y;
+                    let mm = m < 10 ? '0'+m : m;
+                    let dd = d < 10 ? '0'+d : d;
+                    document.getElementById('out-dob').innerText = `${dd}/${mm}/${fullY}`;
+                    document.getElementById('row-dob').classList.add('ok');
                 }
             }
 
             // 3. NOME
-            let nomRow = lines.find(l => l.includes('<<') && !l.includes('IT') && !l.match(/^\d/));
-            if(nomRow) {
-                let p = nomRow.split('<<');
-                document.getElementById('out-cog').value = fix(p[0].replace(/</g,''),'L');
-                document.getElementById('out-nom').value = fix(p[1].replace(/</g,''),'L');
-                document.getElementById('c-cog').classList.add('filled');
-                document.getElementById('c-nom').classList.add('filled');
+            let nameLine = lines.find(l => l.includes('<<') && !l.includes('ITA') && !l.match(/^\d/));
+            if (nameLine) {
+                let cleanName = nameLine.replace(/</g, ' ').replace(/[0-9]/g, '').trim();
+                document.getElementById('out-name').innerText = cleanName;
+                document.getElementById('row-name').classList.add('ok');
             }
         }
     </script>
