@@ -3,72 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V50 - AI Logic</title>
+    <title>Scanner V51 - Hybrid Master</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
         
-        /* HEADER NAVIGAZIONE */
+        /* TABS */
         .tabs { display: flex; background: #1c1c1e; border-bottom: 1px solid #333; z-index: 20; }
         .tab { flex: 1; padding: 15px; text-align: center; color: #666; font-weight: 800; font-size: 13px; cursor: pointer; text-transform: uppercase; }
         .tab.active { color: #fff; background: #2c2c2e; border-bottom: 3px solid #007AFF; }
         
-        /* CAMERA AREA */
-        .viewport { position: relative; flex: 0 0 40%; background: #000; overflow: hidden; }
+        /* VIEWPORT */
+        .viewport { position: relative; flex: 0 0 45%; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* GUIDA VISIVA (Solo per aiutare l'occhio, non taglia più l'immagine) */
-        .card-guide {
+
+        /* --- OVERLAY RETRO (BOX FISSI - Vecchio Stile) --- */
+        .retro-layer { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .box-res { 
+            position: absolute; top: 32%; left: 4%; width: 92%; height: 20%; 
+            border: 2px solid #FFD60A; background: rgba(255, 214, 10, 0.1); border-radius: 4px; 
+        }
+        .box-mrz { 
+            position: absolute; bottom: 5%; left: 4%; width: 92%; height: 32%; 
+            border: 2px solid #00E0FF; background: rgba(0, 224, 255, 0.1); border-radius: 4px; 
+        }
+        .tag { position: absolute; top: -16px; left: 0; font-size: 9px; font-weight: bold; background: #000; padding: 2px 4px; color: #fff; text-transform: uppercase; border-radius: 3px; }
+
+        /* --- OVERLAY FRONTE (AI - Solo Contorno) --- */
+        .front-layer { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .ai-frame {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; height: 80%; border: 2px solid rgba(255,255,255,0.5); border-radius: 12px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); pointer-events: none;
+            width: 90%; height: 80%; border: 2px dashed #32d74b; border-radius: 12px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.8);
         }
-        .guide-label {
-            position: absolute; width: 100%; text-align: center; bottom: -25px; 
-            font-size: 12px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000;
+        .ai-msg {
+            position: absolute; width: 100%; text-align: center; bottom: -30px; 
+            font-size: 11px; font-weight: bold; color: #32d74b; text-transform: uppercase;
         }
 
-        /* PANNELLO RISULTATI */
-        .panel { flex: 1; background: #121212; overflow-y: auto; padding: 12px; padding-bottom: 90px; }
+        /* RISULTATI */
+        .panel { flex: 1; background: #121212; overflow-y: auto; padding: 10px; padding-bottom: 90px; }
+        .btn-scan { width: 100%; padding: 16px; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; font-size: 16px; color: white; }
         
-        .btn-scan { 
-            width: 100%; padding: 18px; border: none; font-weight: 900; border-radius: 12px; 
-            margin-bottom: 15px; cursor: pointer; text-transform: uppercase; font-size: 16px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-        
-        /* GRIGLIA DATI */
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 5px; }
-        .full { grid-column: span 3; }    /* Occupa tutta la riga */
-        .half { grid-column: span 2; }    /* Occupa 2/3 */
-        .third { grid-column: span 1; }   /* Occupa 1/3 */
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 5px; }
+        .full { grid-column: span 3; }
+        .half { grid-column: span 2; }
+        .third { grid-column: span 1; }
 
-        .item { background: #1c1c1e; padding: 8px 10px; border-radius: 6px; border-left: 3px solid #333; }
+        .item { background: #1c1c1e; padding: 8px; border-radius: 6px; border-left: 3px solid #333; }
         .item.ok { border-left-color: #32d74b; background: #1a261a; }
         .lbl { font-size: 8px; color: #888; display: block; margin-bottom: 2px; text-transform: uppercase; }
         .val { font-size: 13px; font-weight: 700; min-height: 16px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         canvas { display: none; }
-        #loading { display: none; color: #FFD60A; text-align: center; font-size: 12px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('RETRO')" id="t-retro">1. Retro</div>
-        <div class="tab" onclick="switchTab('FRONTE')" id="t-fronte">2. Fronte</div>
+        <div class="tab active" onclick="setMode('RETRO')" id="t-retro">1. Retro (Box)</div>
+        <div class="tab" onclick="setMode('FRONTE')" id="t-fronte">2. Fronte (AI)</div>
     </div>
 
     <div class="viewport">
         <video id="webcam" autoplay playsinline></video>
-        <div class="card-guide">
-            <div class="guide-label" id="guide-txt">INQUADRA IL RETRO (CODICI)</div>
+        
+        <div class="retro-layer" id="lay-retro">
+            <div class="box-res"><span class="tag" style="color:#FFD60A">Indirizzo</span></div>
+            <div class="box-mrz"><span class="tag" style="color:#00E0FF">Codici MRZ</span></div>
+        </div>
+
+        <div class="front-layer" id="lay-fronte">
+            <div class="ai-frame">
+                <div class="ai-msg">Inquadra tutto il fronte per l'AI</div>
+            </div>
         </div>
     </div>
 
     <div class="panel">
-        <div id="loading">ELABORAZIONE AI IN CORSO...</div>
-        <button id="snap" class="btn-scan" style="background:#007AFF; color:#fff;">SCANSIONA RETRO</button>
+        <button id="snap" class="btn-scan" style="background:#007AFF;">SCANSIONA RETRO</button>
 
         <div class="grid">
             <div class="item full"><span class="lbl">1. Cognome</span><div class="val" id="v-cog">---</div></div>
@@ -102,58 +115,55 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
         const btn = document.getElementById('snap');
-        const loader = document.getElementById('loading');
         let mode = 'RETRO';
 
-        // Avvio Camera Max Risoluzione
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 4096 }, height: { ideal: 2160 } } 
-        }).then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
+            .then(s => video.srcObject = s);
 
-        function switchTab(m) {
+        function setMode(m) {
             mode = m;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             if(m === 'RETRO') {
                 document.getElementById('t-retro').classList.add('active');
-                document.getElementById('guide-txt').innerText = "INQUADRA IL RETRO";
+                document.getElementById('lay-retro').style.display = 'block';
+                document.getElementById('lay-fronte').style.display = 'none';
                 btn.innerText = "SCANSIONA RETRO";
                 btn.style.background = "#007AFF";
             } else {
                 document.getElementById('t-fronte').classList.add('active');
-                document.getElementById('guide-txt').innerText = "INQUADRA IL FRONTE (TUTTO)";
-                btn.innerText = "SCANSIONA FRONTE";
+                document.getElementById('lay-retro').style.display = 'none';
+                document.getElementById('lay-fronte').style.display = 'block';
+                btn.innerText = "SCANSIONA FRONTE (AI)";
                 btn.style.background = "#32d74b";
             }
         }
 
         btn.addEventListener('click', async () => {
-            btn.style.display = 'none';
-            loader.style.display = 'block';
-            
+            btn.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // Filtro "AI": Aumenta contrasto per leggere meglio
+            // Filtro unico potente
             ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
             ctx.drawImage(video, 0, 0);
             
-            // OCR FULL FRAME (Legge tutta l'immagine, non solo pezzetti)
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
             
-            if(mode === 'RETRO') parseRetroAI(text);
+            if(mode === 'RETRO') parseRetroBox(text);
             else parseFronteAI(text);
             
-            loader.style.display = 'none';
-            btn.style.display = 'block';
-            btn.innerText = mode === 'RETRO' ? "FATTO! VAI AL FRONTE" : "SCANSIONE COMPLETATA";
+            btn.innerText = mode === 'RETRO' ? "PASSAGGIO AL FRONTE..." : "SCANSIONE COMPLETATA";
+            if(mode === 'RETRO' && document.getElementById('v-doc').innerText !== '---') {
+                setTimeout(() => setMode('FRONTE'), 1500);
+            }
         });
 
-        // --- INTELLIGENZA RETRO ---
-        function parseRetroAI(raw) {
-            const clean = raw.toUpperCase().replace(/\s/g, ''); // Per codici
-            const lines = raw.toUpperCase().split('\n').map(l => l.trim()).filter(l => l.length > 2); // Per indirizzi
+        // --- RETRO: LOGICA GEOMETRICA PRECISA ---
+        function parseRetroBox(raw) {
+            const clean = raw.toUpperCase().replace(/\s/g, '');
+            const lines = raw.toUpperCase().split('\n').map(l => l.trim()).filter(l => l.length > 2);
 
-            // 1. ANAGRAFICA DA MRZ (Sicura al 100%)
+            // 1. MRZ (Certezze matematiche)
             let mrzName = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if(mrzName) { fill("v-cog", mrzName[1]); fill("v-nom", mrzName[2]); }
             
@@ -168,93 +178,79 @@
                 fill("v-sex", mrzData[2]);
             }
 
-            // 2. PARSING INDIRIZZO INTELLIGENTE
-            // Cerca la riga che contiene "VIA", "PIAZZA" o "CORSO"
+            // 2. INDIRIZZO (Cerca nella parte alta/centrale del testo)
+            // Cerca righe con indicatori stradali
             let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|V\.|P\.|C\.)/));
             if(addrLine) {
-                // Civico: Cerca "N." o "," seguito da numero
+                // Civico: Cerca numeri alla fine o dopo virgola
                 let civMatch = addrLine.match(/(?:N\.|,)\s*(\d+[A-Z]?)/);
                 if(civMatch) fill("v-res-civ", civMatch[1]);
                 
-                // Via: Tutto ciò che è prima del numero/parentesi
+                // Via: Tutto ciò che è prima
                 let viaText = addrLine.split(/N\.|,|\(/)[0].trim();
                 fill("v-res-via", viaText);
 
-                // Comune e Prov: Cerca formato "NOME (XX)"
-                let cityMatch = addrLine.match(/([A-Z\s']+)\s\(?([A-Z]{2})\)?/);
-                // Se non lo trova nella stessa riga, cerca nella riga successiva
-                if (!cityMatch) {
-                    let nextLineIndex = lines.indexOf(addrLine) + 1;
-                    if (lines[nextLineIndex]) cityMatch = lines[nextLineIndex].match(/([A-Z\s']+)\s\(?([A-Z]{2})\)?/);
-                }
+                // Comune e Prov (XX): Cerca pattern Comune (PR)
+                // Se non è nella riga dell'indirizzo, controlla la riga subito dopo o quella prima
+                let cityMatch = null;
+                let idx = lines.indexOf(addrLine);
+                // Controllo riga stessa, poi riga dopo
+                if (addrLine.match(/\([A-Z]{2}\)/)) cityMatch = addrLine.match(/([A-Z\s']+)\s\(?([A-Z]{2})\)?/);
+                else if (lines[idx+1] && lines[idx+1].match(/\([A-Z]{2}\)/)) cityMatch = lines[idx+1].match(/([A-Z\s']+)\s\(?([A-Z]{2})\)?/);
 
                 if(cityMatch) {
-                    // Pulisci il nome del comune da numeri o "N." residui
-                    let comunePulito = cityMatch[1].replace(/.*N\.\s*\d+/, '').trim();
+                    let comunePulito = cityMatch[1].replace(/.*N\.\s*\d+/, '').trim(); // Rimuovi residui civico
                     fill("v-res-com", comunePulito);
-                    fill("v-res-prov", cityMatch[2]); // PROVINCIA IN CASELLA SEPARATA
+                    fill("v-res-prov", cityMatch[2]);
                 }
             }
-            if(document.getElementById('v-doc').innerText !== '---') switchTab('FRONTE');
         }
 
-        // --- INTELLIGENZA FRONTE ---
+        // --- FRONTE: LOGICA AI (Keyword Search) ---
         function parseFronteAI(raw) {
             const up = raw.toUpperCase();
             const lines = up.split('\n');
 
-            // 1. CITTADINANZA
             if(up.includes("ITALIANA")) fill("v-cit", "ITALIANA");
 
-            // 2. LOGICA "CERCA ETICHETTA -> PRENDI VALORE"
             for(let i=0; i<lines.length; i++) {
                 let line = lines[i];
 
-                // LUOGO NASCITA: Cerca "NATO A" o "LUOGO DI"
+                // LUOGO NASCITA (Cerca "NATO" e prende il testo vicino)
                 if(line.includes("NATO") || line.includes("LUOGO")) {
-                    // Il valore potrebbe essere sulla stessa riga dopo ":" o nella riga dopo
                     let val = line.replace(/.*NATO.*A|.*LUOGO.*DATA.*/, "").trim();
-                    if(val.length < 3 && lines[i+1]) val = lines[i+1].trim(); // Prendi riga sotto
+                    if(val.length < 3 && lines[i+1]) val = lines[i+1].trim(); 
                     
-                    // Estrai Provincia (XX)
                     let provMatch = val.match(/\(?([A-Z]{2})\)?/);
                     if(provMatch) {
                         fill("v-luogo-prov", provMatch[1]);
-                        fill("v-luogo", val.replace(provMatch[0], "").trim());
+                        fill("v-luogo", val.replace(provMatch[0], "").replace(/[()]/g, "").trim());
                     } else {
                         fill("v-luogo", val);
                     }
                 }
 
-                // ENTE RILASCIO: Cerca "COMUNE DI" o "RILASCIATO"
+                // ENTE RILASCIO (Cerca "COMUNE DI")
                 if(line.includes("COMUNE DI")) {
                     let ente = line.replace("COMUNE DI", "").trim();
                     if(ente.length < 2 && lines[i+1]) ente = lines[i+1].trim();
                     fill("v-ente", ente);
                 }
             }
-            // Fallback Ministero
             if(up.includes("MINISTERO")) fill("v-ente", "MINISTERO DELL'INTERNO");
 
-            // 3. DATE (EMISSIONE vs SCADENZA)
+            // DATE
             let allDates = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/g);
             if(allDates) {
-                // Filtra date non valide (troppo vecchie o strane)
-                let dates = allDates.filter(d => d.slice(-4) > "1900");
-                
-                // La data più futura è sicuramente la SCADENZA
-                dates.sort((a,b) => b.slice(-4) - a.slice(-4)); 
-                if(dates[0]) fill("v-scad", dates[0]);
-                
-                // Una data intermedia è probabilmente il RILASCIO
-                if(dates[1]) fill("v-ril", dates[1]);
+                let dates = allDates.filter(d => d.slice(-4) > "1900").sort((a,b) => b.slice(-4) - a.slice(-4)); 
+                if(dates[0]) fill("v-scad", dates[0]); // Futura = Scadenza
+                if(dates[1]) fill("v-ril", dates[1]); // Passata = Rilascio
             }
         }
 
         function fill(id, txt) {
             if(!txt) return;
             const el = document.getElementById(id);
-            // Pulisce caratteri sporchi OCR
             let clean = txt.replace(/[^a-zA-Z0-9\s\/\.\(\)']/g, "").trim();
             if(clean.length > 1) {
                 el.innerText = clean;
