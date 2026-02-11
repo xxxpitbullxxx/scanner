@@ -3,28 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner ID V24 - Laser Focus</title>
+    <title>Scanner ID V25 - Final Shield</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; margin: 0; background: #f4f7f9; padding-bottom: 50px; overflow-y: auto !important; height: auto !important; }
         .cam-box { position: relative; width: 100%; height: 320px; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        /* Rettangolo più stretto per forzare l'utente a centrare solo la riga MRZ */
-        .laser-guide { 
+        .shield-guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            width: 90%; height: 40%; border: 4px solid #34C759; border-radius: 10px; 
-            box-shadow: 0 0 0 2000px rgba(0,0,0,0.75); z-index: 5; pointer-events: none; 
+            width: 90%; height: 45%; border: 4px solid #007AFF; border-radius: 12px; 
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.8); z-index: 5; pointer-events: none; 
         }
         .ui-container { padding: 20px; }
-        .btn-laser { 
-            background: #007AFF; color: white; width: 100%; padding: 18px; 
-            border: none; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,122,255,0.4);
+        .btn-shield { 
+            background: #34C759; color: white; width: 100%; padding: 20px; 
+            border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(52,199,89,0.4);
         }
-        .data-card { background: white; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
-        .input-wrap { margin-bottom: 15px; }
+        .data-card { background: white; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
+        .field { margin-bottom: 15px; }
         label { display: block; font-size: 10px; font-weight: 800; color: #a0a0a0; text-transform: uppercase; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 16px; font-weight: 600; box-sizing: border-box; background: #fdfdfd; }
-        #log-area { font-family: monospace; font-size: 11px; color: #ff3b30; background: #fff; padding: 10px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; }
+        input { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 18px; font-weight: bold; box-sizing: border-box; background: #fdfdfd; color: #333; }
+        #log-shield { font-family: monospace; font-size: 11px; color: #ff3b30; background: #fff; padding: 10px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; }
         canvas { display: none; }
     </style>
 </head>
@@ -32,101 +31,92 @@
 
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
-        <div class="laser-guide"></div>
+        <div class="shield-guide"></div>
     </div>
 
     <div class="ui-container">
-        <div id="status-txt" style="text-align:center; font-weight:bold; color:#007AFF; margin-bottom:12px;">CENTRA LA RIGA CON LE FRECCE "<<<"</div>
-        <button class="btn-laser" id="btn-run">SCANSIONE LASER FOCUS</button>
+        <div id="status-txt" style="text-align:center; font-weight:bold; color:#34C759; margin-bottom:12px;">PULIZIA SCANNER ATTIVA</div>
+        <button class="btn-shield" id="btn-run">SCANSIONE DEFINITIVA</button>
 
         <div class="data-card">
-            <div class="input-wrap"><label>Cognome</label><input type="text" id="out-cog"></div>
-            <div class="input-wrap"><label>Nome</label><input type="text" id="out-nom"></div>
-            <div class="input-wrap"><label>Numero Documento (Validato CIE)</label><input type="text" id="out-doc" style="background: #eefbff; border-color: #007AFF; color: #007AFF;"></div>
+            <div class="field"><label>Cognome</label><input type="text" id="out-cog"></div>
+            <div class="field"><label>Nome</label><input type="text" id="out-nom"></div>
+            <div class="field"><label>N. Documento (Validato CIE)</label><input type="text" id="out-doc" style="border-color: #34C759; color: #34C759; background: #f0fff4;"></div>
         </div>
 
-        <div id="log-area">Pronto. Allinea il retro del documento.</div>
+        <div id="log-shield">Allinea la riga del retro "<<<" nel riquadro blu.</div>
     </div>
 
-    <canvas id="canvas-laser"></canvas>
+    <canvas id="canvas-shield"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
-        const canvas = document.getElementById('canvas-laser');
-        const log = document.getElementById('log-area');
+        const canvas = document.getElementById('canvas-shield');
+        const log = document.getElementById('log-shield');
         const status = document.getElementById('status-txt');
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
-            .then(s => { video.srcObject = s; log.innerText = "Ottica Pronta."; })
-            .catch(e => { log.innerText = "Errore: " + e; });
+            .then(s => { video.srcObject = s; });
 
         document.getElementById('btn-run').addEventListener('click', async () => {
-            status.innerText = "ANALISI LASER...";
+            status.innerText = "ELIMINAZIONE RIFLESSI...";
             const ctx = canvas.getContext('2d');
             canvas.width = 1600;
-            canvas.height = 800;
+            canvas.height = 900;
 
-            // FILTRO LASER: Contrasto estremo per eliminare grigi e riflessi
-            ctx.filter = 'grayscale(100%) contrast(450%) brightness(100%)';
+            // FILTRO SHIELD: binarizzazione aggressiva (solo nero puro su bianco puro)
+            ctx.filter = 'grayscale(100%) contrast(500%) brightness(90%) threshold(0.5)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             try {
                 const result = await Tesseract.recognize(canvas, 'ita+eng', {
-                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Laser Focus: " + (m.progress * 100).toFixed(0) + "%"; }
+                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Shield Engine: " + (m.progress * 100).toFixed(0) + "%"; }
                 });
 
-                processV24(result.data.text);
-                status.innerText = "COMPLETATO!";
+                processV25(result.data.text);
+                status.innerText = "SCAN COMPLETATO";
             } catch (err) {
                 log.innerText = "Errore: " + err;
             }
         });
 
-        // LOGICA DI CORREZIONE POSIZIONALE CIE (LL NNNNN LL)
-        function laserFix(d) {
+        // Correzione Posizionale Avanzata (LL NNNNN LL)
+        function shieldFix(d) {
             let s = d.replace(/[^A-Z0-9]/g, '');
             if (s.length < 9) return s;
-            if (s.length > 9) s = s.substring(0, 9);
+            s = s.substring(0, 9);
 
             let res = "";
             for (let i = 0; i < 9; i++) {
                 let c = s[i];
-                // Posizioni 0, 1, 7, 8: DEVONO essere LETTERE
                 if ([0, 1, 7, 8].includes(i)) {
-                    res += c.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z').replace(/3/g, 'B').replace(/8/g, 'B');
-                } 
-                // Posizioni 2, 3, 4, 5, 6: DEVONO essere NUMERI
-                else {
-                    res += c.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2').replace(/B/g, '8').replace(/T/g, '7').replace(/A/g, '4').replace(/R/g, '8').replace(/E/g, '3');
+                    res += c.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z').replace(/3/g, 'B');
+                } else {
+                    res += c.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2').replace(/B/g, '8').replace(/T/g, '7').replace(/E/g, '3');
                 }
             }
             return res;
         }
 
-        function processV24(raw) {
+        function processV25(raw) {
             const t = raw.toUpperCase();
             const clean = t.replace(/\s/g, '');
-            console.log("RAW OCR:", clean);
             
-            // 1. Estrazione Prioritaria da riga MRZ (Retro - Esempio CA50322TW)
+            // Priorità alla riga MRZ (Retro)
             const mrzMatch = clean.match(/C<IT([A-Z0-9]{9})/);
             if (mrzMatch) {
-                document.getElementById('out-doc').value = laserFix(mrzMatch[1]);
+                document.getElementById('out-doc').value = shieldFix(mrzMatch[1]);
             }
 
-            // 2. Estrazione Nomi (ZANGARA GABRIEL)
             const nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if (nameMatch) {
                 document.getElementById('out-cog').value = nameMatch[1];
                 document.getElementById('out-nom').value = nameMatch[2];
             }
 
-            // 3. Fallback Documento se non trova stringa C<IT
             if (!document.getElementById('out-doc').value) {
                 const docPat = t.match(/[A-Z0-9]{2}\s?[0-9A-Z]{5}\s?[A-Z0-9]{2}/);
-                if (docPat) {
-                    document.getElementById('out-doc').value = laserFix(docPat[0].replace(/\s/g, ''));
-                }
+                if (docPat) document.getElementById('out-doc').value = shieldFix(docPat[0].replace(/\s/g, ''));
             }
         }
     </script>
