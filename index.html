@@ -3,50 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner V34 - Precision Slicer</title>
+    <title>Scanner V35 - Micro Surgery</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: monospace; background: #000; color: #fff; margin: 0; overflow: hidden; }
-        .viewport { position: relative; width: 100vw; height: 65vh; background: #111; }
+        .viewport { position: relative; width: 100vw; height: 60vh; background: #111; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* GRIGLIA DI TAGLIO DINAMICA */
-        .slicer-container { 
+        /* CONTENITORE GRIGLIA */
+        .grid-wrapper { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 95%; 
-            /* L'altezza viene decisa dallo slider */
-            height: 120px; 
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; justify-content: center;
             z-index: 10;
         }
         
-        .slice { flex: 1; border: 1px solid rgba(255,255,255,0.3); box-sizing: border-box; }
+        /* LE 3 STRISCE DI LETTURA - Default molto sottili */
+        .strip { 
+            width: 100%; 
+            height: 30px; /* Altezza fissa di base, modificabile da slider */
+            border: 1px solid rgba(255,255,255,0.8); 
+            box-sizing: border-box;
+            margin-bottom: 10px; /* Spazio di base tra le righe */
+        }
         
-        /* Colori semitrasparenti per vedere le righe sotto */
-        .s-doc { background: rgba(255, 59, 48, 0.2); border-color: #ff3b30; } /* ROSSO */
-        .s-dob { background: rgba(255, 204, 0, 0.2); border-color: #ffcc00; } /* GIALLO */
-        .s-nom { background: rgba(50, 215, 75, 0.2); border-color: #32d74b; } /* VERDE */
+        .s-doc { background: rgba(255, 59, 48, 0.15); border-color: #ff3b30; }
+        .s-dob { background: rgba(255, 204, 0, 0.15); border-color: #ffcc00; }
+        .s-nom { background: rgba(50, 215, 75, 0.15); border-color: #32d74b; margin-bottom: 0; }
 
         .controls { 
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 35vh; 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 40vh; 
             background: #1c1c1e; padding: 15px; box-sizing: border-box; 
-            display: flex; flex-direction: column; gap: 8px;
+            display: flex; flex-direction: column; gap: 5px;
         }
 
-        /* SLIDER PER REGOLARE L'ALTEZZA */
-        input[type=range] { width: 100%; margin: 10px 0; accent-color: #007AFF; cursor: pointer; }
+        .slider-group { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #aaa; }
+        input[type=range] { flex: 1; margin: 0 10px; accent-color: #007AFF; }
         
         .btn-scan { 
             background: #fff; color: #000; width: 100%; padding: 12px; 
             border: none; border-radius: 8px; font-size: 18px; font-weight: bold; 
-            text-transform: uppercase; cursor: pointer; margin-top: 5px;
+            text-transform: uppercase; cursor: pointer; margin-top: 10px;
         }
 
-        .result-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 2px; }
-        .lbl { font-size: 10px; font-weight: bold; }
-        .val { font-size: 14px; font-weight: bold; color: #fff; }
-        
-        #log { font-size: 10px; text-align: center; color: #aaa; margin-top: 5px; }
+        .res-line { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 2px 0; }
+        .val { color: #fff; font-weight: bold; }
+
+        #log { font-size: 10px; text-align: center; color: #666; margin-top: 5px; }
         canvas { display: none; }
     </style>
 </head>
@@ -55,84 +58,106 @@
     <div class="viewport">
         <video id="video" autoplay playsinline></video>
         
-        <div class="slicer-container" id="grid">
-            <div class="slice s-doc"></div> <div class="slice s-dob"></div> <div class="slice s-nom"></div> </div>
+        <div class="grid-wrapper" id="grid">
+            <div class="strip s-doc" id="box1"></div>
+            <div class="strip s-dob" id="box2"></div>
+            <div class="strip s-nom" id="box3"></div>
+        </div>
     </div>
 
     <div class="controls">
-        <div style="text-align:center; font-size:11px; color:#007AFF;">↕️ USA LA LEVA PER ADATTARE L'ALTEZZA ALLE RIGHE ↕️</div>
-        <input type="range" id="height-slider" min="80" max="250" value="120">
-        
-        <button class="btn-scan" id="btn-snap">SCANSIONA ORA</button>
+        <div class="slider-group">
+            <span>DISTANZA</span>
+            <input type="range" id="gap-slider" min="0" max="40" value="5">
+        </div>
 
-        <div class="result-row"><span class="lbl" style="color:#ff3b30">DOC:</span> <span class="val" id="out-doc">...</span></div>
-        <div class="result-row"><span class="lbl" style="color:#ffcc00">DATA:</span> <span class="val" id="out-dob">...</span></div>
-        <div class="result-row"><span class="lbl" style="color:#32d74b">NOM:</span> <span class="val" id="out-nom">...</span></div>
+        <div class="slider-group">
+            <span>SPESSORE</span>
+            <input type="range" id="thick-slider" min="15" max="60" value="25">
+        </div>
         
-        <div id="log">Regola la griglia e scatta</div>
+        <button class="btn-scan" id="btn-snap">SCANSIONA 3 RIGHE</button>
+
+        <div class="res-line"><span style="color:#ff3b30">DOC</span> <span class="val" id="out-doc">...</span></div>
+        <div class="res-line"><span style="color:#ffcc00">DATA</span> <span class="val" id="out-dob">...</span></div>
+        <div class="res-line"><span style="color:#32d74b">NOME</span> <span class="val" id="out-nom">...</span></div>
+        
+        <div id="log">Regola i cursori per combaciare perfettamente</div>
     </div>
 
     <canvas id="canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const grid = document.getElementById('grid');
-        const slider = document.getElementById('height-slider');
+        const gapSlider = document.getElementById('gap-slider');
+        const thickSlider = document.getElementById('thick-slider');
+        const boxes = [document.getElementById('box1'), document.getElementById('box2'), document.getElementById('box3')];
         const canvas = document.getElementById('canvas');
         const log = document.getElementById('log');
 
-        // Attiva Camera
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
             .then(s => video.srcObject = s);
 
-        // LOGICA SLIDER: Cambia l'altezza della griglia in tempo reale
-        slider.addEventListener('input', (e) => {
-            grid.style.height = e.target.value + 'px';
-        });
+        // Funzione per aggiornare la griglia visiva in tempo reale
+        function updateGrid() {
+            const gap = gapSlider.value + 'px';
+            const thick = thickSlider.value + 'px';
+            
+            boxes[0].style.height = thick;
+            boxes[0].style.marginBottom = gap;
+            
+            boxes[1].style.height = thick;
+            boxes[1].style.marginBottom = gap;
+            
+            boxes[2].style.height = thick;
+        }
+
+        gapSlider.addEventListener('input', updateGrid);
+        thickSlider.addEventListener('input', updateGrid);
 
         document.getElementById('btn-snap').addEventListener('click', async () => {
             log.innerText = "ELABORAZIONE...";
             
-            // Calcoli geometrici precisi
-            const rect = grid.getBoundingClientRect(); // Posizione della griglia sullo schermo
-            const videoRect = video.getBoundingClientRect(); // Posizione del video
-            
-            // Fattore di scala (perché il video reale è più grande dello schermo)
+            // Calcoli di posizione per il ritaglio
+            const videoRect = video.getBoundingClientRect();
             const scaleX = video.videoWidth / videoRect.width;
             const scaleY = video.videoHeight / videoRect.height;
 
-            // Coordinate reali sul video sorgente
-            const realX = (rect.left - videoRect.left) * scaleX;
-            const realY = (rect.top - videoRect.top) * scaleY;
-            const realW = rect.width * scaleX;
-            const realH = rect.height * scaleY;
-            const sliceH = realH / 3; // Altezza singola striscia
-
-            // --- ANALISI STRISCIA 1 (ROSSA) ---
+            // Scansioniamo ogni box individualmente
+            // BOX 1 (ROSSO - DOC)
             log.innerText = "Leggo Riga 1...";
-            let t1 = await scanZone(realX, realY, realW, sliceH);
+            let t1 = await scanElement(boxes[0], videoRect, scaleX, scaleY);
             parseDoc(t1);
 
-            // --- ANALISI STRISCIA 2 (GIALLA) ---
+            // BOX 2 (GIALLO - DATA)
             log.innerText = "Leggo Riga 2...";
-            let t2 = await scanZone(realX, realY + sliceH, realW, sliceH);
+            let t2 = await scanElement(boxes[1], videoRect, scaleX, scaleY);
             parseDob(t2);
 
-            // --- ANALISI STRISCIA 3 (VERDE) ---
+            // BOX 3 (VERDE - NOME)
             log.innerText = "Leggo Riga 3...";
-            let t3 = await scanZone(realX, realY + (sliceH*2), realW, sliceH);
+            let t3 = await scanElement(boxes[2], videoRect, scaleX, scaleY);
             parseName(t3);
 
             log.innerText = "Finito!";
         });
 
-        async function scanZone(x, y, w, h) {
+        async function scanElement(element, vRect, sX, sY) {
+            const rect = element.getBoundingClientRect();
+            
+            // Coordinate relative al video originale
+            const realX = (rect.left - vRect.left) * sX;
+            const realY = (rect.top - vRect.top) * sY;
+            const realW = rect.width * sX;
+            const realH = rect.height * sY;
+
             const ctx = canvas.getContext('2d');
-            canvas.width = w;
-            canvas.height = h;
-            // Filtro nitidezza estrema
+            canvas.width = realW;
+            canvas.height = realH;
+            
+            // Filtro nitidezza massima
             ctx.filter = 'grayscale(100%) contrast(300%)';
-            ctx.drawImage(video, x, y, w, h, 0, 0, w, h);
+            ctx.drawImage(video, realX, realY, realW, realH, 0, 0, realW, realH);
             
             const { data } = await Tesseract.recognize(canvas, 'ita', {
                 tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'
@@ -140,44 +165,41 @@
             return data.text.replace(/\s/g, '').toUpperCase();
         }
 
-        // Funzioni di Pulizia Dati
         function fix(s, type) {
             if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
+            // Correzione Numeri (N) o Lettere (L)
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/A/g,'4');
             if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
             return s;
         }
 
         function parseDoc(txt) {
-            // Cerca pattern CIE nella prima striscia
+            // Cerca pattern Documento
             let m = txt.match(/IT([A-Z0-9]{9})/) || txt.match(/[A-Z]{2}[0-9]{5}[A-Z]{2}/);
             if (m) {
                 let d = m[1] || m[0];
                 d = fix(d.substr(0,2),'L') + fix(d.substr(2,5),'N') + fix(d.substr(7,2),'L');
                 document.getElementById('out-doc').innerText = d;
-                document.getElementById('out-doc').style.color = "#ff3b30";
             }
         }
 
         function parseDob(txt) {
-            // Cerca data nella seconda striscia (inizia con numeri)
+            // Cerca Data (6 numeri)
             let m = txt.match(/[0-9]{6}/);
             if (m) {
                 let d = fix(m[0], 'N');
                 let y = parseInt(d.substr(0,2)) > 40 ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
                 document.getElementById('out-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
-                document.getElementById('out-dob').style.color = "#ffcc00";
             }
         }
 
         function parseName(txt) {
-            // Cerca nome nella terza striscia
+            // Cerca Nome (separato da <<)
             if (txt.includes('<<')) {
                 let parts = txt.split('<<');
                 let cog = fix(parts[0].replace(/</g,''), 'L');
                 let nom = fix(parts[1].replace(/</g,''), 'L');
                 document.getElementById('out-nom').innerText = `${cog} ${nom}`;
-                document.getElementById('out-nom').style.color = "#32d74b";
             }
         }
     </script>
