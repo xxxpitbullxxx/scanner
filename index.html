@@ -3,261 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V40 - Hard Reset</title>
+    <title>Scanner V39 - Titanium</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* RESET TOTALE */
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #000; font-family: monospace; height: 100vh; overflow: hidden; }
+        body { 
+            font-family: monospace, sans-serif; margin: 0; background: #000; 
+            height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+        }
 
-        /* SEZIONE CAMERA (Fissa in alto, 40%) */
-        #cam-section {
-            position: fixed; top: 0; left: 0; width: 100%; height: 40%;
-            background: black; z-index: 10;
+        /* TABS */
+        .tabs { flex: 0 0 auto; display: flex; background: #1a1a1a; border-bottom: 1px solid #333; z-index: 50; }
+        .tab { 
+            flex: 1; padding: 15px; text-align: center; color: #666; 
+            font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px;
+        }
+        .tab.active { background: #000; color: #fff; border-bottom: 3px solid #00E0FF; }
+        .tab.active.front { border-bottom-color: #FFD60A; }
+
+        /* CAMERA */
+        .cam-view { 
+            flex: 0 0 35%; position: relative; overflow: hidden; background: #000; 
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* MIRINO (Semplificato) */
-        #guide {
+        .guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            border: 3px solid #00E0FF; width: 90%; height: 30%; 
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); pointer-events: none;
+            width: 95%; height: 30%; 
+            border: 3px solid #00E0FF; border-radius: 6px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.8);
+            z-index: 10;
+        }
+        .guide.front-mode { border-color: #FFD60A; height: 70%; width: 90%; }
+        
+        .guide-msg {
+            position: absolute; bottom: 5px; width: 100%; text-align: center;
+            color: #00E0FF; font-size: 11px; font-weight: bold; z-index: 20;
+            text-shadow: 1px 1px 0 #000;
         }
 
-        /* TAB DI NAVIGAZIONE (Sopra la camera) */
-        .tabs {
-            position: absolute; top: 0; left: 0; width: 100%; z-index: 20;
-            display: flex; background: rgba(0,0,0,0.8);
-        }
-        .tab {
-            flex: 1; padding: 15px; text-align: center; color: #fff; font-weight: bold;
-            border-bottom: 4px solid #444; cursor: pointer;
-        }
-        .tab.active { border-bottom-color: #00E0FF; background: rgba(0,224,255,0.1); }
-        .tab.front-active { border-bottom-color: #FFD60A; background: rgba(255,214,10,0.1); }
-
-        /* SEZIONE DATI (Fissa in basso, 60%, SCORREVOLE) */
-        #data-section {
-            position: fixed; top: 40%; bottom: 0; left: 0; width: 100%;
-            background: #121212; border-top: 4px solid #333;
-            overflow-y: scroll; /* FORZA SCORRIMENTO */
-            -webkit-overflow-scrolling: touch;
-            padding: 15px; padding-bottom: 200px; /* SPAZIO EXTRA PER SCROLL */
+        /* PANNELLO */
+        .panel { 
+            flex: 1; background: #111; display: flex; flex-direction: column; 
+            overflow: hidden; border-top: 1px solid #333;
         }
 
-        /* PULSANTE AZIONE */
-        #btn-action {
-            width: 100%; padding: 20px; font-size: 20px; font-weight: bold;
-            border: none; border-radius: 8px; margin-bottom: 20px;
-            cursor: pointer; background: #00E0FF; color: #000;
+        .action-area { flex: 0 0 auto; padding: 10px; background: #111; z-index: 30;}
+        .btn-scan { 
+            background: #00E0FF; color: #000; width: 100%; padding: 14px; 
+            border: none; border-radius: 4px; font-size: 16px; font-weight: bold; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-scan.front { background: #FFD60A; }
+
+        /* LISTA SCORREVOLE */
+        .scroll-container {
+            flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 80px;
         }
 
-        /* CAMPI DATI */
-        .field {
-            background: #222; margin-bottom: 10px; padding: 12px;
-            border-left: 5px solid #555; border-radius: 4px;
+        .field { 
+            background: #222; padding: 8px; margin-bottom: 6px; 
+            border-left: 3px solid #444; border-radius: 4px;
         }
         .field.ok { border-left-color: #32d74b; background: #1a2a1a; }
-        
-        .label { color: #888; font-size: 10px; display: block; margin-bottom: 5px; }
-        .value { color: #fff; font-size: 16px; font-weight: bold; min-height: 20px; }
 
-        /* DEBUG AREA (Per vedere cosa legge il fronte) */
-        #raw-text {
-            font-size: 10px; color: #555; margin-top: 20px; 
-            border: 1px solid #333; padding: 5px; display: none;
-        }
+        .lbl { font-size: 9px; color: #888; display: block; margin-bottom: 2px; text-transform: uppercase; }
+        .val { font-size: 15px; color: #fff; font-weight: bold; min-height: 18px; white-space: pre-wrap; }
 
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="cam-section">
-        <div class="tabs">
-            <div class="tab active" id="tab-retro" onclick="setMode('RETRO')">1. RETRO</div>
-            <div class="tab" id="tab-front" onclick="setMode('FRONTE')">2. FRONTE</div>
-        </div>
-        <video id="webcam" autoplay playsinline></video>
-        <div id="guide"></div>
+    <div class="tabs">
+        <div class="tab active" id="tab-retro" onclick="setMode('RETRO')">1. RETRO</div>
+        <div class="tab" id="tab-fronte" onclick="setMode('FRONTE')">2. FRONTE</div>
     </div>
 
-    <div id="data-section">
-        <button id="btn-action">SCANSIONA RETRO</button>
+    <div class="cam-view">
+        <video id="webcam" autoplay playsinline></video>
+        <div class="guide" id="guide-box"></div>
+        <div class="guide-msg" id="msg">CENTRA LA RIGA "C&lt;ITA..."</div>
+    </div>
 
-        <div class="field"><span class="label">COGNOME</span><div class="value" id="res-cog"></div></div>
-        <div class="field"><span class="label">NOME</span><div class="value" id="res-nom"></div></div>
-        <div class="field"><span class="label">NUMERO DOCUMENTO</span><div class="value" id="res-doc"></div></div>
-        <div class="field"><span class="label">DATA DI NASCITA</span><div class="value" id="res-dob"></div></div>
-        <div class="field"><span class="label">DATA SCADENZA</span><div class="value" id="res-exp"></div></div>
-        <div class="field"><span class="label">SESSO</span><div class="value" id="res-sex"></div></div>
+    <div class="panel">
+        <div class="action-area">
+            <button class="btn-scan" id="btn-snap">CATTURA RETRO</button>
+        </div>
         
-        <hr style="border-color:#333; margin: 20px 0;">
-        <div style="color:#FFD60A; font-weight:bold; margin-bottom:10px;">DATI FRONTE</div>
-
-        <div class="field"><span class="label">CITTADINANZA</span><div class="value" id="res-cit"></div></div>
-        <div class="field"><span class="label">LUOGO DI NASCITA</span><div class="value" id="res-birthplace"></div></div>
-        <div class="field"><span class="label">RESIDENZA (Indirizzo)</span><div class="value" id="res-addr"></div></div>
-        <div class="field"><span class="label">ENTE RILASCIO</span><div class="value" id="res-org"></div></div>
-
-        <div id="raw-text">TESTO GREZZO OCR...</div>
-        <br><br><br> </div>
+        <div class="scroll-container">
+            <div class="field"><span class="lbl">COGNOME NOME</span><div class="val" id="out-nom"></div></div>
+            <div class="field"><span class="lbl">NUMERO DOC</span><div class="val" id="out-doc"></div></div>
+            <div class="field"><span class="lbl">NASCITA</span><div class="val" id="out-dob"></div></div>
+            <div class="field"><span class="lbl">SESSO</span><div class="val" id="out-sex"></div></div>
+            <div class="field"><span class="lbl">SCADENZA (Stimata da MRZ)</span><div class="val" id="out-scad"></div></div>
+            
+            <div style="height: 1px; background: #333; margin: 10px 0;"></div>
+            
+            <div class="field"><span class="lbl">RESIDENZA (Via/Città)</span><div class="val" id="out-res"></div></div>
+            <div class="field"><span class="lbl">LUOGO DI NASCITA</span><div class="val" id="out-luogo"></div></div>
+            <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="out-cit"></div></div>
+            <div class="field"><span class="lbl">ENTE RILASCIO</span><div class="val" id="out-ente"></div></div>
+        </div>
+    </div>
 
     <canvas id="cvs"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
-        const btn = document.getElementById('btn-action');
-        const guide = document.getElementById('guide');
-        const rawDiv = document.getElementById('raw-text');
-        let mode = 'RETRO';
+        const btn = document.getElementById('btn-snap');
+        const guide = document.getElementById('guide-box');
+        const msg = document.getElementById('msg');
+        let currentMode = 'RETRO';
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
-            .then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment", width: { ideal: 1920 } } 
+        }).then(s => video.srcObject = s);
 
-        function setMode(m) {
-            mode = m;
-            if (m === 'RETRO') {
-                document.getElementById('tab-retro').className = 'tab active';
-                document.getElementById('tab-front').className = 'tab';
-                guide.style.borderColor = '#00E0FF';
-                guide.style.height = '30%'; // Stretto per MRZ
-                btn.style.backgroundColor = '#00E0FF';
-                btn.innerText = "SCANSIONA RETRO";
-                video.style.filter = "contrast(1.2)"; // Contrasto per retro
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'RETRO') {
+                document.getElementById('tab-retro').classList.add('active');
+                document.getElementById('tab-fronte').classList.remove('active');
+                guide.classList.remove('front-mode');
+                btn.classList.remove('front');
+                btn.innerText = "CATTURA RETRO";
+                msg.innerText = "CENTRA LA RIGA C<ITA...";
+                msg.style.color = "#00E0FF";
             } else {
-                document.getElementById('tab-front').className = 'tab front-active';
-                document.getElementById('tab-retro').className = 'tab';
-                guide.style.borderColor = '#FFD60A';
-                guide.style.height = '70%'; // AMPIO per il fronte
-                btn.style.backgroundColor = '#FFD60A';
-                btn.innerText = "SCANSIONA FRONTE";
-                video.style.filter = "brightness(1.1)"; // Luminosità per scritte grigie
-                rawDiv.style.display = 'block'; // Mostra debug
+                document.getElementById('tab-fronte').classList.add('active');
+                document.getElementById('tab-fronte').classList.add('front');
+                document.getElementById('tab-retro').classList.remove('active');
+                guide.classList.add('front-mode');
+                btn.classList.add('front');
+                btn.innerText = "CATTURA FRONTE";
+                msg.innerText = "INQUADRA TUTTO IL FRONTE";
+                msg.style.color = "#FFD60A";
             }
         }
 
-        document.getElementById('btn-action').addEventListener('click', async () => {
-            btn.innerText = "ELABORAZIONE...";
+        document.getElementById('btn-snap').addEventListener('click', async () => {
+            btn.innerText = "ANALISI...";
             const ctx = canvas.getContext('2d');
             const vw = video.videoWidth;
             const vh = video.videoHeight;
             
-            // Ritaglio
-            let cw = vw * 0.90;
-            // Se fronte, prendiamo quasi tutto lo schermo verticale
-            let ch = (mode === 'RETRO') ? vh * 0.30 : vh * 0.70; 
-            let cx = (vw - cw) / 2;
-            let cy = (vh / 2) - (ch / 2);
-
-            canvas.width = cw * 2; canvas.height = ch * 2; // Zoom 2x
-
-            if (mode === 'RETRO') {
-                ctx.filter = 'grayscale(100%) contrast(300%)';
+            // Ritaglio Ottimizzato
+            let cw, ch, cy;
+            if(currentMode === 'RETRO') {
+                cw = vw * 0.95; ch = vh * 0.25; cy = (vh * 0.40) - (ch / 2);
             } else {
-                // Filtro più delicato per il fronte
-                ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)'; 
+                cw = vw * 0.90; ch = vh * 0.60; cy = (vh / 2) - (ch / 2);
             }
+            let cx = (vw - cw) / 2;
+
+            canvas.width = cw * 2.5; // Zoom 2.5x per massima definizione
+            canvas.height = ch * 2.5;
             
+            // Filtro Nitidezza Estremo
+            ctx.filter = 'grayscale(100%) contrast(250%) brightness(110%)'; 
             ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
 
             try {
-                // Whitelist estesa per il fronte
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<.,/-\' '
+                });
                 
-                if (mode === 'RETRO') parseRetro(text);
-                else parseFronte(text);
+                if (currentMode === 'RETRO') processRetroV36(text);
+                else processFronteAdvanced(text);
                 
-                btn.innerText = "COMPLETATO";
-            } catch (e) { btn.innerText = "ERRORE"; }
+                btn.innerText = currentMode === 'RETRO' ? "CATTURA RETRO" : "CATTURA FRONTE";
+            } catch (e) { btn.innerText = "ERRORE OCR"; }
         });
 
-        // --- RETRO (Logica V36 ripristinata) ---
-        function fix(s) { return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4'); }
-        function parseRetro(txt) {
-            const lines = txt.split('\n').map(l => l.replace(/\s/g,'').toUpperCase());
+        function fill(id, val) {
+            if(!val) return;
+            const el = document.getElementById(id);
+            el.innerText = val;
+            el.parentElement.classList.add('ok');
+        }
+
+        // --- MOTORE RETRO (Basato su V36 - Infallibile) ---
+        function fix(s) { return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8'); }
+        function fixL(s) { return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B'); }
+
+        function processRetroV36(raw) {
+            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase());
             
-            // 1. Doc Number
-            let docL = lines.find(l => (l.includes('ITA')||l.includes('1TA')) && l.length>10);
-            if(docL) {
-                let m = docL.match(/(ITA|1TA)/);
-                if(m) {
-                    let c = docL.substr(m.index+3, 9);
-                    // Logica Anchor Lock V36
-                    if(c.length===9) setVal('res-doc', c);
-                }
-            }
-            // 2. Data & Sesso
-            let datL = lines.find(l => l.match(/^\d/) && (l.includes('M')||l.includes('F')));
-            if(datL) {
-                let d=fix(datL.substr(4,2)); let m=fix(datL.substr(2,2)); let y=fix(datL.substr(0,2));
-                setVal('res-dob', `${d}/${m}/${y>40?'19'+y:'20'+y}`);
-                setVal('res-sex', datL.includes('M')?'M':'F');
-                // Scadenza
-                let idx = datL.search(/[MF]/);
-                if(idx>-1) {
-                    let s = datL.substr(idx+1).replace(/</g,'');
-                    if(s.length>=6) {
-                        let ed=fix(s.substr(4,2)); let em=fix(s.substr(2,2)); let ey=fix(s.substr(0,2));
-                        setVal('res-exp', `${ed}/${em}/20${ey}`);
+            // 1. DOC (Anchor Lock)
+            let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA') || l.includes('IT4')) && l.length > 10);
+            if (docLine) {
+                let m = docLine.match(/(ITA|1TA|IT4)/);
+                if (m) {
+                    let code = docLine.substr(m.index + 3, 9);
+                    let clean = fixL(code.substr(0,2)) + fix(code.substr(2,5)) + fixL(code.substr(7,2));
+                    if(clean.match(/^[A-Z]{2}\d{5}[A-Z]{2}$/)) {
+                        fill('out-doc', clean);
                     }
                 }
             }
-            // 3. Nome (Logica V36: cerca <<)
-            let nomL = lines.find(l => l.includes('<<') && !l.includes('ITA'));
-            if(nomL) {
-                let parts = nomL.split('<<');
-                setVal('res-cog', parts[0].replace(/</g,' '));
-                setVal('res-nom', parts[1].replace(/</g,' '));
-            }
-            alert("Retro OK. Passa al Fronte.");
-            setMode('FRONTE');
-        }
-
-        // --- FRONTE (Nuova Logica Grandangolo) ---
-        function parseFronte(txt) {
-            rawDiv.innerText = txt; // DEBUG: Vedi cosa legge!
-            const up = txt.toUpperCase();
             
-            // Cittadinanza
-            if(up.includes('CITTADINANZA')) setVal('res-cit', 'ITALIANA');
-
-            // Luogo Nascita (Cerca riga con NATO)
-            let lines = up.split('\n');
-            let natoIdx = lines.findIndex(l => l.includes('NATO') || l.includes('LUOGO'));
-            if(natoIdx > -1 && lines[natoIdx+1]) {
-                setVal('res-birthplace', lines[natoIdx+1].replace(/[^A-Z ]/g,''));
-            }
-
-            // Ente
-            if(up.includes('MINISTERO')) setVal('res-org', 'MINISTERO DELL\'INTERNO');
-            else if(up.includes('COMUNE')) {
-                let com = lines.find(l => l.includes('COMUNE'));
-                if(com) setVal('res-org', com.replace(/[^A-Z ]/g,''));
-            }
-
-            // Residenza (Cerca VIA, PIAZZA, ecc)
-            // Se non legge nulla, prova a cambiare angolazione della luce!
-            let addr = lines.find(l => l.match(/(VIA |VIALE |PIAZZA |CORSO |VICOLO |LARGO )/));
-            if(addr) {
-                setVal('res-addr', addr);
-            } else {
-                // Fallback: cerca dopo RESIDENZA
-                let resIdx = up.indexOf('RESIDENZA');
-                if(resIdx > -1) {
-                    let chunk = up.substr(resIdx+9, 60);
-                    setVal('res-addr', chunk.split('\n')[0]);
-                }
-            }
-        }
-
-        function setVal(id, v) {
-            if(!v) return;
-            let el = document.getElementById(id);
-            el.innerText = v;
-            el.parentElement.classList.add('ok');
-        }
-    </script>
-</body>
-</html>
+            // 2. DATA & SEX & SCADENZA
+            let datLine = lines.find(l => l.match(/^\d/) && (l.includes('
