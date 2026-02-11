@@ -3,116 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V38 - Safe Start</title>
+    <title>Scanner V39 - Universal</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; background: #f2f2f7; height: 100vh; display: flex; flex-direction: column;
+            font-family: -apple-system, sans-serif; margin: 0; background: #f2f2f7; 
+            height: 100vh; display: flex; flex-direction: column; 
         }
 
-        .cam-section { 
-            position: relative; height: 40vh; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center;
+        /* ZONA CAMERA */
+        .cam-box { 
+            position: relative; height: 35vh; background: #000; 
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
         }
-        video { width: 100%; height: 100%; object-fit: cover; display: none; } /* Nascosto finché non attivo */
-
-        /* Pulsante per forzare l'avvio della camera */
-        #btn-start-cam {
-            background: #FF3B30; color: white; padding: 15px 30px; 
-            border: none; border-radius: 50px; font-weight: bold; font-size: 16px;
-            z-index: 50; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+        video { 
+            width: 100%; height: 100%; object-fit: cover; 
         }
 
-        /* Mirino Allargato */
-        .mrz-guide { 
+        /* SELETTORE CAMERA (appare solo se serve) */
+        #cam-select {
+            position: absolute; top: 10px; left: 10px; z-index: 100;
+            padding: 10px; background: white; border-radius: 8px; border: none;
+            display: none; font-size: 14px; max-width: 90%;
+        }
+
+        /* PULSANTE AVVIO EMERGENZA */
+        #btn-force-start {
+            padding: 15px 30px; background: #FF3B30; color: white; border: none; 
+            border-radius: 50px; font-weight: bold; z-index: 50; cursor: pointer;
+        }
+
+        /* Mirino */
+        .guide-box { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 95%; height: 35%; 
-            border: 3px solid #007AFF; 
-            border-radius: 8px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.7);
-            z-index: 10; display: none; /* Nascosto finché camera non va */
+            border: 3px solid #00E0FF; border-radius: 8px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); pointer-events: none;
         }
 
-        .form-section { 
-            flex: 1; background: #fff; padding: 20px; 
-            border-radius: 20px 20px 0 0; margin-top: -20px; z-index: 20;
-            overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+        /* ZONA DATI */
+        .form-box { 
+            flex: 1; background: #fff; padding: 15px; border-radius: 20px 20px 0 0; 
+            margin-top: -20px; z-index: 20; overflow-y: auto; 
+            display: flex; flex-direction: column; gap: 8px;
         }
 
-        .btn-main { 
-            background: #007AFF; color: white; width: 100%; padding: 16px; 
+        .btn-scan { 
+            background: #007AFF; color: white; width: 100%; padding: 15px; 
             border: none; border-radius: 12px; font-size: 18px; font-weight: 700; 
-            cursor: pointer; margin-bottom: 10px; flex-shrink: 0;
+            margin-bottom: 5px; flex-shrink: 0;
         }
 
-        /* Griglia Dati Alloggiati */
-        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .field-group { background: #f5f5f7; padding: 8px 12px; border-radius: 8px; border: 1px solid #e5e5ea; }
-        .field-group.full { grid-column: span 2; }
+        .row { display: flex; gap: 10px; }
+        .field { flex: 1; background: #f5f5f7; padding: 8px; border-radius: 8px; border: 1px solid #ddd; }
+        .field.full { width: 100%; }
         
-        label { font-size: 10px; color: #888; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        label { font-size: 10px; color: #888; font-weight: bold; display: block; }
         input { 
-            width: 100%; border: none; background: transparent; font-size: 16px; 
-            font-weight: 600; color: #1c1c1e; outline: none; font-family: monospace;
+            width: 100%; background: transparent; border: none; 
+            font-size: 15px; font-weight: 600; font-family: monospace; 
         }
 
-        .status-bar { font-size: 11px; text-align: center; color: #888; margin-top: 10px; }
         .filled { background: #e8fce8; border-color: #34C759; }
-        
-        /* Messaggio di errore rosso */
-        #error-msg { color: red; font-weight: bold; font-size: 14px; text-align: center; padding: 20px; display: none; }
-
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="cam-section">
-        <button id="btn-start-cam">ATTIVA FOTOCAMERA</button>
-        <div id="error-msg"></div>
-        <video id="webcam" autoplay playsinline></video>
-        <div class="mrz-guide" id="guide"></div>
+    <div class="cam-box">
+        <select id="cam-select"></select>
+        <button id="btn-force-start">AVVIA FOTOCAMERA</button>
+        <video id="webcam" autoplay playsinline muted></video>
+        <div class="guide-box"></div>
     </div>
 
-    <div class="form-section">
-        <button class="btn-main" id="scan-btn">SCANSIONA DATI OSPITE</button>
+    <div class="form-box">
+        <button class="btn-scan" id="scan-action">SCANSIONA</button>
+        <div id="log" style="text-align:center; font-size:11px; color:#555; margin-bottom:5px;">In attesa camera...</div>
 
-        <div class="field-group full">
-            <label>Tipo Documento</label>
-            <input type="text" value="CARTA D'IDENTITÀ" readonly>
+        <div class="field full"><label>TIPO</label><input type="text" value="CARTA D'IDENTITÀ" readonly></div>
+        <div class="row">
+            <div class="field" id="c-doc"><label>NUMERO</label><input type="text" id="out-doc"></div>
+            <div class="field" id="c-cit"><label>CITTADINANZA</label><input type="text" id="out-cit"></div>
         </div>
-
-        <div class="grid-row">
-            <div class="field-group" id="grp-doc"><label>Numero</label><input type="text" id="res-doc" placeholder="---"></div>
-            <div class="field-group" id="grp-cit"><label>Cittadinanza</label><input type="text" id="res-cit" placeholder="---"></div>
+        <div class="row">
+            <div class="field" id="c-cog"><label>COGNOME</label><input type="text" id="out-cog"></div>
+            <div class="field" id="c-nom"><label>NOME</label><input type="text" id="out-nom"></div>
         </div>
-
-        <div class="grid-row">
-            <div class="field-group" id="grp-cog"><label>Cognome</label><input type="text" id="res-cog" placeholder="---"></div>
-            <div class="field-group" id="grp-nom"><label>Nome</label><input type="text" id="res-nom" placeholder="---"></div>
+        <div class="row">
+            <div class="field" id="c-dob"><label>NASCITA</label><input type="text" id="out-dob"></div>
+            <div class="field" id="c-sex"><label>SESSO</label><input type="text" id="out-sex"></div>
         </div>
-
-        <div class="grid-row">
-            <div class="field-group" id="grp-dob"><label>Nascita</label><input type="text" id="res-dob" placeholder="GG/MM/AAAA"></div>
-            <div class="field-group" id="grp-sex"><label>Sesso</label><input type="text" id="res-sex" placeholder="M/F"></div>
-        </div>
-
-        <div class="grid-row">
-            <div class="field-group full" id="grp-exp"><label>Scadenza Documento</label><input type="text" id="res-exp" placeholder="GG/MM/AAAA"></div>
-        </div>
-        
-        <div class="status-bar" id="log">Clicca 'Attiva Fotocamera' per iniziare</div>
+        <div class="field full" id="c-exp"><label>SCADENZA</label><input type="text" id="out-exp"></div>
     </div>
 
     <canvas id="cvs"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
-        const canvas = document.getElementById('cvs');
+        const startBtn = document.getElementById('btn-force-start');
+        const camSelect = document.getElementById('cam-select');
         const log = document.getElementById('log');
-        const startBtn = document.getElementById('btn-start-cam');
-        const guide = document.getElementById('guide');
-        const errorMsg = document.getElementById('error-msg');
+        const canvas = document.getElementById('cvs');
 
-        // 1. Avvio Manuale della Camera (più sicuro)
-        startBtn.addEventListener('click',
+        // FUNZIONE AVVIO CAMERA UNIVERSALE
+        async function startCamera(deviceId = null) {
+            startBtn.style.display = 'none';
+            log.innerText = "Avvio camera...";
+            
+            // Vincoli MINIMI per evitare blocchi
+            const constraints = {
+                video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" }
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                video.style.display = 'block';
+                log.innerText = "Camera attiva. Inquadra il retro.";
+                
+                // Popola il menu se ci sono più camere
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                
+                if (videoDevices.length > 1) {
+                    camSelect.style.display = 'block';
+                    camSelect.innerHTML = "";
+                    videoDevices.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.deviceId;
+                        opt.text = d.label || `Camera ${camSelect.length + 1}`;
+                        camSelect.appendChild(opt);
+                    });
+                    // Se l'utente cambia camera dal menu
+                    camSelect.onchange = () => startCamera(camSelect.value);
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Errore Camera: " + err.message + "\nProva a cambiare browser o ricaricare.");
+                startBtn.style.display = 'block';
+                startBtn.innerText = "RIPROVA";
+            }
+        }
+
+        startBtn.addEventListener('click', () => startCamera());
+
+        // LOGICA SCANSIONE (V37 + V36 mixed)
+        document.getElementById('scan-action').addEventListener('click', async () => {
+            log.innerText = "Elaborazione...";
+            const ctx = canvas.getContext('2d');
+            
+            // Dimensioni attuali video
+            const w = video.videoWidth;
+            const h = video.videoHeight;
+            
+            if(w === 0) { alert("Attendi che il video appaia!"); return; }
+
+            // Ritaglio centrale
+            const cw = w * 0.90;
+            const ch = h * 0.35;
+            const cx = (w - cw) / 2;
+            const cy = (h - ch) / 2;
+
+            canvas.width = cw * 2; // Zoom digitale
+            canvas.height = ch * 2;
+            
+            ctx.filter = 'grayscale(100%) contrast(200%)';
+            ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
+
+            try {
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+                });
+                parseData(text);
+                log.innerText = "Finito.";
+            } catch (e) { log.innerText = "Errore OCR"; }
+        });
+
+        // Helpers
+        function fix(s, t) {
+            if(!s) return "";
+            if(t==='N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4');
+            if(t==='L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+            return s;
+        }
+        function fmtDate(s) {
+            if(!s || s.length<6) return s;
+            let y=parseInt(s.substr(0,2));
+            let fy=(y>40)?'19'+y:'20'+y;
+            return `${s.substr(4,2)}/${s.substr(2,2)}/${fy}`;
+        }
+
+        function parseData(raw) {
+            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
+            
+            // DOCUMENTO
+            let docRow = lines.find(l => (l.includes('IT') || l.includes('1T')) && l.includes('<') && l.match(/\d/));
+            if(docRow) {
+                let m = docRow.match(/IT([A-Z0-9]{9})/);
+                if(!m) m = docRow.match(/1T([A-Z0-9]{9})/);
+                if(m) {
+                    let c = m[1];
+                    let final = fix(c.substr(0,2),'L')+fix(c.substr(2,5),'N')+fix(c.substr(7,2),'L');
+                    document.getElementById('out-doc').value = final;
+                    document.getElementById('c-doc').classList.add('filled');
+                    document.getElementById('out-cit').value = "ITALIA";
+                }
+            }
+
+            // DATI
+            let datRow = lines.find(l => l.match(/^\d{6}/) && (l.includes('M')||l.includes('F')));
+            if(datRow) {
+                let dob = fix(datRow.substr(0,6), 'N');
+                document.getElementById('out-dob').value = fmtDate(dob);
+                document.getElementById('c-dob').classList.add('filled');
+
+                let sex = datRow.match(/[0-9]([MF])/);
+                if(sex) {
+                    document.getElementById('out-sex').value = sex[1];
+                    document.getElementById('c-sex').classList.add('filled');
+                }
+
+                let parts = datRow.split(/[MF]/);
+                if(parts[1] && parts[1].length>=6) {
+                    let exp = fix(parts[1].substr(0,6),'N');
+                    document.getElementById('out-exp').value = fmtDate(exp);
+                    document.getElementById('c-exp').classList.add('filled');
+                }
+            }
+
+            // NOME
+            let nomRow = lines.find(l => l.includes('<<') && !l.includes('IT') && !l.match(/^\d/));
+            if(nomRow) {
+                let p = nomRow.split('<<');
+                document.getElementById('out-cog').value = fix(p[0].replace(/</g,''),'L');
+                document.getElementById('out-nom').value = fix(p[1].replace(/</g,''),'L');
+                document.getElementById('c-cog').classList.add('filled');
+                document.getElementById('c-nom').classList.add('filled');
+            }
+        }
+    </script>
+</body>
+</html>
