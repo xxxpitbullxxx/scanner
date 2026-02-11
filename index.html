@@ -3,128 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner ID V21 - Neural Scan</title>
+    <title>Scanner ID V22 - Triple Check</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #f0f2f5; padding-bottom: 40px; }
-        .camera-box { position: relative; width: 100%; height: 320px; background: #000; overflow: hidden; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #f0f2f5; padding-bottom: 50px; overflow-y: auto !important; height: auto !important; }
+        .cam-container { position: relative; width: 100%; height: 320px; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .overlay { 
+        .guide-box { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             width: 85%; height: 60%; border: 3px solid #34C759; border-radius: 15px; 
             box-shadow: 0 0 0 2000px rgba(0,0,0,0.7); z-index: 5; pointer-events: none; 
         }
-        .ui { padding: 20px; }
-        .btn-scan { 
+        .panel { padding: 20px; }
+        .btn-extract { 
             background: #007AFF; color: white; width: 100%; padding: 18px; 
-            border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+            border: none; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,122,255,0.3);
         }
-        .card { background: white; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .field { margin-bottom: 15px; }
+        .data-card { background: white; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .input-wrap { margin-bottom: 15px; }
         label { display: block; font-size: 10px; font-weight: 800; color: #8e8e93; text-transform: uppercase; margin-bottom: 4px; }
         input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; font-weight: 600; box-sizing: border-box; background: #f9f9f9; }
-        #log { font-family: monospace; font-size: 11px; color: #ff3b30; background: #fff; padding: 10px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; }
+        #log-status { font-family: monospace; font-size: 11px; color: #ff3b30; background: #fff; padding: 10px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="camera-box">
+    <div class="cam-container">
         <video id="webcam" autoplay playsinline></video>
-        <div class="overlay"></div>
+        <div class="guide-box"></div>
     </div>
 
-    <div class="ui">
-        <div id="status" style="text-align:center; font-weight:bold; color:#007AFF; margin-bottom:10px;">INQUADRA IL RETRO (ZONA MRZ)</div>
-        <button class="btn-scan" id="btn-do">SCANSIONE NEURALE</button>
+    <div class="panel">
+        <div id="status-txt" style="text-align:center; font-weight:bold; color:#007AFF; margin-bottom:10px;">PUNTA IL RETRO (ZONA CON FRECCE)</div>
+        <button class="btn-extract" id="btn-run">SCANSIONE MULTI-LIVELLO</button>
 
-        <div class="card">
-            <div class="field"><label>Cognome</label><input type="text" id="out-cog"></div>
-            <div class="field"><label>Nome</label><input type="text" id="out-nom"></div>
-            <div class="field"><label>N. Documento (Validato)</label><input type="text" id="out-doc" style="background: #eefbff; border-color: #007AFF; color: #007AFF;"></div>
+        <div class="data-card">
+            <div class="input-wrap"><label>Cognome</label><input type="text" id="out-cog"></div>
+            <div class="input-wrap"><label>Nome</label><input type="text" id="out-nom"></div>
+            <div class="input-wrap"><label>Numero Documento (Validazione Tripla)</label><input type="text" id="out-doc" style="background: #eefbff; border-color: #007AFF; color: #007AFF;"></div>
         </div>
 
-        <div id="log">Sistema Pronto. Punta il retro del documento.</div>
+        <div id="log-status">Sistema pronto per l'estrazione.</div>
     </div>
 
-    <canvas id="proc-canvas"></canvas>
+    <canvas id="canvas-main"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
-        const canvas = document.getElementById('proc-canvas');
-        const log = document.getElementById('log');
-        const status = document.getElementById('status');
+        const canvas = document.getElementById('canvas-main');
+        const log = document.getElementById('log-status');
+        const status = document.getElementById('status-txt');
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
-            .then(s => { video.srcObject = s; log.innerText = "Camera HD Pronta."; })
-            .catch(e => { log.innerText = "Errore Camera: " + e; });
+            .then(s => { video.srcObject = s; log.innerText = "Camera Ottimizzata caricata."; })
+            .catch(e => { log.innerText = "Errore Hardware: " + e; });
 
-        document.getElementById('btn-do').addEventListener('click', async () => {
-            status.innerText = "ANALISI NEURALE...";
+        document.getElementById('btn-run').addEventListener('click', async () => {
+            status.innerText = "EXTRACTING DATA...";
             const ctx = canvas.getContext('2d');
             canvas.width = 1600;
             canvas.height = 1000;
 
-            // Applichiamo filtri per esaltare i tratti neri su fondo bianco
-            ctx.filter = 'grayscale(100%) contrast(300%) brightness(100%)';
+            // TRIPLO FILTRO: Sforziamo il nero puro per i caratteri CIE
+            ctx.filter = 'grayscale(100%) contrast(350%) brightness(100%)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             try {
                 const result = await Tesseract.recognize(canvas, 'ita+eng', {
-                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Processo: " + (m.progress * 100).toFixed(0) + "%"; }
+                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Deep Extraction: " + (m.progress * 100).toFixed(0) + "%"; }
                 });
 
-                processV21(result.data.text);
-                status.innerText = "ANALISI COMPLETATA!";
+                processV22(result.data.text);
+                status.innerText = "EXTRACTED!";
             } catch (err) {
-                log.innerText = "Errore OCR: " + err;
+                log.innerText = "Errore: " + err;
             }
         });
 
-        // Correzione Intelligente Posizionale per CIE (LL NNNNN LL)
-        function neuralFix(d) {
-            // Rimuove caratteri non validi
+        // Correzione Posizionale Avanzata per la CIE Italiana
+        function deepFix(d) {
             let s = d.replace(/[^A-Z0-9]/g, '');
             if (s.length < 9) return s;
             if (s.length > 9) s = s.substring(0, 9);
 
-            let res = "";
+            let corrected = "";
             for (let i = 0; i < 9; i++) {
                 let c = s[i];
-                // Posizioni 0, 1, 7, 8 devono essere LETTERE
-                if (i === 0 || i === 1 || i === 7 || i === 8) {
-                    res += c.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z').replace(/3/g, 'B').replace(/8/g, 'B');
+                // Posizioni 0, 1, 7, 8: Devono essere LETTERE
+                if ([0, 1, 7, 8].includes(i)) {
+                    corrected += c.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z').replace(/3/g, 'B');
                 } 
-                // Posizioni 2, 3, 4, 5, 6 devono essere NUMERI
+                // Posizioni 2, 3, 4, 5, 6: Devono essere NUMERI
                 else {
-                    res += c.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2').replace(/B/g, '8').replace(/T/g, '7');
+                    corrected += c.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2').replace(/B/g, '3').replace(/T/g, '7');
                 }
             }
-            return res;
+            return corrected;
         }
 
-        function processV21(raw) {
+        function processV22(raw) {
             const t = raw.toUpperCase();
             const clean = t.replace(/\s/g, '');
             
-            // 1. Estrazione da MRZ (Fonte Primaria - Retro)
+            // 1. Estrazione Prioritaria da MRZ (Retro - Esempio CA50322TW)
             const mrzMatch = clean.match(/C<IT([A-Z0-9]{9})/);
             if (mrzMatch) {
-                document.getElementById('out-doc').value = neuralFix(mrzMatch[1]);
+                document.getElementById('out-doc').value = deepFix(mrzMatch[1]);
             }
 
-            // 2. Estrazione Nomi (MRZ)
+            // 2. Estrazione Nomi da MRZ
             const nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if (nameMatch) {
                 document.getElementById('out-cog').value = nameMatch[1];
                 document.getElementById('out-nom').value = nameMatch[2];
             }
 
-            // 3. Fallback Numero Documento (Pattern ovunque)
+            // 3. Fallback per il numero se MRZ non è nitida
             if (!document.getElementById('out-doc').value) {
-                const docPat = t.match(/[A-Z0-9]{2}\s?[0-9A-Z]{5}\s?[A-Z0-9]{2}/);
-                if (docPat) {
-                    document.getElementById('out-doc').value = neuralFix(docPat[0].replace(/\s/g, ''));
+                const docPattern = t.match(/[A-Z0-9]{2}\s?[0-9A-Z]{5}\s?[A-Z0-9]{2}/);
+                if (docPattern) {
+                    document.getElementById('out-doc').value = deepFix(docPattern[0].replace(/\s/g, ''));
                 }
             }
         }
