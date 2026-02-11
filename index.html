@@ -3,150 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner Infallibile V6</title>
+    <title>Scanner Pro V7 - Infallibile</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         :root { --blue: #007AFF; --green: #34C759; }
-        body { font-family: sans-serif; margin: 0; background: #000; color: white; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #000; color: white; overflow: hidden; }
         
-        /* Contenitore Video Flessibile */
-        #camera-area { position: relative; width: 100vw; height: 45vh; background: #000; overflow: hidden; }
+        /* Area Video con Rotazione Software */
+        #camera-container { position: relative; width: 100vw; height: 50vh; background: #000; display: flex; align-items: center; justify-content: center; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Rettangolo Guida che si adatta all'orientamento */
-        .guide {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 85%; height: 60%; border: 3px solid var(--green);
-            border-radius: 15px; box-shadow: 0 0 0 1000px rgba(0,0,0,0.6);
-            z-index: 10; pointer-events: none;
+        /* Guida che si adatta visivamente */
+        .guide-box {
+            position: absolute; width: 85%; height: 60%;
+            border: 3px solid var(--green); border-radius: 15px;
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.6); z-index: 10;
         }
 
-        /* Effetto Flash */
-        #flash-effect {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; opacity: 0; pointer-events: none; z-index: 100;
-        }
-
-        .panel { background: white; color: #333; padding: 20px; border-radius: 25px 25px 0 0; margin-top: -20px; position: relative; z-index: 50; }
-        .btn-main { 
-            background: var(--blue); color: white; width: 100%; padding: 18px; 
-            border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-bottom: 20px;
-        }
+        .panel { background: white; color: #1c1e21; padding: 20px; border-radius: 25px 25px 0 0; margin-top: -20px; position: relative; z-index: 50; height: 55vh; overflow-y: auto; }
+        .btn-main { background: var(--blue); color: white; width: 100%; padding: 18px; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
+        .btn-main:active { transform: scale(0.95); background: #0056b3; }
         
-        .results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #status { text-align: center; font-weight: bold; color: var(--blue); margin-bottom: 15px; height: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full { grid-column: span 2; }
-        label { font-size: 10px; font-weight: bold; color: #999; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; box-sizing: border-box; background: #f9f9f9; }
+        label { font-size: 10px; font-weight: bold; color: #8e8e93; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 15px; box-sizing: border-box; background: #f2f2f7; }
         
-        #status-log { text-align: center; font-weight: bold; color: var(--blue); margin-bottom: 10px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div id="flash-effect"></div>
-
-<div id="camera-area">
-    <video id="webcam" autoplay playsinline></video>
-    <div class="guide"></div>
+<div id="camera-container">
+    <video id="video" autoplay playsinline></video>
+    <div class="guide-box"></div>
 </div>
 
 <div class="panel">
-    <div id="status-log">FOTOCAMERA PRONTA</div>
+    <div id="status">FOTOCAMERA PRONTA</div>
     
-    <button class="btn-main" id="snap-btn">📸 SCATTA E ANALIZZA</button>
+    <button class="btn-main" id="btn-snap">📸 SCATTA E ANALIZZA</button>
 
-    <div class="results">
-        <div><label>Cognome</label><input type="text" id="field-cognome"></div>
-        <div><label>Nome</label><input type="text" id="field-nome"></div>
-        <div class="full"><label>Data di Nascita</label><input type="text" id="field-nascita"></div>
-        <div class="full"><label>Indirizzo / Via</label><input type="text" id="field-via"></div>
-        <div class="full"><label>N. Documento</label><input type="text" id="field-doc"></div>
+    <div class="grid">
+        <div><label>Cognome</label><input type="text" id="res-cognome"></div>
+        <div><label>Nome</label><input type="text" id="res-nome"></div>
+        <div class="full"><label>Data di Nascita</label><input type="text" id="res-nascita"></div>
+        <div class="full"><label>N. Documento</label><input type="text" id="res-doc"></div>
+        <div class="full"><label>Residenza / Via</label><input type="text" id="res-via"></div>
     </div>
-    
-    <p style="font-size: 10px; color: #ccc; margin-top: 15px; text-align: center;">
-        Se non vedi il video, usa il caricamento file cliccando qui sopra.
-    </p>
 </div>
 
-<canvas id="out-canvas"></canvas>
+<canvas id="hidden-canvas"></canvas>
 
 <script>
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('out-canvas');
-    const log = document.getElementById('status-log');
-    const flash = document.getElementById('flash-effect');
-
-    // Funzione per avviare la fotocamera
-    async function initCamera() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment", width: { ideal: 1920 } } 
-            });
-            video.srcObject = stream;
-            log.innerText = "INQUADRA IL DOCUMENTO";
-        } catch (err) {
-            log.innerText = "ERRORE CAMERA: USA CARICAMENTO";
-            console.error(err);
-        }
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playClickSound() {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    // Esegui lo scatto
-    document.getElementById('snap-btn').addEventListener('click', async () => {
-        // 1. Feedback Visivo e Sonoro (Vibrazione)
-        flash.style.opacity = '1';
-        setTimeout(() => flash.style.opacity = '0', 150);
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('hidden-canvas');
+    const status = document.getElementById('status');
+
+    // Inizializzazione Camera con parametri di rotazione
+    navigator.mediaDevices.getUserMedia({ 
+        video: { 
+            facingMode: "environment", 
+            width: { ideal: 1920 },
+            height: { ideal: 1080 } 
+        } 
+    }).then(stream => {
+        video.srcObject = stream;
+        status.innerText = "INQUADRA IN ORIZZONTALE";
+    }).catch(err => {
+        status.innerText = "ERRORE CAMERA - USA HTTPS";
+    });
+
+    document.getElementById('btn-snap').addEventListener('click', async () => {
+        playClickSound();
         if (navigator.vibrate) navigator.vibrate(100);
-
-        log.innerText = "ANALISI IN CORSO...";
-
+        
+        status.innerText = "ELABORAZIONE IN CORSO...";
         const ctx = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
 
-        // 2. Cattura l'immagine con filtri per pulire il rumore
-        ctx.filter = 'contrast(150%) grayscale(100%)';
+        // Settiamo il canvas in orizzontale forzato (16:9)
+        canvas.width = 1280;
+        canvas.height = 720;
+
+        // Pulizia e Rotazione Software se necessario
+        ctx.filter = 'grayscale(100%) contrast(180%) brightness(110%)';
+        
+        // Disegniamo il video sul canvas adattandolo
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // 3. OCR con Tesseract
         try {
-            const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
-            processResults(text);
-            log.innerText = "COMPLETATO!";
+            const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng', {
+                logger: m => { if(m.status === 'recognizing text') status.innerText = `ANALISI: ${Math.round(m.progress * 100)}%`; }
+            });
+            processData(text);
+            status.innerText = "COMPLETATO!";
         } catch (e) {
-            log.innerText = "ERRORE DURANTE LA LETTURA";
+            status.innerText = "ERRORE DURANTE L'ANALISI";
         }
     });
 
-    function processResults(raw) {
+    function processData(raw) {
         const t = raw.toUpperCase();
-        console.log("Dati letti:", t);
+        console.log("OCR RAW:", t);
 
-        // Numero Documento
-        const doc = t.match(/[A-Z]{2}\d{5}[A-Z]{2}/) || t.match(/[A-Z]{2}\d{7}/);
-        if (doc) document.getElementById('field-doc').value = doc[0];
+        // Estrazione Numero Doc
+        const doc = t.match(/[A-Z]{2}\s?\d{5}[A-Z]{2}/) || t.match(/[A-Z]{2}\s?\d{7}/);
+        if (doc) document.getElementById('res-doc').value = doc[0].replace(/\s/g, '');
 
-        // Data Nascita
+        // Estrazione Data
         const date = t.match(/\d{2}.\d{2}.\d{4}/);
-        if (date) document.getElementById('field-nascita').value = date[0];
+        if (date) document.getElementById('res-nascita').value = date[0];
 
-        // Cognome e Nome (Logica a righe)
+        // Estrazione Cognome/Nome
         const lines = t.split('\n').map(l => l.trim());
         lines.forEach((l, i) => {
-            if (l.includes("COGNOME")) document.getElementById('field-cognome').value = lines[i+1]?.split(' ')[0] || "";
-            if (l.includes("NOME")) document.getElementById('field-nome').value = lines[i+1]?.split(' ')[0] || "";
-            if (l.includes("VIA") || l.includes("PIAZZA")) document.getElementById('field-via').value = l;
+            if (l.includes("COGNOME")) document.getElementById('res-cognome').value = lines[i+1]?.split(' ')[0] || "";
+            if (l.includes("NOME")) document.getElementById('res-nome').value = lines[i+1]?.split(' ')[0] || "";
+            if (l.includes("VIA") || l.includes("PIAZZA")) document.getElementById('res-via').value = l;
         });
 
-        // Se trova le freccette MRZ (Retro)
+        // Logica MRZ (Retro)
         const mrz = t.replace(/\s/g, '').match(/([A-Z]+)<<([A-Z]+)/);
         if (mrz) {
-            document.getElementById('field-cognome').value = mrz[1];
-            document.getElementById('field-nome').value = mrz[2];
+            document.getElementById('res-cognome').value = mrz[1];
+            document.getElementById('res-nome').value = mrz[2];
         }
     }
-
-    initCamera();
 </script>
 </body>
 </html>
