@@ -2,91 +2,107 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Scanner ID Pro - Universal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Integrale - Power Mode</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* Scorrimento forzato e layout semplice */
-        html, body { background: #f0f2f5; color: #1c1e21; margin: 0; padding: 0; overflow-y: scroll !important; -webkit-overflow-scrolling: touch; }
-        .camera-box { position: relative; width: 100%; height: 320px; background: #000; border-bottom: 3px solid #007AFF; }
+        html, body { background: #f4f4f9; margin: 0; padding: 0; overflow-y: auto !important; height: auto !important; }
+        .cam-wrap { position: relative; width: 100%; height: 350px; background: #000; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .reticolo { position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px solid #34C759; border-radius: 10px; pointer-events: none; z-index: 5; box-shadow: 0 0 0 2000px rgba(0,0,0,0.4); }
-        .content { padding: 20px; }
-        .btn-ocr { background: #007AFF; color: white; width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; margin-bottom: 20px; cursor: pointer; }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 11px; font-weight: bold; color: #8e8e93; text-transform: uppercase; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        #status-log { text-align: center; color: #007AFF; font-weight: bold; margin-bottom: 10px; }
+        .guide { position: absolute; top: 10%; left: 5%; width: 90%; height: 80%; border: 3px solid #34C759; border-radius: 15px; box-shadow: 0 0 0 2000px rgba(0,0,0,0.5); pointer-events: none; z-index: 10; }
+        .panel { padding: 20px; }
+        .btn-work { background: #007AFF; color: white; width: 100%; padding: 20px; border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer; }
+        .field-group { margin-bottom: 15px; }
+        label { font-size: 12px; font-weight: bold; color: #666; display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        #log-status { text-align: center; color: #007AFF; font-weight: bold; margin-bottom: 10px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="camera-box">
+    <div class="cam-wrap">
         <video id="video" autoplay playsinline></video>
-        <div class="reticolo"></div>
+        <div class="guide"></div>
     </div>
 
-    <div class="content">
-        <div id="status-log">Inquadra e premi Scansiona</div>
-        <button class="btn-ocr" id="scan-btn">SCANSIONA ORA</button>
+    <div class="panel">
+        <div id="log-status">PUNTI IL DOCUMENTO E SCATTI</div>
+        <button class="btn-work" id="run-ocr">SCANSIONA ADESSO</button>
 
-        <div class="form-group"><label>Cognome</label><input type="text" id="res-cognome"></div>
-        <div class="form-group"><label>Nome</label><input type="text" id="res-nome"></div>
-        <div class="form-group"><label>Numero Doc</label><input type="text" id="res-doc"></div>
-        <div class="form-group"><label>Residenza</label><input type="text" id="res-via"></div>
+        <div class="field-group"><label>Cognome</label><input type="text" id="r-cognome"></div>
+        <div class="field-group"><label>Nome</label><input type="text" id="r-nome"></div>
+        <div class="field-group"><label>Numero Documento</label><input type="text" id="r-doc"></div>
+        <div class="field-group"><label>Dati MRZ (Retro)</label><input type="text" id="r-mrz"></div>
     </div>
 
-    <canvas id="temp-canvas"></canvas>
+    <canvas id="big-canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('temp-canvas');
-        const status = document.getElementById('status-log');
+        const canvas = document.getElementById('big-canvas');
+        const log = document.getElementById('log-status');
 
-        // Accesso camera base
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280 } })
         .then(s => video.srcObject = s);
 
-        document.getElementById('scan-btn').addEventListener('click', async () => {
-            status.innerText = "ANALISI...";
+        document.getElementById('run-ocr').addEventListener('click', async () => {
+            log.innerText = "ANALISI PROFONDA...";
             const ctx = canvas.getContext('2d');
             
-            // Definiamo una risoluzione fissa orizzontale
-            canvas.width = 1280;
-            canvas.height = 720;
+            // SUPER-RISOLUZIONE: Ingrandiamo l'immagine di 3 volte per l'OCR
+            canvas.width = 2500;
+            canvas.height = 1800;
 
-            // ROTAZIONE SOFTWARE: Se il video è verticale, lo forziamo orizzontale nel canvas
+            // ROTAZIONE E SCALING
+            // Se il video è verticale, lo ruotiamo nel canvas per leggere orizzontale
+            ctx.save();
             if (video.videoHeight > video.videoWidth) {
                 ctx.translate(canvas.width / 2, canvas.height / 2);
                 ctx.rotate(90 * Math.PI / 180);
                 ctx.drawImage(video, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
             } else {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             }
+            ctx.restore();
 
-            // Pulizia immagine
-            ctx.filter = 'contrast(170%) grayscale(100%)';
-            
+            // FILTRO ESTREMO: Bianco e nero puro (Soglia)
+            ctx.filter = 'contrast(250%) grayscale(100%) brightness(100%)';
+            ctx.drawImage(canvas, 0, 0); // Riapplica il filtro su se stesso
+
             try {
+                // Esecuzione OCR forzata
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
-                parse(text);
-                status.innerText = "COMPLETATO!";
-            } catch (e) { status.innerText = "ERRORE OCR"; }
+                processData(text);
+                log.innerText = "SCANSIONE COMPLETATA!";
+            } catch (e) { log.innerText = "ERRORE OCR"; }
         });
 
-        function parse(raw) {
+        function processData(raw) {
             const t = raw.toUpperCase();
-            const lines = t.split('\n').map(l => l.trim());
-            lines.forEach((l, i) => {
-                if (l.includes("COGNOME")) document.getElementById('res-cognome').value = lines[i+1]?.split(' ')[0].replace(/[^A-Z]/g, "") || "";
-                if (l.includes("NOME")) document.getElementById('res-nome').value = lines[i+1]?.split(' ')[0].replace(/[^A-Z]/g, "") || "";
-            });
+            console.log("OCR:", t);
+            
+            // Pulizia e ricerca MRZ (Zona con <<<<)
+            const clean = t.replace(/\s/g, '');
+            const mrz = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if (mrz) {
+                document.getElementById('r-cognome').value = mrz[1];
+                document.getElementById('r-nome').value = mrz[2];
+                document.getElementById('r-mrz').value = mrz[0];
+            }
+
+            // Ricerca Documento
             const doc = t.match(/[A-Z]{2}\s?\d{5}[A-Z]{2}/) || t.match(/[A-Z]{2}\s?\d{7}/);
-            if (doc) document.getElementById('res-doc').value = doc[0].replace(/\s/g, '');
-            const via = t.match(/(VIA|PIAZZA|CORSO|LUNGO).*?\d+/);
-            if (via) document.getElementById('res-via').value = via[0];
+            if (doc) document.getElementById('r-doc').value = doc[0].replace(/\s/g, '');
+
+            // Fallback per Nomi se MRZ fallisce
+            if (!mrz) {
+                const lines = t.split('\n');
+                lines.forEach((l, i) => {
+                    if (l.includes("COGNOME")) document.getElementById('r-cognome').value = lines[i+1]?.split(' ')[0] || "";
+                    if (l.includes("NOME")) document.getElementById('r-nome').value = lines[i+1]?.split(' ')[0] || "";
+                });
+            }
         }
     </script>
 </body>
