@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V43 - Split & Scroll</title>
+    <title>Scanner V44 - Instant Start</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* LAYOUT MOBILE-FIRST FLUIDO */
+        /* LAYOUT FLUIDO */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             margin: 0; background: #000; 
-            height: 100dvh; /* Altezza dinamica reale */
+            height: 100vh; /* Altezza fissa */
             display: flex; flex-direction: column; overflow: hidden;
         }
 
-        /* 1. BARRA DI STATO (Fissa in alto) */
+        /* 1. TAB SELEZIONE */
         .status-bar {
             flex: 0 0 auto; background: #111; border-bottom: 1px solid #333; 
             display: flex; padding: 0; z-index: 50;
@@ -26,12 +26,14 @@
         .step.active { background: #000; color: #fff; border-bottom-color: #00E0FF; }
         .step.active.front { border-bottom-color: #FFD60A; }
 
-        /* 2. CAMERA (Altezza fissa 35%) */
+        /* 2. CAMERA (35% Schermo) */
         .cam-view { 
             flex: 0 0 35%; position: relative; overflow: hidden; background: #000; 
         }
+        /* VIDEO: Object-fit cover essenziale per riempire */
         video { width: 100%; height: 100%; object-fit: cover; }
 
+        /* MIRINO */
         .guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 95%; height: 30%; 
@@ -47,32 +49,27 @@
             text-shadow: 1px 1px 0 #000;
         }
 
-        /* 3. PANNELLO DATI (Occupa tutto il resto) */
+        /* 3. PANNELLO DATI */
         .panel { 
-            flex: 1; /* Prende tutto lo spazio rimasto */
-            min-height: 0; /* FONDAMENTALE PER LO SCROLL SU MOBILE */
+            flex: 1; 
             background: #121212; display: flex; flex-direction: column; 
-            border-top: 1px solid #333;
+            border-top: 1px solid #333; min-height: 0;
         }
 
-        /* Pulsante sempre visibile in cima alla lista */
         .action-area { 
-            flex: 0 0 auto; padding: 12px; background: #121212; 
+            flex: 0 0 auto; padding: 10px; background: #121212; 
             border-bottom: 1px solid #222; z-index: 30;
         }
         .btn-main { 
-            background: #00E0FF; color: #000; width: 100%; padding: 14px; 
+            background: #00E0FF; color: #000; width: 100%; padding: 12px; 
             border: none; border-radius: 6px; font-size: 16px; font-weight: 900; 
-            cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+            cursor: pointer; text-transform: uppercase;
         }
         .btn-main.front { background: #FFD60A; }
 
-        /* LISTA DATI (Scrollabile) */
+        /* LISTA DATI SCORREVOLE */
         .scroll-list {
-            flex: 1; overflow-y: auto; /* Abilita scroll */
-            padding: 15px; 
-            padding-bottom: 150px; /* SPAZIO EXTRA PER NON COPRIRE L'ULTIMO DATO */
-            -webkit-overflow-scrolling: touch; /* Scroll fluido su iOS */
+            flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px;
         }
 
         .section-header {
@@ -82,12 +79,12 @@
         }
 
         .field { 
-            background: #1E1E1E; padding: 10px; margin-bottom: 8px; 
+            background: #1E1E1E; padding: 8px 10px; margin-bottom: 6px; 
             border-left: 4px solid #444; border-radius: 4px;
         }
         .field.ok { border-left-color: #32d74b; background: #1a2e1a; }
         
-        .lbl { font-size: 9px; color: #888; font-weight: bold; display: block; margin-bottom: 3px; text-transform: uppercase;}
+        .lbl { font-size: 9px; color: #888; font-weight: bold; display: block; margin-bottom: 2px; text-transform: uppercase;}
         .val { font-size: 15px; color: #fff; font-weight: bold; word-break: break-word; min-height: 18px;}
 
         canvas { display: none; }
@@ -101,7 +98,7 @@
     </div>
 
     <div class="cam-view">
-        <video id="webcam" autoplay playsinline></video>
+        <video id="webcam" autoplay playsinline muted></video>
         <div class="guide" id="guide-box"></div>
         <div class="guide-msg" id="msg">CENTRA LA RIGA "C&lt;ITA..."</div>
     </div>
@@ -112,12 +109,10 @@
         </div>
         
         <div class="scroll-list">
-            
             <div class="section-header">DATI BIOMETRICI (RETRO)</div>
             
             <div class="field"><span class="lbl">COGNOME</span><div class="val" id="out-cog">---</div></div>
             <div class="field"><span class="lbl">NOME</span><div class="val" id="out-nom">---</div></div>
-            
             <div class="field"><span class="lbl">NUMERO DOCUMENTO</span><div class="val" id="out-doc">---</div></div>
             <div class="field"><span class="lbl">DATA DI NASCITA</span><div class="val" id="out-dob">---</div></div>
             <div class="field"><span class="lbl">SESSO</span><div class="val" id="out-sex">---</div></div>
@@ -144,9 +139,19 @@
         const msg = document.getElementById('msg');
         let currentPhase = 1;
 
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 1920 } } 
-        }).then(s => video.srcObject = s).catch(e => alert("Errore Camera: " + e));
+        // --- AVVIO CAMERA AUTOMATICO ROBUSTO ---
+        window.addEventListener('load', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } // Richiesta semplice per max compatibilità
+                });
+                video.srcObject = stream;
+                // Forza il play per sicurezza su alcuni Android/iOS
+                video.play();
+            } catch (err) {
+                alert("Errore Fotocamera: " + err.message + "\nAssicurati di usare HTTPS e dare i permessi.");
+            }
+        });
 
         function setPhase(p) {
             currentPhase = p;
@@ -170,6 +175,129 @@
         }
 
         document.getElementById('btn-snap').addEventListener('click', async () => {
+            if(!video.srcObject) { alert("Camera non pronta!"); return; }
+            
             btn.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
-            const vw = video.videoWidth
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+            
+            // Ritagli
+            let cw, ch, cy;
+            if (currentPhase === 1) {
+                cw = vw * 0.95; ch = vh * 0.25; cy = (vh * 0.40) - (ch / 2);
+            } else {
+                cw = vw * 0.90; ch = vh * 0.65; cy = (vh / 2) - (ch / 2);
+            }
+            let cx = (vw - cw) / 2;
+
+            canvas.width = cw * 2; canvas.height = ch * 2;
+            // Filtro V36 (che funzionava bene)
+            ctx.filter = currentPhase === 1 ? 'grayscale(100%) contrast(300%)' : 'grayscale(100%) contrast(200%) brightness(110%)';
+            ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
+
+            try {
+                const whitelist = currentPhase === 1 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<' : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<.,/-\' ';
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', { tessedit_char_whitelist: whitelist });
+                
+                if (currentPhase === 1) processRetro(text);
+                else processFronte(text);
+                
+                if(btn.innerText === "ELABORAZIONE...") btn.innerText = currentPhase === 1 ? "SCANSIONA RETRO" : "SCANSIONA FRONTE";
+            } catch (e) { btn.innerText = "ERRORE"; }
+        });
+
+        function fill(id, val) {
+            if (!val || val.length < 2) return;
+            const el = document.getElementById(id);
+            el.innerText = val;
+            el.parentElement.className = 'field ok';
+        }
+
+        // --- RETRO (V36 LOGIC) ---
+        function fix(s) { return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8'); }
+        function fixL(s) { return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B'); }
+
+        function processRetro(raw) {
+            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase());
+            let found = false;
+
+            // DOC
+            let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA')) && l.length > 10);
+            if (docLine) {
+                let m = docLine.match(/(ITA|1TA)/);
+                if (m) {
+                    let code = docLine.substr(m.index + 3, 9);
+                    let clean = fixL(code.substr(0,2)) + fix(code.substr(2,5)) + fixL(code.substr(7,2));
+                    if(clean.match(/^[A-Z]{2}\d{5}[A-Z]{2}$/)) { fill('out-doc', clean); found = true; }
+                }
+            }
+
+            // DATA, SEX, SCAD
+            let datLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
+            if (datLine) {
+                let d = fix(datLine.substr(4,2)); let m = fix(datLine.substr(2,2)); let y = fix(datLine.substr(0,2));
+                fill('out-dob', `${d}/${m}/${(y>40?'19':'20')+y}`);
+                fill('out-sex', datLine.includes('M') ? 'M' : 'F');
+                let sexIdx = datLine.search(/[MF]/);
+                if (sexIdx > -1) {
+                     let after = datLine.substr(sexIdx+1).replace(/</g,'');
+                     if(after.length >= 6) {
+                         let ed = fix(after.substr(4,2)); let em = fix(after.substr(2,2)); let ey = fix(after.substr(0,2));
+                         fill('out-scad', `${ed}/${em}/20${ey}`);
+                     }
+                }
+            }
+
+            // NOME/COGNOME SPLIT
+            let nameLine = lines.find(l => l.includes('<<') && !l.includes('ITA'));
+            if(nameLine) {
+                let parts = nameLine.split('<<');
+                if (parts[0]) fill('out-cog', parts[0].replace(/</g, ' ').trim());
+                if (parts[1]) fill('out-nom', parts.slice(1).join(' ').replace(/</g, ' ').trim());
+            }
+
+            if (found) {
+                alert("RETRO OK! Passa al Fronte.");
+                setPhase(2);
+            }
+        }
+
+        // --- FRONTE ---
+        function processFronte(raw) {
+            const up = raw.toUpperCase();
+            if(up.includes('CITTADINANZA')) fill('out-cit', 'ITALIANA');
+            
+            // Indirizzo
+            let lines = up.split('\n');
+            for(let i=0; i<lines.length; i++) {
+                let l = lines[i].trim();
+                if (l.match(/^(VIA|VIALE|PIAZZA|CORSO|VICOLO|L\.GO|P\.ZZA)\s+[A-Z]/)) {
+                    let fullAddr = l;
+                    if(lines[i+1] && lines[i+1].length > 2 && lines[i+1].length < 25) fullAddr += " " + lines[i+1];
+                    fill('out-res', fullAddr);
+                    break;
+                }
+            }
+            if(up.includes('RESIDENZA') && !document.getElementById('out-res').innerText.includes('---') === false) {
+                let idx = up.indexOf('RESIDENZA');
+                fill('out-res', up.substr(idx+9, 40).replace(/[^A-Z0-9 \.]/g, ''));
+            }
+
+            // Ente
+            if(up.includes('MINISTERO') || up.includes('INTERNO')) fill('out-ente', 'MINISTERO DELL\'INTERNO');
+            else if (up.includes('COMUNE')) {
+                let m = up.match(/COMUNE DI [A-Z\s]+/);
+                if(m) fill('out-ente', m[0]);
+            }
+
+            // Luogo Nascita
+            let idxNato = up.indexOf('NATO A');
+            if(idxNato > -1) {
+                let chunk = up.substr(idxNato+6, 30).split('\n')[0];
+                fill('out-luogo', chunk.replace(/[^A-Z ]/g,'').trim());
+            }
+        }
+    </script>
+</body>
+</html>
