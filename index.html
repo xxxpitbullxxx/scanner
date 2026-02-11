@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V36 - Anchor Lock</title>
+    <title>Scanner V37 - Total ID</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { 
@@ -12,188 +12,268 @@
             display: flex; flex-direction: column;
         }
 
-        .cam-view { 
-            position: relative; flex: 1; overflow: hidden; background: #000;
-        }
+        .cam-view { position: relative; flex: 1; overflow: hidden; background: #000; }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Mirino Ciano Tecnico */
+        /* MIRINO DINAMICO (Cambia colore in base alla modalità) */
         .guide { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            width: 95%; height: 25%; 
+            width: 90%; height: 30%; 
             border: 3px solid #00E0FF; 
-            border-radius: 6px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.85);
-            z-index: 10;
+            border-radius: 8px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.8);
+            z-index: 10; transition: border-color 0.3s;
         }
-        .guide::after {
-            content: "CENTRA LA RIGA 'C<ITA...'";
-            position: absolute; bottom: -25px; width: 100%; text-align: center;
-            color: #00E0FF; font-size: 12px; font-weight: bold; letter-spacing: 1px;
-            text-shadow: 0 1px 2px black;
+        .guide.front-mode { border-color: #FFD60A; height: 50%; } /* Giallo e più alto per il fronte */
+
+        .guide-text {
+            position: absolute; bottom: -30px; width: 100%; text-align: center;
+            color: #fff; font-size: 14px; font-weight: bold; text-shadow: 0 1px 3px black;
         }
 
-        /* Pannello controlli scuro e fisso */
+        /* TAB DI NAVIGAZIONE */
+        .tabs { display: flex; background: #222; border-bottom: 1px solid #333; }
+        .tab { 
+            flex: 1; padding: 15px; text-align: center; color: #888; 
+            font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px;
+        }
+        .tab.active { background: #333; color: white; border-bottom: 3px solid #00E0FF; }
+        .tab.active.front { border-bottom-color: #FFD60A; }
+
+        /* PANNELLO DATI */
         .panel { 
-            height: 40vh; background: #121212; 
-            border-top: 2px solid #333;
-            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
-            z-index: 20; color: white;
+            height: 45vh; background: #121212; display: flex; flex-direction: column; 
+            padding: 10px; overflow-y: auto; gap: 8px;
         }
 
         .btn-scan { 
-            background: #00E0FF; color: #000; width: 100%; padding: 16px; 
+            background: #00E0FF; color: #000; width: 100%; padding: 15px; 
             border: none; border-radius: 8px; font-size: 18px; font-weight: 800; 
-            text-transform: uppercase; cursor: pointer; margin-bottom: 20px;
+            margin-bottom: 10px; cursor: pointer;
         }
-        .btn-scan:active { opacity: 0.8; }
+        .btn-scan.front { background: #FFD60A; }
 
-        .result-row { 
-            display: flex; justify-content: space-between; align-items: center;
-            background: #1E1E1E; padding: 12px; margin-bottom: 8px; border-radius: 6px;
-            border-left: 4px solid #555;
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .full-row { grid-column: span 2; }
+
+        .field { 
+            background: #1E1E1E; padding: 10px; border-radius: 6px; border-left: 3px solid #555;
         }
-        /* Stile verde successo */
-        .result-row.ok { border-left-color: #32d74b; background: #1a2e1e; }
+        .field.filled { border-left-color: #32d74b; }
 
-        .lbl { font-size: 11px; color: #888; font-weight: bold; }
-        .val { font-size: 16px; font-family: monospace; font-weight: bold; letter-spacing: 1px; }
+        .lbl { font-size: 10px; color: #888; font-weight: bold; display: block; margin-bottom: 2px;}
+        .val { font-size: 14px; color: #fff; font-weight: 600; min-height: 18px; word-break: break-word;}
 
-        #debug-log { font-size: 10px; color: #555; text-align: center; margin-top: auto; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
+    <div class="tabs">
+        <div class="tab active" id="tab-retro" onclick="setMode('RETRO')">1. RETRO (MRZ)</div>
+        <div class="tab" id="tab-fronte" onclick="setMode('FRONTE')">2. FRONTE (DATI)</div>
+    </div>
+
     <div class="cam-view">
         <video id="webcam" autoplay playsinline></video>
-        <div class="guide"></div>
+        <div class="guide" id="guide-box"></div>
+        <div class="guide-text" id="guide-msg">CENTRA IL RETRO (CODICE &lt;&lt;&lt;)</div>
     </div>
 
     <div class="panel">
-        <button class="btn-scan" id="btn-snap">SCANSIONA MRZ</button>
+        <button class="btn-scan" id="btn-snap">SCANSIONA RETRO</button>
         
-        <div class="result-row" id="row-doc">
-            <span class="lbl">DOCUMENTO</span>
-            <span class="val" id="out-doc">---</span>
+        <div class="data-grid">
+            <div class="field full-row"><span class="lbl">COGNOME NOME</span><div class="val" id="out-nom"></div></div>
+            <div class="field"><span class="lbl">NUMERO DOC</span><div class="val" id="out-doc"></div></div>
+            <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="out-scad"></div></div>
+            <div class="field"><span class="lbl">NASCITA</span><div class="val" id="out-dob"></div></div>
+            <div class="field"><span class="lbl">SESSO</span><div class="val" id="out-sex"></div></div>
+            <div class="field full-row"><span class="lbl">CITTADINANZA</span><div class="val" id="out-cit"></div></div>
+            <div class="field full-row"><span class="lbl">LUOGO DI NASCITA</span><div class="val" id="out-luogo"></div></div>
+            <div class="field full-row"><span class="lbl">RESIDENZA (VIA/CITTÀ)</span><div class="val" id="out-res"></div></div>
+            <div class="field full-row"><span class="lbl">EMESSO DA</span><div class="val" id="out-ente"></div></div>
         </div>
-        <div class="result-row" id="row-dob">
-            <span class="lbl">NASCITA</span>
-            <span class="val" id="out-dob">---</span>
-        </div>
-        <div class="result-row" id="row-name">
-            <span class="lbl">NOME</span>
-            <span class="val" id="out-name">---</span>
-        </div>
-
-        <div id="debug-log">Pronto</div>
     </div>
 
-    <canvas id="hidden-cvs"></canvas>
+    <canvas id="cvs"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
-        const canvas = document.getElementById('hidden-cvs');
-        const log = document.getElementById('debug-log');
+        const canvas = document.getElementById('cvs');
+        const btn = document.getElementById('btn-snap');
+        const guide = document.getElementById('guide-box');
+        const msg = document.getElementById('guide-msg');
+        let currentMode = 'RETRO';
 
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 1920 } } 
-        }).then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
+            .then(s => video.srcObject = s);
+
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'RETRO') {
+                document.getElementById('tab-retro').classList.add('active');
+                document.getElementById('tab-fronte').classList.remove('active');
+                guide.classList.remove('front-mode');
+                btn.classList.remove('front');
+                btn.innerText = "SCANSIONA RETRO";
+                msg.innerText = "CENTRA IL RETRO (CODICE <<<)";
+            } else {
+                document.getElementById('tab-fronte').classList.add('active');
+                document.getElementById('tab-fronte').classList.add('front');
+                document.getElementById('tab-retro').classList.remove('active');
+                guide.classList.add('front-mode');
+                btn.classList.add('front');
+                btn.innerText = "SCANSIONA FRONTE";
+                msg.innerText = "CENTRA IL FRONTE (TITOLO IN ALTO)";
+            }
+        }
 
         document.getElementById('btn-snap').addEventListener('click', async () => {
-            log.innerText = "Analisi Anchor Lock...";
+            btn.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
-            
-            // Ritaglio che combacia col mirino ciano
             const vw = video.videoWidth;
             const vh = video.videoHeight;
-            const cw = vw * 0.95; 
-            const ch = vh * 0.25;
-            const cx = (vw - cw) / 2;
-            const cy = (vh * 0.40) - (ch / 2);
 
-            // Zoom 2x per massima nitidezza
-            canvas.width = cw * 2;
-            canvas.height = ch * 2;
-            
-            // Filtro Binarizzato
-            ctx.filter = 'grayscale(100%) contrast(300%)';
+            // Ritaglio diverso in base alla modalità
+            let cw, ch, cy;
+            if (currentMode === 'RETRO') {
+                cw = vw * 0.95; ch = vh * 0.25; cy = (vh * 0.40) - (ch / 2);
+            } else {
+                cw = vw * 0.95; ch = vh * 0.50; cy = (vh * 0.40) - (ch / 2); // Fronte più alto
+            }
+            const cx = (vw - cw) / 2;
+
+            canvas.width = cw * 2; canvas.height = ch * 2;
+            ctx.filter = 'grayscale(100%) contrast(250%)'; // Contrasto alto per leggere scritte piccole
             ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
-                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<./,- '
                 });
-                parseV36(text);
-                log.innerText = "Scan terminato";
-            } catch (e) { log.innerText = "Errore OCR"; }
+                
+                if (currentMode === 'RETRO') processRetro(text);
+                else processFronte(text);
+                
+                btn.innerText = currentMode === 'RETRO' ? "SCANSIONA RETRO" : "SCANSIONA FRONTE";
+            } catch (e) { btn.innerText = "ERRORE OCR"; }
         });
 
-        // Correzione CIE (Lettere vs Numeri)
-        function fix(s, type) {
-            if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
-            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
-            return s;
-        }
+        // ---------------- LOGICA RETRO (Tua V36 infallibile) ----------------
+        function fix(s) { return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4'); }
+        function fixL(s) { return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B'); }
 
-        function parseV36(raw) {
-            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
+        function processRetro(raw) {
+            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase());
             
-            // 1. NUMERO DOCUMENTO (LOGICA "ANCHOR LOCK")
-            // Cerca ESPLICITAMENTE "ITA", "1TA" o "IT4"
-            let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA') || l.includes('IT4')) && l.length > 10);
-            
-            let foundDoc = false;
+            // DOC NUM (Anchor Lock)
+            let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA')) && l.length > 10);
             if (docLine) {
-                let anchor = docLine.match(/(ITA|1TA|IT4)/);
-                if (anchor) {
-                    let idx = anchor.index;
-                    // Prendi i 9 caratteri SUBITO DOPO l'ancora
-                    let rawCode = docLine.substr(idx + 3, 9);
-                    
-                    if (rawCode.length === 9) {
-                        let p1 = fix(rawCode.substr(0,2), 'L');
-                        let p2 = fix(rawCode.substr(2,5), 'N');
-                        let p3 = fix(rawCode.substr(7,2), 'L');
-                        let finalCode = p1 + p2 + p3;
-
-                        // VALIDAZIONE: Deve rispettare LL NNNNN LL
-                        if(finalCode.match(/^[A-Z]{2}\d{5}[A-Z]{2}$/)) {
-                            document.getElementById('out-doc').innerText = finalCode;
-                            document.getElementById('row-doc').classList.add('ok');
-                            foundDoc = true;
-                        }
+                let m = docLine.match(/(ITA|1TA)/);
+                if (m) {
+                    let code = docLine.substr(m.index + 3, 9);
+                    let clean = fixL(code.substr(0,2)) + fix(code.substr(2,5)) + fixL(code.substr(7,2));
+                    if(clean.match(/^[A-Z]{2}\d{5}[A-Z]{2}$/)) {
+                        fill('out-doc', clean);
                     }
                 }
             }
-            if (!foundDoc) {
-                document.getElementById('out-doc').innerText = "Centra 'ITA'";
-                document.getElementById('row-doc').classList.remove('ok');
-            }
 
-            // 2. DATA DI NASCITA
-            let dateLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
-            if (dateLine) {
-                let dobRaw = fix(dateLine.substr(0, 6), 'N');
-                let y = parseInt(dobRaw.substr(0,2));
-                let m = parseInt(dobRaw.substr(2,2));
-                let d = parseInt(dobRaw.substr(4,2));
-                if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-                    let fullY = (y > 40) ? '19'+y : '20'+y;
-                    let mm = m < 10 ? '0'+m : m;
-                    let dd = d < 10 ? '0'+d : d;
-                    document.getElementById('out-dob').innerText = `${dd}/${mm}/${fullY}`;
-                    document.getElementById('row-dob').classList.add('ok');
+            // DOB & SEX
+            let datLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
+            if (datLine) {
+                let d = fix(datLine.substr(4,2));
+                let m = fix(datLine.substr(2,2));
+                let y = fix(datLine.substr(0,2));
+                let fullY = (y > 40) ? '19'+y : '20'+y;
+                fill('out-dob', `${d}/${m}/${fullY}`);
+                
+                let sex = datLine.includes('M') ? 'M' : 'F';
+                fill('out-sex', sex);
+                
+                // DATA SCADENZA (spesso dopo il sesso nell'MRZ)
+                // Nell'MRZ italiano la scadenza è i primi 6 numeri DOPO il sesso
+                // Esempio: ...M<<201201... (Scade 01/12/2020)
+                let sexIdx = datLine.search(/[MF]/);
+                if (sexIdx > -1 && datLine.length > sexIdx + 6) {
+                    // Cerca numeri dopo il sesso saltando eventuali <
+                    let afterSex = datLine.substr(sexIdx + 1).replace(/</g, '');
+                    if (afterSex.length >= 6) {
+                         let expY = fix(afterSex.substr(0,2));
+                         let expM = fix(afterSex.substr(2,2));
+                         let expD = fix(afterSex.substr(4,2));
+                         fill('out-scad', `${expD}/${expM}/20${expY}`);
+                    }
                 }
             }
 
-            // 3. NOME
+            // NOME
             let nameLine = lines.find(l => l.includes('<<') && !l.includes('ITA') && !l.match(/^\d/));
-            if (nameLine) {
-                let cleanName = nameLine.replace(/</g, ' ').replace(/[0-9]/g, '').trim();
-                document.getElementById('out-name').innerText = cleanName;
-                document.getElementById('row-name').classList.add('ok');
+            if (nameLine) fill('out-nom', nameLine.replace(/</g, ' ').replace(/[0-9]/g, '').trim());
+            
+            // Passaggio automatico al fronte
+            if (document.getElementById('out-doc').innerText) {
+                alert("Retro acquisito! Ora gira la carta per il Fronte.");
+                setMode('FRONTE');
+            }
+        }
+
+        // ---------------- LOGICA FRONTE (Keyword Search) ----------------
+        function processFronte(raw) {
+            const up = raw.toUpperCase();
+            console.log(up); // Debug
+
+            // 1. CITTADINANZA
+            if (up.includes('CITTADINANZA')) {
+                fill('out-cit', 'ITALIANA'); // 99% dei casi
+            }
+
+            // 2. ENTE RILASCIO (Cerca "COMUNE DI..." o "MINISTERO")
+            // Solitamente è in alto
+            let lines = up.split('\n');
+            let ente = lines.find(l => l.includes('COMUNE DI') || l.includes('MINISTERO'));
+            if (ente) fill('out-ente', ente.replace(/[^A-Z ]/g, '').trim());
+
+            // 3. LUOGO DI NASCITA
+            // Spesso si trova vicino a "NATO A" o sotto la data di nascita (che abbiamo già)
+            // Cerchiamo la riga che contiene una città nota o segue la data
+            let idxNato = up.indexOf('LUOGO DI NASCITA');
+            if (idxNato > -1) {
+                // Prendi i 30 caratteri successivi puliti
+                let snippet = up.substr(idxNato, 50).split('\n')[1]; // Riga sotto
+                if (snippet) fill('out-luogo', snippet.replace(/[^A-Z ]/g, '').trim());
+            }
+
+            // 4. RESIDENZA (Il più difficile)
+            // Cerchiamo la parola chiave "RESIDENZA"
+            let idxRes = up.indexOf('RESIDENZA');
+            if (idxRes > -1) {
+                // Prendiamo il blocco di testo dopo "RESIDENZA"
+                let rawRes = up.substr(idxRes + 9, 80); 
+                // Pulizia: cerchiamo parole come VIA, PIAZZA, VIALE
+                let matchIndirizzo = rawRes.match(/(VIA|PIAZZA|VICOLO|CORSO|VIALE)\s+[A-Z0-9\s,\.]+/);
+                if (matchIndirizzo) {
+                    fill('out-res', matchIndirizzo[0].trim());
+                } else {
+                    // Fallback: prendi le due righe successive
+                    let resLines = rawRes.split('\n').filter(l => l.length > 5);
+                    if (resLines.length > 0) fill('out-res', resLines[0] + " " + (resLines[1]||""));
+                }
+            }
+            
+            // Backup Scadenza (Se non trovata nel retro)
+            if (!document.getElementById('out-scad').innerText) {
+                let matchScad = up.match(/SCAD.*?(\d{2}\/\d{2}\/\d{4})/);
+                if (matchScad) fill('out-scad', matchScad[1]);
+            }
+        }
+
+        function fill(id, val) {
+            const el = document.getElementById(id);
+            if (val && val.length > 2) {
+                el.innerText = val;
+                el.parentElement.classList.add('filled');
             }
         }
     </script>
