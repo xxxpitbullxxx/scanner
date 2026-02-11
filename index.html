@@ -3,29 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner ID Pro - Multi-Dati</title>
+    <title>Scanner ID Pro - Fronte/Retro</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        :root { --blue: #007AFF; --green: #34C759; }
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #f0f2f5; padding-bottom: 30px; }
+        :root { --blue: #007AFF; --green: #34C759; --red: #FF3B30; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #f0f2f5; padding-bottom: 40px; }
         
-        .header-scanner { position: relative; width: 100%; height: 35vh; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .header { position: relative; width: 100%; height: 35vh; background: #000; overflow: hidden; }
         video, #preview-img { width: 100%; height: 100%; object-fit: contain; }
-        .focus-guide { 
+        .guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 85%; height: 65%; border: 3px solid var(--green); border-radius: 12px;
+            width: 85%; height: 60%; border: 3px solid var(--green); border-radius: 12px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); z-index: 10; pointer-events: none;
         }
 
-        .container { background: white; padding: 20px; border-radius: 25px 25px 0 0; margin-top: -20px; position: relative; z-index: 20; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
+        .container { background: white; padding: 20px; border-radius: 25px 25px 0 0; margin-top: -20px; position: relative; z-index: 20; }
+        
+        /* Selettore Fronte/Retro */
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
+        .mode-btn { flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 10px; background: white; font-weight: bold; cursor: pointer; }
+        .mode-btn.active { border-color: var(--blue); color: var(--blue); background: #eef6ff; }
+
         .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn { padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; }
         .btn-blue { background: var(--blue); color: white; }
-        .btn-gray { background: #e4e6eb; color: #333; }
         
-        #status { text-align: center; color: var(--blue); font-weight: bold; margin-bottom: 15px; min-height: 20px; }
+        #status { text-align: center; color: var(--blue); font-weight: bold; margin-bottom: 10px; min-height: 20px; }
         
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full { grid-column: span 2; }
         label { font-size: 10px; font-weight: bold; color: #8e8e93; text-transform: uppercase; display: block; margin-bottom: 4px; }
         input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 15px; box-sizing: border-box; background: #f9f9f9; margin-bottom: 10px; }
@@ -34,23 +39,28 @@
 </head>
 <body>
 
-    <div class="header-scanner">
+    <div class="header">
         <video id="video" autoplay playsinline></video>
         <img id="preview-img" style="display:none">
-        <div class="focus-guide"></div>
+        <div class="guide"></div>
     </div>
 
     <div class="container">
-        <div id="status">In attesa...</div>
+        <div id="status">Seleziona lato e scatta</div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" id="mode-fronte" onclick="setMode('fronte')">FRONTE (Dati)</button>
+            <button class="mode-btn" id="mode-retro" onclick="setMode('retro')">RETRO (MRZ/Via)</button>
+        </div>
+
         <div class="btn-row">
             <button class="btn btn-blue" id="btn-snap">SCATTA ORA</button>
-            <button class="btn btn-gray" onclick="document.getElementById('file-in').click()">CARICA O SCATTA</button>
+            <button class="btn" onclick="document.getElementById('file-in').click()">CARICA FILE</button>
         </div>
         
         <input type="file" id="file-in" accept="image/*" capture="environment" style="display:none">
 
-        <div class="form-grid">
-            <div class="full"><label>Cognome e Nome (MRZ)</label><input type="text" id="res-mrz-name" placeholder="Inquadra il retro"></div>
+        <div class="grid">
             <div><label>Cognome</label><input type="text" id="res-cognome"></div>
             <div><label>Nome</label><input type="text" id="res-nome"></div>
             <div><label>Nato il</label><input type="text" id="res-nascita"></div>
@@ -65,23 +75,39 @@
     <canvas id="hidden-canvas"></canvas>
 
     <script>
+        let currentMode = 'fronte';
         const video = document.getElementById('video');
         const previewImg = document.getElementById('preview-img');
         const status = document.getElementById('status');
         const canvas = document.getElementById('hidden-canvas');
         const fileIn = document.getElementById('file-in');
 
-        // Avvio Camera (solo se HTTPS)
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } })
-                .then(s => { video.srcObject = s; })
-                .catch(e => { 
-                    status.innerText = "Modalità Upload Attiva (No HTTPS)";
-                    video.style.display = "none";
+        // Attivazione fotocamera live
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280 } })
+                .then(s => video.srcObject = s)
+                .catch(e => {
+                    status.innerText = "Usa 'Carica File' per scattare";
+                    video.style.display = 'none';
                 });
         }
+        startCamera();
 
-        document.getElementById('btn-snap').addEventListener('click', () => process(video));
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('mode-' + mode).classList.add('active');
+            status.innerText = "Modalità: " + mode.toUpperCase();
+        }
+
+        // Se "Scatta Ora" fallisce perché non c'è video, apre il selettore file
+        document.getElementById('btn-snap').addEventListener('click', () => {
+            if (video.srcObject) {
+                process(video);
+            } else {
+                fileIn.click();
+            }
+        });
 
         fileIn.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -99,61 +125,66 @@
         });
 
         async function process(source) {
-            status.innerText = "Analisi in corso...";
+            status.innerText = "Analisi " + currentMode + "...";
             const ctx = canvas.getContext('2d');
             canvas.width = source.videoWidth || source.width;
             canvas.height = source.videoHeight || source.height;
 
-            // Filtro contrasto per testi piccoli
-            ctx.filter = 'grayscale(100%) contrast(180%) brightness(110%)';
+            // ELABORAZIONE SFORZATA
+            // Se retro, contrasto massimo per MRZ. Se fronte, bilanciamento per nomi.
+            if (currentMode === 'retro') {
+                ctx.filter = 'grayscale(100%) contrast(250%) brightness(120%)';
+            } else {
+                ctx.filter = 'grayscale(100%) contrast(180%) brightness(100%)';
+            }
+            
             ctx.drawImage(source, 0, 0);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
-                extractAll(text);
-                status.innerText = "Analisi completata!";
+                extractData(text);
             } catch (err) {
-                status.innerText = "Errore durante l'analisi";
+                status.innerText = "Errore lettura";
             }
         }
 
-        function extractAll(raw) {
+        function extractData(raw) {
             const t = raw.toUpperCase();
-            console.log("Dati estratti:", t);
+            console.log("Dati:", t);
             const lines = t.split('\n').map(l => l.trim()).filter(l => l.length > 2);
 
-            // 1. ZONA MRZ (Indispensabile per precisione 100%)
-            const clean = t.replace(/\s/g, '');
-            const mrzMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if (mrzMatch) {
-                document.getElementById('res-mrz-name').value = mrzMatch[1] + " " + mrzMatch[2];
-                document.getElementById('res-cognome').value = mrzMatch[1];
-                document.getElementById('res-nome').value = mrzMatch[2];
+            if (currentMode === 'retro') {
+                // LOGICA MRZ (FRECCETTE)
+                const clean = t.replace(/\s/g, '');
+                const mrz = clean.match(/([A-Z]+)<<([A-Z]+)/);
+                if (mrz) {
+                    document.getElementById('res-cognome').value = mrz[1];
+                    document.getElementById('res-nome').value = mrz[2];
+                }
+                // Residenza
+                lines.forEach((l, i) => {
+                    if (l.includes("VIA") || l.includes("PIAZZA") || l.includes("RESIDENZA")) {
+                        document.getElementById('res-via').value = (l.includes("VIA") ? l : lines[i+1]) || "";
+                        document.getElementById('res-comune').value = (lines[i+1]?.includes("(") ? lines[i+1] : lines[i+2])?.split('(')[0] || "";
+                    }
+                });
+            } else {
+                // LOGICA FRONTE
+                lines.forEach((l, i) => {
+                    if (l.includes("COGNOME")) document.getElementById('res-cognome').value = lines[i+1]?.split(' ')[0] || "";
+                    if (l.includes("NOME")) document.getElementById('res-nome').value = lines[i+1]?.split(' ')[0] || "";
+                    if (l.includes("DATA") || l.includes("NASCITA")) {
+                        const dt = l.match(/\d{2}.\d{2}.\d{4}/) || lines[i+1]?.match(/\d{2}.\d{2}.\d{4}/);
+                        if (dt) document.getElementById('res-nascita').value = dt[0];
+                    }
+                });
             }
 
-            // 2. MAPPATURA CAMPI
-            lines.forEach((l, i) => {
-                if (l.includes("COGNOME")) document.getElementById('res-cognome').value = lines[i+1]?.split(' ')[0] || "";
-                if (l.includes("NOME")) document.getElementById('res-nome').value = lines[i+1]?.split(' ')[0] || "";
-                
-                if (l.includes("DATA") || l.includes("NASCITA")) {
-                    const dt = l.match(/\d{2}.\d{2}.\d{4}/) || lines[i+1]?.match(/\d{2}.\d{2}.\d{4}/);
-                    if (dt) document.getElementById('res-nascita').value = dt[0];
-                }
-
-                if (l.includes("SESSO")) {
-                    const s = lines[i+1]?.charAt(0);
-                    if (s === 'M' || s === 'F') document.getElementById('res-sesso').value = s;
-                }
-
-                if (l.includes("RESIDENZA") || l.includes("VIA") || l.includes("PIAZZA")) {
-                    document.getElementById('res-via').value = (l.includes("VIA") ? l : lines[i+1]) || "";
-                    document.getElementById('res-comune').value = (lines[i+1]?.includes("(") ? lines[i+1] : lines[i+2])?.split('(')[0] || "";
-                }
-            });
-
-            const doc = clean.match(/[A-Z]{2}\d{5}[A-Z]{2}/) || clean.match(/[A-Z]{2}\d{7}/) || clean.match(/ITA([A-Z0-9]{9})/);
+            // Numero Documento (Sempre attivo)
+            const doc = t.replace(/\s/g, '').match(/[A-Z]{2}\d{5}[A-Z]{2}/) || t.replace(/\s/g, '').match(/ITA([A-Z0-9]{9})/);
             if (doc) document.getElementById('res-doc').value = doc[1] || doc[0];
+
+            status.innerText = "Completato!";
         }
     </script>
 </body>
