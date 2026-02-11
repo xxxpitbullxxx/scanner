@@ -3,85 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V47 - Precision</title>
+    <title>Scanner V48 - Sequence</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
         
-        /* HEADER TABS */
+        /* TABS */
         .tabs { display: flex; background: #1c1c1e; border-bottom: 1px solid #333; z-index: 20; }
         .tab { flex: 1; padding: 15px; text-align: center; color: #666; font-weight: 800; font-size: 13px; cursor: pointer; text-transform: uppercase; }
         .tab.active { color: #fff; background: #2c2c2e; border-bottom: 3px solid #007AFF; }
-        .tab.active.front { border-bottom-color: #32d74b; }
-
-        /* CAMERA VIEWPORT */
+        
+        /* VIEWPORT */
         .viewport { position: relative; flex: 0 0 45%; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-
-        /* SAGOMA CARTA (SHELL) */
         .card-shell {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 92%; height: 85%; border: 1.5px solid rgba(200,200,200,0.5); border-radius: 12px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); pointer-events: none;
         }
 
-        /* BOX INTERNI - RETRO */
+        /* OVERLAY RETRO (Modificati) */
         .retro-overlay .box-res { 
-            position: absolute; top: 34%; left: 4%; width: 92%; height: 16%; /* ALZATO */
+            position: absolute; top: 34%; left: 4%; width: 92%; height: 20%; /* PIÙ ALTO */
             border: 2px solid #FFD60A; background: rgba(255, 214, 10, 0.1); border-radius: 4px; 
         }
         .retro-overlay .box-mrz { 
-            position: absolute; bottom: 4%; left: 4%; width: 92%; height: 32%; /* ALLUNGATO GIÙ */
+            position: absolute; bottom: 4%; left: 4%; width: 92%; height: 32%; 
             border: 2px solid #00E0FF; background: rgba(0, 224, 255, 0.1); border-radius: 4px; 
         }
 
-        /* BOX INTERNI - FRONTE */
+        /* OVERLAY FRONTE (Modificati) */
         .front-overlay { display: none; }
-        .front-overlay .box-comune {
-            position: absolute; top: 12%; left: 4%; width: 45%; height: 15%; /* NUOVO PER COMUNE */
+        .front-overlay .box-ente {
+            position: absolute; top: 19%; left: 4%; width: 60%; height: 14%; /* ABBASSATO PER COMUNE */
             border: 2px solid #32d74b; background: rgba(50, 215, 75, 0.1); border-radius: 4px;
         }
         .front-overlay .box-dati {
-            position: absolute; top: 35%; right: 4%; width: 55%; height: 40%; 
+            position: absolute; top: 36%; left: 20%; width: 75%; height: 40%; /* ALLARGATO A SX */
             border: 2px solid #FFD60A; border-radius: 4px; opacity: 0.5;
         }
 
         .tag { position: absolute; top: -14px; left: 0; font-size: 9px; font-weight: bold; padding: 1px 4px; color: #000; text-transform: uppercase; }
 
-        /* RISULTATI */
+        /* LISTA RISULTATI (Sequenza Richiesta) */
         .panel { flex: 1; background: #121212; overflow-y: auto; padding: 12px; padding-bottom: 80px; }
-        .btn-scan { 
-            width: 100%; padding: 16px; background: #007AFF; color: #fff; border: none; 
-            font-weight: 900; border-radius: 12px; margin-bottom: 15px; cursor: pointer; text-transform: uppercase;
-        }
+        .btn-scan { width: 100%; padding: 16px; background: #007AFF; color: #fff; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 15px; cursor: pointer; text-transform: uppercase; }
         
-        .group-title { font-size: 10px; color: #007AFF; margin: 10px 0 5px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 2px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .full { grid-column: span 2; }
-        .item { background: #1c1c1e; padding: 10px; border-radius: 8px; border-left: 3px solid #333; }
+        .item { background: #1c1c1e; padding: 8px 10px; border-radius: 8px; border-left: 3px solid #333; }
         .item.ok { border-left-color: #32d74b; background: #1a261a; }
-        .lbl { font-size: 8px; color: #888; display: block; margin-bottom: 2px; }
-        .val { font-size: 14px; font-weight: 700; min-height: 16px; }
+        .lbl { font-size: 8px; color: #888; display: block; margin-bottom: 2px; text-transform: uppercase; }
+        .val { font-size: 13px; font-weight: 700; min-height: 16px; color: #fff; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('RETRO')" id="t-retro">1. Retro (Indirizzo)</div>
-        <div class="tab" onclick="switchTab('FRONTE')" id="t-fronte">2. Fronte (Comune)</div>
+        <div class="tab active" onclick="switchTab('RETRO')" id="t-retro">1. Retro</div>
+        <div class="tab" onclick="switchTab('FRONTE')" id="t-fronte">2. Fronte</div>
     </div>
 
     <div class="viewport">
         <video id="webcam" autoplay playsinline></video>
         <div class="card-shell">
             <div class="retro-overlay" id="ov-retro">
-                <div class="box-res"><span class="tag" style="background:#FFD60A">Indirizzo (Alzato)</span></div>
-                <div class="box-mrz"><span class="tag" style="background:#00E0FF">Codici MRZ (Esteso)</span></div>
+                <div class="box-res"><span class="tag" style="background:#FFD60A">Indirizzo</span></div>
+                <div class="box-mrz"><span class="tag" style="background:#00E0FF">MRZ</span></div>
             </div>
             <div class="front-overlay" id="ov-fronte">
-                <div class="box-comune"><span class="tag" style="background:#32d74b">Ente / Comune</span></div>
-                <div class="box-dati"><span class="tag" style="background:#FFD60A">Dati Nascita</span></div>
+                <div class="box-ente"><span class="tag" style="background:#32d74b">Ente (Comune)</span></div>
+                <div class="box-dati"><span class="tag" style="background:#FFD60A">Nascita / Date</span></div>
             </div>
         </div>
     </div>
@@ -89,22 +82,22 @@
     <div class="panel">
         <button id="snap" class="btn-scan">SCANSIONA RETRO</button>
 
-        <div class="group-title">Residenza (Senza CAP)</div>
         <div class="grid">
-            <div class="item full"><span class="lbl">Via / Piazza</span><div class="val" id="v-via">---</div></div>
-            <div class="item"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
-            <div class="item"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
-            <div class="item"><span class="lbl">Prov.</span><div class="val" id="v-prov">---</div></div>
-        </div>
-
-        <div class="group-title">Dati Documento</div>
-        <div class="grid">
-            <div class="item full"><span class="lbl">Ente Rilascio (Fronte)</span><div class="val" id="v-ente">---</div></div>
-            <div class="item full"><span class="lbl">Cognome e Nome</span><div class="val" id="v-nom">---</div></div>
-            <div class="item"><span class="lbl">N. Documento</span><div class="val" id="v-doc">---</div></div>
-            <div class="item"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
-            <div class="item"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
-            <div class="item"><span class="lbl">Nascita</span><div class="val" id="v-dob">---</div></div>
+            <div class="item full"><span class="lbl">1. Cognome</span><div class="val" id="v-cog">---</div></div>
+            <div class="item full"><span class="lbl">2. Nome</span><div class="val" id="v-nom">---</div></div>
+            <div class="item"><span class="lbl">3. Data Nascita</span><div class="val" id="v-dob">---</div></div>
+            <div class="item"><span class="lbl">4. Comune Nascita</span><div class="val" id="v-luogo">---</div></div>
+            <div class="item"><span class="lbl">5. Prov. Nascita</span><div class="val" id="v-luogo-prov">---</div></div>
+            <div class="item"><span class="lbl">6. Cittadinanza</span><div class="val" id="v-cit">---</div></div>
+            
+            <div class="item full"><span class="lbl">7. Comune Residenza</span><div class="val" id="v-res-com">---</div></div>
+            <div class="item full"><span class="lbl">8. Via Residenza</span><div class="val" id="v-res-via">---</div></div>
+            <div class="item"><span class="lbl">9. Civico</span><div class="val" id="v-res-civ">---</div></div>
+            
+            <div class="item"><span class="lbl">10. N. Documento</span><div class="val" id="v-doc">---</div></div>
+            <div class="item full"><span class="lbl">11. Ente Rilascio</span><div class="val" id="v-ente">---</div></div>
+            <div class="item"><span class="lbl">12. Data Rilascio</span><div class="val" id="v-ril">---</div></div>
+            <div class="item"><span class="lbl">13. Scadenza</span><div class="val" id="v-scad">---</div></div>
         </div>
     </div>
 
@@ -121,7 +114,7 @@
 
         function switchTab(m) {
             mode = m;
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active', 'front'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             if(m === 'RETRO') {
                 document.getElementById('t-retro').classList.add('active');
                 document.getElementById('ov-retro').style.display = 'block';
@@ -129,11 +122,11 @@
                 btn.innerText = "SCANSIONA RETRO";
                 btn.style.background = "#007AFF";
             } else {
-                document.getElementById('t-fronte').classList.add('active', 'front');
+                document.getElementById('t-fronte').classList.add('active');
                 document.getElementById('ov-retro').style.display = 'none';
                 document.getElementById('ov-fronte').style.display = 'block';
                 btn.innerText = "SCANSIONA FRONTE";
-                btn.style.background = "#32d74b"; // Verde per il fronte
+                btn.style.background = "#32d74b";
             }
         }
 
@@ -141,8 +134,7 @@
             btn.innerText = "ANALISI...";
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            // Filtro nitidezza
-            ctx.filter = 'grayscale(100%) contrast(250%)';
+            ctx.filter = 'grayscale(100%) contrast(200%)'; // Contrasto bilanciato
             ctx.drawImage(video, 0, 0);
             
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
@@ -154,45 +146,42 @@
 
         function parseRetro(raw) {
             const up = raw.toUpperCase();
-            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
             const clean = up.replace(/\s/g, '');
+            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
 
-            // 1. MRZ (Nome, Doc, Sesso, Nascita)
+            // 1. COGNOME, NOME, DOC, NASCITA (da MRZ)
             let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nameMatch) fill("v-nom", nameMatch[1] + " " + nameMatch[2]);
-            
+            if(nameMatch) {
+                fill("v-cog", nameMatch[1]);
+                fill("v-nom", nameMatch[2]);
+            }
             let docMatch = clean.match(/ITA([A-Z0-9]{9})/);
             if(docMatch) fill("v-doc", docMatch[1]);
-
-            let sexMatch = clean.match(/([MF])\d{7}/);
-            if(sexMatch) {
-                fill("v-sex", sexMatch[1]);
-                // Data nascita dall'MRZ (YYMMDD) subito dopo il sesso è rischioso, meglio la regex specifica
-            }
-            // Data Nascita MRZ (YYMMDD)
-            let dobM = clean.match(/\d{6}\d[MF]/); // Cerca pattern data+check+sesso
+            
+            let dobM = clean.match(/(\d{6})\d[MF]/);
             if(dobM) {
-                let d = dobM[0].substring(0,6);
-                fill("v-dob", d.substr(4,2)+"/"+d.substr(2,2)+"/"+d.substr(0,2));
+                let d = dobM[1];
+                let yearPrefix = (parseInt(d.substr(0,2)) > 40) ? '19' : '20';
+                fill("v-dob", `${d.substr(4,2)}/${d.substr(2,2)}/${yearPrefix}${d.substr(0,2)}`);
             }
 
-            // 2. INDIRIZZO (Senza CAP)
+            // 2. RESIDENZA
             let res = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO"));
             if(res) {
-                let via = res.match(/(VIA|PIAZZA|CORSO|VIALE)\s+[A-Z\s]+/);
-                if(via) fill("v-via", via[0].trim());
+                let via = res.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO)\s+[A-Z0-9\s\.]+/);
+                if(via) fill("v-res-via", via[0].replace(/,\s*N\..*/, "").trim()); // Pulisci via da numero
                 
                 let civ = res.match(/N\.\s*(\d+[A-Z]?)/) || res.match(/,\s*(\d+[A-Z]?)/);
-                if(civ) fill("v-civ", civ[1]);
+                if(civ) fill("v-res-civ", civ[1]);
                 
                 let com = res.match(/[A-Z\s]+\s\([A-Z]{2}\)/);
                 if(com) {
                     let parts = com[0].split('(');
-                    fill("v-com", parts[0].trim());
-                    fill("v-prov", parts[1].replace(')', '').trim());
+                    fill("v-res-com", parts[0].trim());
+                    // Prov Residenza non richiesta esplicitamente ma utile, la metto nel comune se serve o no
                 }
             }
-            alert("Retro acquisito! Passa al Fronte per il Comune.");
+            alert("Retro OK. Passa al Fronte.");
             switchTab('FRONTE');
         }
 
@@ -200,32 +189,63 @@
             const up = raw.toUpperCase();
             const lines = up.split('\n');
 
-            // 1. COMUNE / ENTE (Zona Verde in alto a sx)
-            // Cerca righe con "COMUNE DI" o "MINISTERO"
-            let enteLine = lines.find(l => l.includes("COMUNE DI") || l.includes("MINISTERO"));
-            if(enteLine) {
-                if(enteLine.includes("MINISTERO")) fill("v-ente", "MINISTERO DELL'INTERNO");
-                else {
-                    // Pulisce "COMUNE DI " e tiene il resto
-                    let ente = enteLine.replace("COMUNE DI", "").trim();
-                    // Se la riga finisce lì, cerca la riga dopo (spesso il nome è sotto)
-                    if(ente.length < 3) {
-                        let idx = lines.indexOf(enteLine);
-                        if(lines[idx+1]) fill("v-ente", lines[idx+1].trim());
-                    } else {
-                        fill("v-ente", ente);
-                    }
+            // 3. ENTE RILASCIO (Logica migliorata)
+            // Cerca "COMUNE DI" specificamente
+            let comuneLine = lines.find(l => l.includes("COMUNE DI"));
+            if (comuneLine) {
+                fill("v-ente", comuneLine.trim());
+            } else if (up.includes("MINISTERO")) {
+                // Fallback se non trova comune
+                fill("v-ente", "MINISTERO DELL'INTERNO");
+            }
+
+            // 4. DATE: EMISSIONE vs SCADENZA
+            // Cerca pattern data
+            let dates = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/g);
+            if (dates && dates.length >= 2) {
+                // Ordina le date. La più futura è scadenza. Quella nel passato recente è rilascio.
+                // Metodo semplice: Se c'è scritto "SCAD" vicino
+                let scadLine = lines.find(l => l.includes("SCAD") && l.match(/\d{2}/));
+                if(scadLine) {
+                     let d = scadLine.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
+                     if(d) fill("v-scad", d[0]);
+                }
+                
+                let emiLine = lines.find(l => (l.includes("RILASCIO") || l.includes("EMISSIONE")) && l.match(/\d{2}/));
+                if(emiLine) {
+                    let d = emiLine.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
+                    if(d) fill("v-ril", d[0]);
+                } else {
+                    // Fallback: la prima data trovata che non è la scadenza e non è la nascita
+                    fill("v-ril", dates[0]); 
                 }
             }
 
-            // 2. SCADENZA (Zona Gialla)
-            let scad = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
-            if(scad) fill("v-scad", scad[0]);
+            // 5. CITTADINANZA
+            if(up.includes("ITALIANA")) fill("v-cit", "ITALIANA");
+
+            // 6. LUOGO NASCITA (Split Comune e Prov)
+            let natoLine = lines.find(l => l.includes("NATO A") || l.includes("LUOGO DI"));
+            if(natoLine) {
+                // Esempio: "SIENA (SI)"
+                let fullPlace = natoLine.replace(/NATO A|LUOGO DI NASCITA/g, "").trim();
+                // Cerca parentesi
+                let matchProv = fullPlace.match(/\(([A-Z]{2})\)/);
+                if(matchProv) {
+                    fill("v-luogo-prov", matchProv[1]);
+                    fill("v-luogo", fullPlace.replace(matchProv[0], "").trim());
+                } else {
+                    fill("v-luogo", fullPlace);
+                }
+            }
         }
 
         function fill(id, txt) {
             const el = document.getElementById(id);
-            if(txt) { el.innerText = txt.trim(); el.parentElement.classList.add('ok'); }
+            if(txt) { 
+                el.innerText = txt.trim().replace(/[<>]/g,''); 
+                el.parentElement.classList.add('ok'); 
+            }
         }
     </script>
 </body>
