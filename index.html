@@ -3,77 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V45 - Custom Layout</title>
+    <title>Scanner V45 - Shell</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
+        body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
         
-        /* TABS */
-        .tabs { display: flex; background: #1c1c1e; border-bottom: 1px solid #333; }
-        .tab { flex: 1; padding: 15px; text-align: center; color: #666; font-weight: 800; font-size: 12px; cursor: pointer; }
-        .tab.active { color: #fff; border-bottom: 3px solid #00E0FF; background: #2c2c2e; }
-        .tab.active.f-mode { border-bottom-color: #FFD60A; }
-
-        /* VIEWPORT & OVERLAYS */
-        .viewport { position: relative; flex: 0 0 40%; background: #000; overflow: hidden; }
+        /* CAMERA AREA CON SAGOMA TESSERA */
+        .viewport { position: relative; flex: 0 0 45%; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        .card-outline { 
+        /* SAGOMA ESTERNA TESSERA (SHELL) */
+        .card-shell {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 94%; height: 85%; border: 1px solid rgba(255,255,255,0.2); border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); z-index: 5;
+            width: 92%; height: 85%; border: 2px solid rgba(255,255,255,0.4); border-radius: 15px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); z-index: 5; pointer-events: none;
         }
 
-        .box { position: absolute; border: 2px solid; border-radius: 4px; z-index: 10; transition: all 0.3s; }
+        /* RETTANGOLI INTERNI ALLINEATI */
+        .box { position: absolute; border: 2px solid; border-radius: 5px; left: 4%; width: 92%; z-index: 10; }
+        .box-res { top: 32%; height: 18%; border-color: #FFD60A; background: rgba(255, 214, 10, 0.1); }
+        .box-mrz { bottom: 8%; height: 28%; border-color: #00E0FF; background: rgba(0, 224, 255, 0.1); }
         
-        /* RETRO: Rettangolo giallo esteso a DX e in ALTO */
-        .box-res { top: 25%; left: 5%; width: 85%; height: 25%; border-color: #FFD60A; display: block; }
-        .box-mrz { bottom: 5%; left: 3%; width: 94%; height: 30%; border-color: #00E0FF; display: block; }
+        .box-label { position: absolute; top: -16px; left: 0; font-size: 8px; font-weight: bold; background: inherit; color: #000; padding: 1px 4px; text-transform: uppercase; }
 
-        /* FRONTE: Rettangoli specifici */
-        .box-title { top: 10%; left: 20%; width: 60%; height: 15%; border-color: #FFD60A; display: none; }
-        .box-personal { top: 35%; left: 35%; width: 60%; height: 45%; border-color: #FFD60A; display: none; }
-
-        /* RISULTATI */
-        .panel { flex: 1; background: #121212; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
-        .btn-scan { width: 100%; padding: 16px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 15px; cursor: pointer; }
-        .btn-scan.f-btn { background: #FFD60A; }
-
-        .field { background: #1c1c1e; padding: 10px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #333; }
+        /* PANNELLO RISULTATI */
+        .panel { flex: 1; background: #121212; overflow-y: auto; padding: 10px; padding-bottom: 80px; }
+        .btn-main { width: 100%; padding: 16px; background: #007AFF; color: #fff; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 12px; }
+        
+        .section { font-size: 10px; color: #00E0FF; margin: 12px 0 6px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .full { grid-column: span 2; }
+        .field { background: #1c1c1e; padding: 8px; border-radius: 6px; border-left: 3px solid #333; }
         .field.ok { border-left-color: #32d74b; background: #1a261a; }
-        .lbl { font-size: 9px; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; display: block; }
-        .val { font-size: 14px; color: #fff; font-weight: 600; min-height: 18px; }
-
+        .lbl { font-size: 8px; color: #888; display: block; }
+        .val { font-size: 13px; font-weight: 700; min-height: 15px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="tabs">
-        <div class="tab active" id="t-retro" onclick="switchMode('R')">1. RETRO (Residenza/Nome)</div>
-        <div class="tab" id="t-fronte" onclick="switchMode('F')">2. FRONTE (Nascita/Scadenza)</div>
-    </div>
-
     <div class="viewport">
         <video id="webcam" autoplay playsinline></video>
-        <div class="card-outline">
-            <div class="box box-res" id="b-res"></div>
-            <div class="box box-mrz" id="b-mrz"></div>
-            <div class="box box-title" id="b-title"></div>
-            <div class="box box-personal" id="b-pers"></div>
+        <div class="card-shell">
+            <div class="box box-res"><span class="box-label" style="background:#FFD60A">Indirizzo / Luogo Nascita</span></div>
+            <div class="box box-mrz"><span class="box-label" style="background:#00E0FF">Codici / Scadenza</span></div>
         </div>
     </div>
 
     <div class="panel">
-        <button id="snap" class="btn-scan">SCANSIONA RETRO</button>
-        
-        <div class="field" id="f-nom"><span class="lbl">Cognome Nome</span><div class="val" id="v-nom">---</div></div>
-        <div class="field" id="f-doc"><span class="lbl">N. Documento</span><div class="val" id="v-doc">---</div></div>
-        <div class="field" id="f-via"><span class="lbl">Indirizzo</span><div class="val" id="v-via">---</div></div>
-        <div class="field" id="f-com"><span class="lbl">Comune (Prov)</span><div class="val" id="v-com">---</div></div>
-        <div class="field" id="f-luo"><span class="lbl">Luogo di Nascita</span><div class="val" id="v-luo">---</div></div>
-        <div class="field" id="f-sca"><span class="lbl">Scadenza</span><div class="val" id="v-sca">---</div></div>
-        <div class="field" id="f-ent"><span class="lbl">Rilasciato da</span><div class="val" id="v-ent">---</div></div>
+        <button id="snap" class="btn-main">SCANSIONA DOCUMENTO</button>
+
+        <div class="section">Dati Personali</div>
+        <div class="grid">
+            <div class="field full"><span class="lbl">Cognome e Nome</span><div class="val" id="v-nom">---</div></div>
+            <div class="field"><span class="lbl">Luogo di Nascita</span><div class="val" id="v-luogo">---</div></div>
+            <div class="field"><span class="lbl">Data Nascita</span><div class="val" id="v-dob">---</div></div>
+        </div>
+
+        <div class="section">Residenza</div>
+        <div class="grid">
+            <div class="field full"><span class="lbl">Indirizzo</span><div class="val" id="v-via">---</div></div>
+            <div class="field"><span class="lbl">Comune (Prov)</span><div class="val" id="v-com">---</div></div>
+            <div class="field"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
+        </div>
+
+        <div class="section">Identificativi</div>
+        <div class="grid">
+            <div class="field"><span class="lbl">N. Documento</span><div class="val" id="v-doc">---</div></div>
+            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+        </div>
     </div>
 
     <canvas id="cvs"></canvas>
@@ -82,23 +80,9 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
         const btn = document.getElementById('snap');
-        let mode = 'R';
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
             .then(s => video.srcObject = s);
-
-        function switchMode(m) {
-            mode = m;
-            const isR = m === 'R';
-            document.getElementById('t-retro').className = `tab ${isR ? 'active' : ''}`;
-            document.getElementById('t-fronte').className = `tab ${!isR ? 'active f-mode' : ''}`;
-            document.getElementById('b-res').style.display = isR ? 'block' : 'none';
-            document.getElementById('b-mrz').style.display = isR ? 'block' : 'none';
-            document.getElementById('b-title').style.display = isR ? 'none' : 'block';
-            document.getElementById('b-pers').style.display = isR ? 'none' : 'block';
-            btn.className = `btn-scan ${isR ? '' : 'f-btn'}`;
-            btn.innerText = isR ? "SCANSIONA RETRO" : "SCANSIONA FRONTE";
-        }
 
         btn.addEventListener('click', async () => {
             btn.innerText = "ANALISI...";
@@ -107,45 +91,44 @@
             ctx.filter = 'grayscale(100%) contrast(250%)';
             ctx.drawImage(video, 0, 0);
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-            mode === 'R' ? parseR(text) : parseF(text);
-            btn.innerText = mode === 'R' ? "SCANSIONA RETRO" : "SCANSIONA FRONTE";
+            parseV45(text);
+            btn.innerText = "SCANSIONA DOCUMENTO";
         });
 
-        function parseR(raw) {
+        function parseV45(raw) {
             const up = raw.toUpperCase();
-            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 4);
-            // Indirizzo
-            let res = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO"));
-            if(res) {
-                fill("v-via", "f-via", res.split(',')[0]);
-                let com = res.match(/[A-Z\s]+\s\([A-Z]{2}\)/);
-                if(com) fill("v-com", "f-com", com[0]);
-            }
-            // MRZ
+            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
             const clean = up.replace(/\s/g, '');
-            let n = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(n) fill("v-nom", "f-nom", n[1]+" "+n[2]);
-            let d = clean.match(/ITA([A-Z0-9]{9})/);
-            if(d) fill("v-doc", "f-doc", d[1]);
+
+            // NOME E COGNOME (MRZ)
+            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if(nameMatch) fill("v-nom", nameMatch[1] + " " + nameMatch[2]);
+
+            // LUOGO DI NASCITA (Fronte)
+            let luogo = lines.find(l => l.includes("NATO A") || l.includes("LUOGO DI"));
+            if(luogo) fill("v-luogo", luogo.split("NASCITA")[1] || luogo.split("NATO A")[1]);
+
+            // INDIRIZZO (Retro)
+            let res = lines.find(l => l.includes("VIA") || l.includes("PIAZZA"));
+            if(res) {
+                let via = res.match(/(VIA|PIAZZA|CORSO|LARGO)\s+[A-Z\s]+/);
+                if(via) fill("v-via", via[0].trim());
+                let civ = res.match(/N\.\s*(\d+)/);
+                if(civ) fill("v-civ", civ[1]);
+                let com = res.match(/[A-Z\s]+\s\([A-Z]{2}\)/);
+                if(com) fill("v-com", com[0]);
+            }
+
+            // DOCUMENTO E SCADENZA
+            let doc = clean.match(/ITA([A-Z0-9]{9})/);
+            if(doc) fill("v-doc", doc[1]);
+            let scad = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
+            if(scad) fill("v-scad", scad[0]);
         }
 
-        function parseF(raw) {
-            const up = raw.toUpperCase();
-            const lines = up.split('\n').map(l => l.trim());
-            // Ente
-            if(up.includes("MINISTERO")) fill("v-ent", "f-ent", "MINISTERO DELL'INTERNO");
-            else { let c = lines.find(l => l.includes("COMUNE")); if(c) fill("v-ent", "f-ent", c); }
-            // Nascita
-            let l = lines.find(l => l.includes("NATO A") || l.includes("NATA A"));
-            if(l) fill("v-luo", "f-luo", l.replace(/NAT[OA] A/, "").trim());
-            // Scadenza
-            let s = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
-            if(s) fill("v-sca", "f-sca", s[0]);
-        }
-
-        function fill(vid, fid, txt) {
-            document.getElementById(vid).innerText = txt;
-            document.getElementById(fid).classList.add('ok');
+        function fill(id, txt) {
+            const el = document.getElementById(id);
+            if(txt && txt.length > 2) { el.innerText = txt.trim(); el.parentElement.classList.add('ok'); }
         }
     </script>
 </body>
