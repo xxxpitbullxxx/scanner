@@ -3,53 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner V35 - Micro Surgery</title>
+    <title>Scanner V33 - Hybrid Focus</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: monospace; background: #000; color: #fff; margin: 0; overflow: hidden; }
-        .viewport { position: relative; width: 100vw; height: 60vh; background: #111; }
+        
+        .viewport { position: relative; width: 100vw; height: 55vh; background: #111; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* CONTENITORE GRIGLIA */
-        .grid-wrapper { 
+        /* Mirino calibrato per le 3 righe MRZ */
+        .scan-guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 95%; 
-            display: flex; flex-direction: column; justify-content: center;
+            width: 92%; height: 32%; 
+            border: 3px solid #007AFF; /* Blu Focus */
+            border-radius: 8px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.85);
             z-index: 10;
         }
-        
-        /* LE 3 STRISCE DI LETTURA - Default molto sottili */
-        .strip { 
-            width: 100%; 
-            height: 30px; /* Altezza fissa di base, modificabile da slider */
-            border: 1px solid rgba(255,255,255,0.8); 
-            box-sizing: border-box;
-            margin-bottom: 10px; /* Spazio di base tra le righe */
-        }
-        
-        .s-doc { background: rgba(255, 59, 48, 0.15); border-color: #ff3b30; }
-        .s-dob { background: rgba(255, 204, 0, 0.15); border-color: #ffcc00; }
-        .s-nom { background: rgba(50, 215, 75, 0.15); border-color: #32d74b; margin-bottom: 0; }
+        /* Linee divisorie visive per aiutare l'allineamento */
+        .scan-line { width: 100%; height: 33.3%; border-bottom: 1px solid rgba(0, 122, 255, 0.3); box-sizing: border-box; }
 
-        .controls { 
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 40vh; 
-            background: #1c1c1e; padding: 15px; box-sizing: border-box; 
-            display: flex; flex-direction: column; gap: 5px;
+        .hud-panel { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 45vh; 
+            background: #1c1c1e; border-top: 2px solid #333; padding: 20px; box-sizing: border-box; 
+            overflow-y: auto; display: flex; flex-direction: column; gap: 15px;
         }
 
-        .slider-group { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #aaa; }
-        input[type=range] { flex: 1; margin: 0 10px; accent-color: #007AFF; }
-        
         .btn-scan { 
-            background: #fff; color: #000; width: 100%; padding: 12px; 
-            border: none; border-radius: 8px; font-size: 18px; font-weight: bold; 
-            text-transform: uppercase; cursor: pointer; margin-top: 10px;
+            background: #007AFF; color: white; width: 100%; padding: 18px; 
+            border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
         }
 
-        .res-line { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 2px 0; }
-        .val { color: #fff; font-weight: bold; }
+        .field-box { background: #2c2c2e; padding: 10px; border-radius: 8px; border-left: 5px solid #444; }
+        .field-box.ok { border-left-color: #32d74b; background: #1a2e1e; }
+        
+        label { font-size: 10px; color: #888; display: block; margin-bottom: 4px; }
+        .val { font-size: 18px; font-weight: bold; color: #fff; letter-spacing: 1px; min-height: 22px; }
 
-        #log { font-size: 10px; text-align: center; color: #666; margin-top: 5px; }
+        #log { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
         canvas { display: none; }
     </style>
 </head>
@@ -57,149 +49,142 @@
 
     <div class="viewport">
         <video id="video" autoplay playsinline></video>
-        
-        <div class="grid-wrapper" id="grid">
-            <div class="strip s-doc" id="box1"></div>
-            <div class="strip s-dob" id="box2"></div>
-            <div class="strip s-nom" id="box3"></div>
+        <div class="scan-guide">
+            <div class="scan-line"></div>
+            <div class="scan-line"></div>
         </div>
     </div>
 
-    <div class="controls">
-        <div class="slider-group">
-            <span>DISTANZA</span>
-            <input type="range" id="gap-slider" min="0" max="40" value="5">
+    <div class="hud-panel">
+        <button class="btn-scan" id="scan-btn">SCANSIONE HD</button>
+        
+        <div class="field-box" id="box-doc">
+            <label>NUMERO DOCUMENTO</label>
+            <div class="val" id="res-doc">---</div>
         </div>
-
-        <div class="slider-group">
-            <span>SPESSORE</span>
-            <input type="range" id="thick-slider" min="15" max="60" value="25">
+        <div class="field-box" id="box-dat">
+            <label>DATA DI NASCITA</label>
+            <div class="val" id="res-dob">---</div>
+        </div>
+        <div class="field-box" id="box-nom">
+            <label>NOME COMPLETO</label>
+            <div class="val" id="res-name">---</div>
         </div>
         
-        <button class="btn-scan" id="btn-snap">SCANSIONA 3 RIGHE</button>
-
-        <div class="res-line"><span style="color:#ff3b30">DOC</span> <span class="val" id="out-doc">...</span></div>
-        <div class="res-line"><span style="color:#ffcc00">DATA</span> <span class="val" id="out-dob">...</span></div>
-        <div class="res-line"><span style="color:#32d74b">NOME</span> <span class="val" id="out-nom">...</span></div>
-        
-        <div id="log">Regola i cursori per combaciare perfettamente</div>
+        <div id="log">Inquadra le 3 righe MRZ</div>
     </div>
 
-    <canvas id="canvas"></canvas>
+    <canvas id="proc-canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const gapSlider = document.getElementById('gap-slider');
-        const thickSlider = document.getElementById('thick-slider');
-        const boxes = [document.getElementById('box1'), document.getElementById('box2'), document.getElementById('box3')];
-        const canvas = document.getElementById('canvas');
+        const canvas = document.getElementById('proc-canvas');
         const log = document.getElementById('log');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
-            .then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment", width: { ideal: 1920 } } 
+        }).then(s => video.srcObject = s);
 
-        // Funzione per aggiornare la griglia visiva in tempo reale
-        function updateGrid() {
-            const gap = gapSlider.value + 'px';
-            const thick = thickSlider.value + 'px';
+        document.getElementById('scan-btn').addEventListener('click', async () => {
+            log.innerText = "SCANSIONE 2X IN CORSO...";
             
-            boxes[0].style.height = thick;
-            boxes[0].style.marginBottom = gap;
+            // Ritaglio
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+            const cw = vw * 0.92;
+            const ch = vh * 0.32;
+            const cx = (vw - cw) / 2;
+            const cy = (vh - ch) / 2;
+
+            // TRUCCO RISOLUZIONE: Usiamo un canvas grande il DOPPIO del ritaglio
+            // Questo aiuta Tesseract a leggere i caratteri piccoli del numero documento
+            canvas.width = cw * 2;
+            canvas.height = ch * 2;
             
-            boxes[1].style.height = thick;
-            boxes[1].style.marginBottom = gap;
-            
-            boxes[2].style.height = thick;
-        }
+            const ctx = canvas.getContext('2d');
+            ctx.filter = 'grayscale(100%) contrast(200%) brightness(110%)';
+            // Disegniamo l'immagine ingrandita 2x
+            ctx.drawImage(video, cx, cy, cw, ch, 0, 0, cw * 2, ch * 2);
 
-        gapSlider.addEventListener('input', updateGrid);
-        thickSlider.addEventListener('input', updateGrid);
-
-        document.getElementById('btn-snap').addEventListener('click', async () => {
-            log.innerText = "ELABORAZIONE...";
-            
-            // Calcoli di posizione per il ritaglio
-            const videoRect = video.getBoundingClientRect();
-            const scaleX = video.videoWidth / videoRect.width;
-            const scaleY = video.videoHeight / videoRect.height;
-
-            // Scansioniamo ogni box individualmente
-            // BOX 1 (ROSSO - DOC)
-            log.innerText = "Leggo Riga 1...";
-            let t1 = await scanElement(boxes[0], videoRect, scaleX, scaleY);
-            parseDoc(t1);
-
-            // BOX 2 (GIALLO - DATA)
-            log.innerText = "Leggo Riga 2...";
-            let t2 = await scanElement(boxes[1], videoRect, scaleX, scaleY);
-            parseDob(t2);
-
-            // BOX 3 (VERDE - NOME)
-            log.innerText = "Leggo Riga 3...";
-            let t3 = await scanElement(boxes[2], videoRect, scaleX, scaleY);
-            parseName(t3);
-
-            log.innerText = "Finito!";
+            try {
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+                    logger: m => log.innerText = `OCR: ${Math.round(m.progress * 100)}%`
+                });
+                
+                analyzeText(text);
+                log.innerText = "FINITO";
+            } catch (e) { log.innerText = "Errore OCR"; }
         });
 
-        async function scanElement(element, vRect, sX, sY) {
-            const rect = element.getBoundingClientRect();
-            
-            // Coordinate relative al video originale
-            const realX = (rect.left - vRect.left) * sX;
-            const realY = (rect.top - vRect.top) * sY;
-            const realW = rect.width * sX;
-            const realH = rect.height * sY;
-
-            const ctx = canvas.getContext('2d');
-            canvas.width = realW;
-            canvas.height = realH;
-            
-            // Filtro nitidezza massima
-            ctx.filter = 'grayscale(100%) contrast(300%)';
-            ctx.drawImage(video, realX, realY, realW, realH, 0, 0, realW, realH);
-            
-            const { data } = await Tesseract.recognize(canvas, 'ita', {
-                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'
-            });
-            return data.text.replace(/\s/g, '').toUpperCase();
-        }
-
-        function fix(s, type) {
-            if(!s) return "";
-            // Correzione Numeri (N) o Lettere (L)
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/A/g,'4');
-            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
-            return s;
-        }
-
-        function parseDoc(txt) {
-            // Cerca pattern Documento
-            let m = txt.match(/IT([A-Z0-9]{9})/) || txt.match(/[A-Z]{2}[0-9]{5}[A-Z]{2}/);
-            if (m) {
-                let d = m[1] || m[0];
-                d = fix(d.substr(0,2),'L') + fix(d.substr(2,5),'N') + fix(d.substr(7,2),'L');
-                document.getElementById('out-doc').innerText = d;
+        // Correzione Intelligente
+        function clean(str, type) {
+            if(!str) return "";
+            if (type === 'DOC') {
+                // Forza: LL NNNNN LL
+                let s = str.substring(0, 9);
+                let res = "";
+                for(let i=0; i<s.length; i++) {
+                    if([0,1,7,8].includes(i)) res += s[i].replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+                    else res += s[i].replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
+                }
+                return res;
             }
-        }
-
-        function parseDob(txt) {
-            // Cerca Data (6 numeri)
-            let m = txt.match(/[0-9]{6}/);
-            if (m) {
-                let d = fix(m[0], 'N');
-                let y = parseInt(d.substr(0,2)) > 40 ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
-                document.getElementById('out-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
+            if (type === 'DATE') {
+                return str.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
             }
+            if (type === 'NAME') {
+                return str.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B').replace(/</g, ' ').trim();
+            }
+            return str;
         }
 
-        function parseName(txt) {
-            // Cerca Nome (separato da <<)
-            if (txt.includes('<<')) {
-                let parts = txt.split('<<');
-                let cog = fix(parts[0].replace(/</g,''), 'L');
-                let nom = fix(parts[1].replace(/</g,''), 'L');
-                document.getElementById('out-nom').innerText = `${cog} ${nom}`;
+        function analyzeText(raw) {
+            console.log(raw);
+            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 6);
+
+            // 1. TROVA RIGA DOCUMENTO (Contiene IT e numeri)
+            // Migliorato: Cerca C<IT, ITA, o I<IT
+            let docRow = lines.find(l => (l.includes('IT') || l.includes('1T')) && l.match(/[0-9]/) && l.includes('<'));
+            
+            if (docRow) {
+                // Regex flessibile per catturare i 9 caratteri dopo il codice paese
+                let m = docRow.match(/IT([A-Z0-9]{9})/);
+                if (!m) m = docRow.match(/1T([A-Z0-9]{9})/); // Fix comune errore OCR
+                
+                if (m) {
+                    let docNum = clean(m[1], 'DOC');
+                    // Controllo validità: deve iniziare con lettere e finire con lettere
+                    if (docNum.match(/^[A-Z]{2}[0-9]{5}[A-Z]{2}$/)) {
+                        document.getElementById('res-doc').innerText = docNum;
+                        document.getElementById('box-doc').classList.add('ok');
+                    }
+                }
+            }
+
+            // 2. TROVA DATA DI NASCITA (Inizia con numeri)
+            let dateRow = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
+            if (dateRow) {
+                let dob = clean(dateRow.substring(0, 6), 'DATE');
+                if (dob.length === 6) {
+                    let y = dob.substr(0,2);
+                    let m = dob.substr(2,2);
+                    let d = dob.substr(4,2);
+                    let fullY = (parseInt(y) > 40) ? '19'+y : '20'+y;
+                    document.getElementById('res-dob').innerText = `${d}/${m}/${fullY}`;
+                    document.getElementById('box-dat').classList.add('ok');
+                }
+            }
+
+            // 3. TROVA NOME (Contiene << e non inizia con numeri)
+            let nameRow = lines.find(l => l.includes('<<') && !l.match(/^\d/) && !l.includes('IT'));
+            if (nameRow) {
+                let parts = nameRow.split('<<');
+                let full = "";
+                if (parts[0]) full += clean(parts[0], 'NAME') + " ";
+                if (parts[1]) full += clean(parts[1], 'NAME');
+                document.getElementById('res-name').innerText = full;
+                document.getElementById('box-nom').classList.add('ok');
             }
         }
     </script>
