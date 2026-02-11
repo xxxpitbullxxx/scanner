@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V44 - Instant Start</title>
+    <title>Scanner V45 - Binary Force</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* LAYOUT FLUIDO */
+        /* LAYOUT FLUIDO MOBILE */
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; background: #000; 
-            height: 100vh; /* Altezza fissa */
-            display: flex; flex-direction: column; overflow: hidden;
+            font-family: monospace, sans-serif; margin: 0; background: #000; 
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
 
-        /* 1. TAB SELEZIONE */
+        /* BARRA TAB */
         .status-bar {
             flex: 0 0 auto; background: #111; border-bottom: 1px solid #333; 
             display: flex; padding: 0; z-index: 50;
@@ -26,33 +24,32 @@
         .step.active { background: #000; color: #fff; border-bottom-color: #00E0FF; }
         .step.active.front { border-bottom-color: #FFD60A; }
 
-        /* 2. CAMERA (35% Schermo) */
+        /* CAMERA */
         .cam-view { 
             flex: 0 0 35%; position: relative; overflow: hidden; background: #000; 
         }
-        /* VIDEO: Object-fit cover essenziale per riempire */
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* MIRINO */
+        /* MIRINO RETRO (Ciano) */
         .guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 95%; height: 30%; 
+            width: 95%; height: 25%; 
             border: 3px solid #00E0FF; border-radius: 6px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); z-index: 10;
             transition: all 0.3s;
         }
-        .guide.front-mode { border-color: #FFD60A; height: 70%; width: 90%; }
+        /* MIRINO FRONTE (Giallo e Largo) */
+        .guide.front-mode { border-color: #FFD60A; height: 60%; width: 90%; }
         
         .guide-msg {
-            position: absolute; bottom: 8px; width: 100%; text-align: center;
+            position: absolute; bottom: 5px; width: 100%; text-align: center;
             color: #00E0FF; font-size: 12px; font-weight: bold; z-index: 20;
             text-shadow: 1px 1px 0 #000;
         }
 
-        /* 3. PANNELLO DATI */
+        /* PANNELLO DATI */
         .panel { 
-            flex: 1; 
-            background: #121212; display: flex; flex-direction: column; 
+            flex: 1; background: #121212; display: flex; flex-direction: column; 
             border-top: 1px solid #333; min-height: 0;
         }
 
@@ -61,7 +58,7 @@
             border-bottom: 1px solid #222; z-index: 30;
         }
         .btn-main { 
-            background: #00E0FF; color: #000; width: 100%; padding: 12px; 
+            background: #00E0FF; color: #000; width: 100%; padding: 14px; 
             border: none; border-radius: 6px; font-size: 16px; font-weight: 900; 
             cursor: pointer; text-transform: uppercase;
         }
@@ -69,7 +66,7 @@
 
         /* LISTA DATI SCORREVOLE */
         .scroll-list {
-            flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px;
+            flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 120px;
         }
 
         .section-header {
@@ -122,7 +119,7 @@
             
             <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="out-cit">---</div></div>
             <div class="field"><span class="lbl">LUOGO DI NASCITA</span><div class="val" id="out-luogo">---</div></div>
-            <div class="field"><span class="lbl">RESIDENZA (INDIRIZZO)</span><div class="val" id="out-res">---</div></div>
+            <div class="field"><span class="lbl">RESIDENZA (VIA/CITTÀ)</span><div class="val" id="out-res">---</div></div>
             <div class="field"><span class="lbl">ENTE DI RILASCIO</span><div class="val" id="out-ente">---</div></div>
             
             <div style="height: 50px;"></div>
@@ -139,18 +136,12 @@
         const msg = document.getElementById('msg');
         let currentPhase = 1;
 
-        // --- AVVIO CAMERA AUTOMATICO ROBUSTO ---
+        // AVVIO CAMERA RAPIDO
         window.addEventListener('load', async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } // Richiesta semplice per max compatibilità
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
-                // Forza il play per sicurezza su alcuni Android/iOS
-                video.play();
-            } catch (err) {
-                alert("Errore Fotocamera: " + err.message + "\nAssicurati di usare HTTPS e dare i permessi.");
-            }
+            } catch (err) { alert("Attiva la fotocamera nelle impostazioni!"); }
         });
 
         function setPhase(p) {
@@ -159,6 +150,7 @@
                 document.getElementById('step1').className = 'step active';
                 document.getElementById('step2').className = 'step';
                 guide.className = 'guide';
+                guide.classList.remove('front-mode');
                 btn.className = 'btn-main';
                 btn.innerText = "SCANSIONA RETRO";
                 msg.innerText = "CENTRA LA RIGA C<ITA...";
@@ -175,35 +167,47 @@
         }
 
         document.getElementById('btn-snap').addEventListener('click', async () => {
-            if(!video.srcObject) { alert("Camera non pronta!"); return; }
-            
+            if(!video.srcObject) return;
             btn.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
             const vw = video.videoWidth;
             const vh = video.videoHeight;
             
-            // Ritagli
+            // Ritagli e Filtri DIVERSI per Fronte/Retro
             let cw, ch, cy;
+            
             if (currentPhase === 1) {
+                // --- CONFIGURAZIONE RETRO (V36 ANCHOR) ---
                 cw = vw * 0.95; ch = vh * 0.25; cy = (vh * 0.40) - (ch / 2);
+                canvas.width = cw * 2; canvas.height = ch * 2;
+                // Filtro "Morbido" per MRZ che è già ad alto contrasto
+                ctx.filter = 'grayscale(100%) contrast(300%)'; 
             } else {
-                cw = vw * 0.90; ch = vh * 0.65; cy = (vh / 2) - (ch / 2);
+                // --- CONFIGURAZIONE FRONTE (BIANCO E NERO ESTREMO) ---
+                cw = vw * 0.90; ch = vh * 0.60; cy = (vh / 2) - (ch / 2);
+                canvas.width = cw * 2.5; canvas.height = ch * 2.5; // Zoom alto
+                // Filtro "Aggressivo" per uccidere gli ologrammi
+                // Contrast 500% rende tutto o bianco o nero, niente grigi
+                ctx.filter = 'grayscale(100%) contrast(500%) brightness(120%)'; 
             }
+            
             let cx = (vw - cw) / 2;
-
-            canvas.width = cw * 2; canvas.height = ch * 2;
-            // Filtro V36 (che funzionava bene)
-            ctx.filter = currentPhase === 1 ? 'grayscale(100%) contrast(300%)' : 'grayscale(100%) contrast(200%) brightness(110%)';
             ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
 
             try {
-                const whitelist = currentPhase === 1 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<' : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<.,/-\' ';
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', { tessedit_char_whitelist: whitelist });
+                // Whitelist più ampia per il fronte per leggere indirizzi
+                const whitelist = currentPhase === 1 ? 
+                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<' : 
+                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<.,/-\' ';
                 
-                if (currentPhase === 1) processRetro(text);
-                else processFronte(text);
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', { 
+                    tessedit_char_whitelist: whitelist 
+                });
                 
-                if(btn.innerText === "ELABORAZIONE...") btn.innerText = currentPhase === 1 ? "SCANSIONA RETRO" : "SCANSIONA FRONTE";
+                if (currentPhase === 1) processRetroAnchor(text);
+                else processFronteBinarized(text);
+                
+                btn.innerText = currentPhase === 1 ? "SCANSIONA RETRO" : "SCANSIONA FRONTE";
             } catch (e) { btn.innerText = "ERRORE"; }
         });
 
@@ -211,18 +215,18 @@
             if (!val || val.length < 2) return;
             const el = document.getElementById(id);
             el.innerText = val;
-            el.parentElement.className = 'field ok';
+            el.parentElement.classList.add('ok');
         }
 
-        // --- RETRO (V36 LOGIC) ---
+        // --- RETRO (LOGICA V36 ORIGINALE) ---
         function fix(s) { return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8'); }
         function fixL(s) { return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B'); }
 
-        function processRetro(raw) {
+        function processRetroAnchor(raw) {
             const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase());
             let found = false;
 
-            // DOC
+            // DOC (Cerca l'ancora ITA)
             let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA')) && l.length > 10);
             if (docLine) {
                 let m = docLine.match(/(ITA|1TA)/);
@@ -249,7 +253,7 @@
                 }
             }
 
-            // NOME/COGNOME SPLIT
+            // NOME/COGNOME
             let nameLine = lines.find(l => l.includes('<<') && !l.includes('ITA'));
             if(nameLine) {
                 let parts = nameLine.split('<<');
@@ -262,42 +266,3 @@
                 setPhase(2);
             }
         }
-
-        // --- FRONTE ---
-        function processFronte(raw) {
-            const up = raw.toUpperCase();
-            if(up.includes('CITTADINANZA')) fill('out-cit', 'ITALIANA');
-            
-            // Indirizzo
-            let lines = up.split('\n');
-            for(let i=0; i<lines.length; i++) {
-                let l = lines[i].trim();
-                if (l.match(/^(VIA|VIALE|PIAZZA|CORSO|VICOLO|L\.GO|P\.ZZA)\s+[A-Z]/)) {
-                    let fullAddr = l;
-                    if(lines[i+1] && lines[i+1].length > 2 && lines[i+1].length < 25) fullAddr += " " + lines[i+1];
-                    fill('out-res', fullAddr);
-                    break;
-                }
-            }
-            if(up.includes('RESIDENZA') && !document.getElementById('out-res').innerText.includes('---') === false) {
-                let idx = up.indexOf('RESIDENZA');
-                fill('out-res', up.substr(idx+9, 40).replace(/[^A-Z0-9 \.]/g, ''));
-            }
-
-            // Ente
-            if(up.includes('MINISTERO') || up.includes('INTERNO')) fill('out-ente', 'MINISTERO DELL\'INTERNO');
-            else if (up.includes('COMUNE')) {
-                let m = up.match(/COMUNE DI [A-Z\s]+/);
-                if(m) fill('out-ente', m[0]);
-            }
-
-            // Luogo Nascita
-            let idxNato = up.indexOf('NATO A');
-            if(idxNato > -1) {
-                let chunk = up.substr(idxNato+6, 30).split('\n')[0];
-                fill('out-luogo', chunk.replace(/[^A-Z ]/g,'').trim());
-            }
-        }
-    </script>
-</body>
-</html>
