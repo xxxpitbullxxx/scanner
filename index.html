@@ -3,147 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner Pro V7 - Infallibile</title>
+    <title>Scanner Pro V8 - Nitidezza Attiva</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         :root { --blue: #007AFF; --green: #34C759; }
         body { font-family: -apple-system, sans-serif; margin: 0; background: #000; color: white; overflow: hidden; }
         
-        /* Area Video con Rotazione Software */
-        #camera-container { position: relative; width: 100vw; height: 50vh; background: #000; display: flex; align-items: center; justify-content: center; }
+        #camera-area { position: relative; width: 100vw; height: 50vh; background: #000; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Guida che si adatta visivamente */
-        .guide-box {
-            position: absolute; width: 85%; height: 60%;
-            border: 3px solid var(--green); border-radius: 15px;
-            box-shadow: 0 0 0 2000px rgba(0,0,0,0.6); z-index: 10;
+        /* Rettangolo di guida più sottile per non disturbare l'autofocus */
+        .guide-rect {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80%; height: 55%; border: 2px solid var(--green); border-radius: 10px;
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.7); z-index: 10;
         }
 
         .panel { background: white; color: #1c1e21; padding: 20px; border-radius: 25px 25px 0 0; margin-top: -20px; position: relative; z-index: 50; height: 55vh; overflow-y: auto; }
-        .btn-main { background: var(--blue); color: white; width: 100%; padding: 18px; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
-        .btn-main:active { transform: scale(0.95); background: #0056b3; }
+        .btn-main { background: var(--blue); color: white; width: 100%; padding: 18px; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
         
-        #status { text-align: center; font-weight: bold; color: var(--blue); margin-bottom: 15px; height: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #status { text-align: center; font-weight: bold; color: var(--blue); margin-bottom: 10px; font-size: 14px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .full { grid-column: span 2; }
         label { font-size: 10px; font-weight: bold; color: #8e8e93; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 15px; box-sizing: border-box; background: #f2f2f7; }
+        input { width: 100%; padding: 10px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f2f2f7; }
         
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div id="camera-container">
+<div id="camera-area">
     <video id="video" autoplay playsinline></video>
-    <div class="guide-box"></div>
+    <div class="guide-rect"></div>
 </div>
 
 <div class="panel">
-    <div id="status">FOTOCAMERA PRONTA</div>
-    
-    <button class="btn-main" id="btn-snap">📸 SCATTA E ANALIZZA</button>
+    <div id="status">INQUADRA E ATTENDI IL FUOCO</div>
+    <button class="btn-main" id="btn-snap">SCATTA (NITIDEZZA ALTA)</button>
 
     <div class="grid">
         <div><label>Cognome</label><input type="text" id="res-cognome"></div>
         <div><label>Nome</label><input type="text" id="res-nome"></div>
-        <div class="full"><label>Data di Nascita</label><input type="text" id="res-nascita"></div>
+        <div class="full"><label>Nascita / Residenza</label><input type="text" id="res-extra"></div>
         <div class="full"><label>N. Documento</label><input type="text" id="res-doc"></div>
-        <div class="full"><label>Residenza / Via</label><input type="text" id="res-via"></div>
     </div>
 </div>
 
 <canvas id="hidden-canvas"></canvas>
 
 <script>
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playClickSound() {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-    }
-
     const video = document.getElementById('video');
     const canvas = document.getElementById('hidden-canvas');
     const status = document.getElementById('status');
 
-    // Inizializzazione Camera con parametri di rotazione
-    navigator.mediaDevices.getUserMedia({ 
-        video: { 
-            facingMode: "environment", 
-            width: { ideal: 1920 },
-            height: { ideal: 1080 } 
-        } 
-    }).then(stream => {
-        video.srcObject = stream;
-        status.innerText = "INQUADRA IN ORIZZONTALE";
-    }).catch(err => {
-        status.innerText = "ERRORE CAMERA - USA HTTPS";
-    });
+    // Funzione per avviare la camera con Focus Continuo
+    async function startCamera() {
+        const constraints = {
+            video: {
+                facingMode: "environment",
+                width: { ideal: 4096 }, // Cerchiamo la risoluzione 4K se disponibile
+                height: { ideal: 2160 },
+                focusMode: "continuous" // Comando per autofocus continuo (supportato da alcuni browser Android)
+            }
+        };
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = stream;
+            
+            // Applichiamo un leggero zoom digitale via CSS per aiutare l'ottica a stabilizzarsi sul centro
+            video.style.transform = "scale(1.1)";
+        } catch (err) {
+            status.innerText = "ERRORE CAMERA - USA HTTPS";
+        }
+    }
 
     document.getElementById('btn-snap').addEventListener('click', async () => {
-        playClickSound();
-        if (navigator.vibrate) navigator.vibrate(100);
-        
-        status.innerText = "ELABORAZIONE IN CORSO...";
+        status.innerText = "ELABORAZIONE NITIDEZZA...";
         const ctx = canvas.getContext('2d');
 
-        // Settiamo il canvas in orizzontale forzato (16:9)
-        canvas.width = 1280;
-        canvas.height = 720;
+        // Usiamo una risoluzione fissa alta per l'OCR
+        canvas.width = 1600;
+        canvas.height = 900;
 
-        // Pulizia e Rotazione Software se necessario
-        ctx.filter = 'grayscale(100%) contrast(180%) brightness(110%)';
+        // FILTRO NITIDEZZA (Sharpening)
+        // Aumentiamo il contrasto e riduciamo la luminosità per far "saltare fuori" le lettere
+        ctx.filter = 'contrast(200%) brightness(90%) grayscale(100%)';
         
-        // Disegniamo il video sul canvas adattandolo
+        // Disegniamo solo la parte centrale del video (dove c'è il rettangolo verde)
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         try {
-            const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng', {
-                logger: m => { if(m.status === 'recognizing text') status.innerText = `ANALISI: ${Math.round(m.progress * 100)}%`; }
-            });
-            processData(text);
-            status.innerText = "COMPLETATO!";
+            const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
+            parseData(text);
+            status.innerText = "ANALISI COMPLETATA!";
         } catch (e) {
-            status.innerText = "ERRORE DURANTE L'ANALISI";
+            status.innerText = "ERRORE OCR";
         }
     });
 
-    function processData(raw) {
+    function parseData(raw) {
         const t = raw.toUpperCase();
-        console.log("OCR RAW:", t);
+        console.log("OCR:", t);
 
         // Estrazione Numero Doc
         const doc = t.match(/[A-Z]{2}\s?\d{5}[A-Z]{2}/) || t.match(/[A-Z]{2}\s?\d{7}/);
         if (doc) document.getElementById('res-doc').value = doc[0].replace(/\s/g, '');
 
-        // Estrazione Data
-        const date = t.match(/\d{2}.\d{2}.\d{4}/);
-        if (date) document.getElementById('res-nascita').value = date[0];
-
-        // Estrazione Cognome/Nome
+        // Estrazione Cognome/Nome (Pulizia GIULIAL -> GIULIA)
         const lines = t.split('\n').map(l => l.trim());
         lines.forEach((l, i) => {
-            if (l.includes("COGNOME")) document.getElementById('res-cognome').value = lines[i+1]?.split(' ')[0] || "";
-            if (l.includes("NOME")) document.getElementById('res-nome').value = lines[i+1]?.split(' ')[0] || "";
-            if (l.includes("VIA") || l.includes("PIAZZA")) document.getElementById('res-via').value = l;
+            if (l.includes("COGNOME")) {
+                let cognome = lines[i+1]?.split(' ')[0] || "";
+                document.getElementById('res-cognome').value = cognome.replace(/[^A-Z]/g, "");
+            }
+            if (l.includes("NOME")) {
+                let nome = lines[i+1]?.split(' ')[0] || "";
+                // Rimuove la L spuria finale se presente (es. GIULIAL -> GIULIA)
+                if (nome.endsWith('L') && nome.length > 4) nome = nome.slice(0, -1);
+                document.getElementById('res-nome').value = nome.replace(/[^A-Z]/g, "");
+            }
         });
 
-        // Logica MRZ (Retro)
+        // MRZ Retro
         const mrz = t.replace(/\s/g, '').match(/([A-Z]+)<<([A-Z]+)/);
         if (mrz) {
             document.getElementById('res-cognome').value = mrz[1];
             document.getElementById('res-nome').value = mrz[2];
         }
     }
+
+    startCamera();
 </script>
 </body>
 </html>
