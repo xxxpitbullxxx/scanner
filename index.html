@@ -3,83 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner ID V15 - Radar Scan</title>
+    <title>Scanner ID V16 - Deep Capture</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #f0f2f5; overflow-y: auto !important; }
-        .cam-container { position: relative; width: 100%; height: 350px; background: #000; }
+        .camera-container { position: relative; width: 100%; height: 350px; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .scanner-target { 
+        .frame { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            width: 85%; height: 65%; border: 3px solid #34C759; border-radius: 15px; 
-            box-shadow: 0 0 0 2000px rgba(0,0,0,0.6); pointer-events: none; z-index: 5; 
+            width: 85%; height: 60%; border: 3px solid #34C759; border-radius: 15px; 
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.7); z-index: 5; pointer-events: none; 
         }
-        .ui { padding: 20px; }
-        .btn-scan { 
+        .ui-panel { padding: 20px; }
+        .btn-capture { 
             background: #007AFF; color: white; width: 100%; padding: 20px; 
             border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer; 
         }
-        .results-grid { background: white; padding: 15px; border-radius: 15px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .input-wrap { margin-bottom: 15px; }
+        .results { background: white; padding: 15px; border-radius: 15px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .input-box { margin-bottom: 15px; }
         label { display: block; font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 4px; }
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        #log { font-family: monospace; font-size: 11px; color: #d9534f; background: #fff; padding: 10px; border: 1px solid #ccc; margin-top: 10px; }
+        #log-area { font-family: monospace; font-size: 11px; color: #d9534f; background: #fff; padding: 10px; border: 1px solid #ccc; margin-top: 10px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="cam-container">
+    <div class="camera-container">
         <video id="webcam" autoplay playsinline></video>
-        <div class="scanner-target"></div>
+        <div class="frame"></div>
     </div>
 
-    <div class="ui">
-        <div id="status" style="text-align:center; font-weight:bold; color:#007AFF; margin-bottom:10px;">INQUADRA FRONTE O RETRO</div>
-        <button class="btn-scan" id="start-scan">SCANSIONA ORA</button>
+    <div class="ui-panel">
+        <div id="status" style="text-align:center; font-weight:bold; color:#007AFF; margin-bottom:10px;">POSIZIONA IL DOCUMENTO NEL RETTANGOLO</div>
+        <button class="btn-capture" id="capture-btn">ANALIZZA DOCUMENTO</button>
 
-        <div class="results-grid">
-            <div class="input-wrap"><label>Cognome</label><input type="text" id="o-cognome"></div>
-            <div class="input-wrap"><label>Nome</label><input type="text" id="o-nome"></div>
-            <div class="input-wrap"><label>Numero Documento</label><input type="text" id="o-doc"></div>
+        <div class="results">
+            <div class="input-box"><label>Cognome</label><input type="text" id="out-cognome"></div>
+            <div class="input-box"><label>Nome</label><input type="text" id="out-nome"></div>
+            <div class="input-box"><label>Numero Documento</label><input type="text" id="out-doc"></div>
         </div>
 
-        <div id="log">Log: Sistema pronto.</div>
+        <div id="log-area">In attesa di scansione...</div>
     </div>
 
-    <canvas id="canvas-radar"></canvas>
+    <canvas id="crop-canvas"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
-        const canvas = document.getElementById('canvas-radar');
-        const log = document.getElementById('log');
+        const canvas = document.getElementById('crop-canvas');
+        const log = document.getElementById('log-area');
         const status = document.getElementById('status');
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1920 } })
-            .then(s => { video.srcObject = s; log.innerText = "Camera OK - Risoluzione Massima."; })
+            .then(s => { video.srcObject = s; log.innerText = "Camera OK - Risoluzione attiva."; })
             .catch(e => { log.innerText = "Errore Camera: " + e; });
 
-        document.getElementById('start-scan').addEventListener('click', async () => {
-            status.innerText = "SCANSIONE RADAR...";
-            log.innerText = "Cattura immagine ad alta definizione...";
+        document.getElementById('capture-btn').addEventListener('click', async () => {
+            status.innerText = "CATTURA E PULIZIA...";
+            log.innerText = "Isolamento area documento...";
             
             const ctx = canvas.getContext('2d');
-            canvas.width = 2000;
-            canvas.height = 1400;
+            
+            // Definiamo un canvas grande per non perdere dettagli
+            canvas.width = 1600;
+            canvas.height = 1000;
 
-            // Filtro Bianco e Nero Sforzato per il numero documento
-            ctx.filter = 'grayscale(100%) contrast(300%) brightness(90%)';
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // RITAGLIO SOFTWARE: prendiamo solo i pixel dentro il rettangolo verde
+            // Calcoliamo le proporzioni basate sul video reale
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+            const cropX = vw * 0.075; // 7.5% di margine sinistro
+            const cropY = vh * 0.2;   // 20% di margine superiore
+            const cropW = vw * 0.85;  // 85% di larghezza
+            const cropH = vh * 0.6;   // 60% di altezza
 
-            log.innerText = "Analisi OCR multilivello...";
+            // Applichiamo filtri di binarizzazione prima del disegno
+            ctx.filter = 'grayscale(100%) contrast(250%) brightness(110%)';
+            ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+            log.innerText = "Analisi OCR in corso...";
 
             try {
+                // Usiamo solo caratteri alfanumerici per evitare errori di simboli
                 const result = await Tesseract.recognize(canvas, 'ita+eng', {
-                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Lettura: " + (m.progress * 100).toFixed(0) + "%"; }
+                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Analisi: " + (m.progress * 100).toFixed(0) + "%"; }
                 });
 
-                log.innerText = "Dati grezzi ottenuti. Elaborazione...";
-                parseRadar(result.data.text);
+                log.innerText = "Dati estratti. Filtraggio in corso...";
+                processResults(result.data.text);
                 status.innerText = "COMPLETATO!";
             } catch (err) {
                 log.innerText = "Errore: " + err;
@@ -87,33 +99,33 @@
             }
         });
 
-        function parseRadar(raw) {
+        function processResults(raw) {
             const t = raw.toUpperCase();
             const clean = t.replace(/\s/g, '');
+            console.log("TESTO:", t);
             
-            // 1. Ricerca Numero Documento (Pattern: CA00000AA o simile)
-            const docPattern = t.match(/[A-Z]{2}\s?\d{5}\s?[A-Z]{2}/) || t.match(/[A-Z]{2}\s?\d{7}/) || clean.match(/ITA([A-Z0-9]{9})/);
-            if (docPattern) {
-                let docVal = docPattern[1] || docPattern[0];
-                document.getElementById('o-doc').value = docVal.replace(/\s/g, '');
+            // Numero Documento: pattern 2 lettere, 5 numeri, 2 lettere (CIE)
+            const doc = t.match(/[A-Z]{2}\s?\d{5}\s?[A-Z]{2}/) || t.match(/[A-Z]{2}\s?\d{7}/) || clean.match(/ITA([A-Z0-9]{9})/);
+            if (doc) {
+                document.getElementById('out-doc').value = (doc[1] || doc[0]).replace(/\s/g, '');
             }
 
-            // 2. Ricerca MRZ (Retro - Nome e Cognome)
+            // MRZ (Retro): Nome e Cognome con freccette
             const mrz = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if (mrz) {
-                document.getElementById('o-cognome').value = mrz[1];
-                document.getElementById('o-nome').value = mrz[2];
-                // Se il numero documento non è stato trovato sopra, lo cerchiamo nell'MRZ (prime 9 cifre dopo ITA o simili)
+                document.getElementById('out-cognome').value = mrz[1];
+                document.getElementById('out-nome').value = mrz[2];
+                // Recupero numero documento da MRZ se non trovato
                 const mrzDoc = clean.match(/C<[A-Z]{3}([A-Z0-9]{9})/);
-                if (mrzDoc && !document.getElementById('o-doc').value) {
-                    document.getElementById('o-doc').value = mrzDoc[1];
+                if (mrzDoc && !document.getElementById('out-doc').value) {
+                    document.getElementById('out-doc').value = mrzDoc[1];
                 }
             } else {
-                // 3. Fallback Fronte (Ricerca Testuale classica)
+                // Fronte: ricerca testuale
                 const lines = t.split('\n').map(l => l.trim());
                 lines.forEach((l, i) => {
-                    if (l.includes("COGNOME")) document.getElementById('o-cognome').value = lines[i+1]?.split(' ')[0] || "";
-                    if (l.includes("NOME")) document.getElementById('o-nome').value = lines[i+1]?.split(' ')[0] || "";
+                    if (l.includes("COGNOME")) document.getElementById('out-cognome').value = lines[i+1]?.split(' ')[0] || "";
+                    if (l.includes("NOME")) document.getElementById('out-nome').value = lines[i+1]?.split(' ')[0] || "";
                 });
             }
         }
