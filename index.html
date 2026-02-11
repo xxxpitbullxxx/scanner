@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V39 - Universal</title>
+    <title>Scanner V41 - Aggressive</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { 
@@ -20,14 +20,14 @@
             width: 100%; height: 100%; object-fit: cover; 
         }
 
-        /* SELETTORE CAMERA (appare solo se serve) */
+        /* MENU CAMERA (visibile solo se serve) */
         #cam-select {
             position: absolute; top: 10px; left: 10px; z-index: 100;
-            padding: 10px; background: white; border-radius: 8px; border: none;
-            display: none; font-size: 14px; max-width: 90%;
+            padding: 8px; background: rgba(255,255,255,0.9); border-radius: 8px; border: none;
+            display: none; font-size: 12px;
         }
 
-        /* PULSANTE AVVIO EMERGENZA */
+        /* TASTO EMERGENZA */
         #btn-force-start {
             padding: 15px 30px; background: #FF3B30; color: white; border: none; 
             border-radius: 50px; font-weight: bold; z-index: 50; cursor: pointer;
@@ -37,7 +37,7 @@
         .guide-box { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 95%; height: 35%; 
-            border: 3px solid #00E0FF; border-radius: 8px;
+            border: 3px solid #34C759; border-radius: 8px; /* Verde acceso */
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); pointer-events: none;
         }
 
@@ -51,7 +51,7 @@
         .btn-scan { 
             background: #007AFF; color: white; width: 100%; padding: 15px; 
             border: none; border-radius: 12px; font-size: 18px; font-weight: 700; 
-            margin-bottom: 5px; flex-shrink: 0;
+            margin-bottom: 5px; flex-shrink: 0; cursor: pointer;
         }
 
         .row { display: flex; gap: 10px; }
@@ -61,7 +61,7 @@
         label { font-size: 10px; color: #888; font-weight: bold; display: block; }
         input { 
             width: 100%; background: transparent; border: none; 
-            font-size: 15px; font-weight: 600; font-family: monospace; 
+            font-size: 15px; font-weight: 600; font-family: monospace; color: #333;
         }
 
         .filled { background: #e8fce8; border-color: #34C759; }
@@ -78,12 +78,12 @@
     </div>
 
     <div class="form-box">
-        <button class="btn-scan" id="scan-action">SCANSIONA</button>
-        <div id="log" style="text-align:center; font-size:11px; color:#555; margin-bottom:5px;">In attesa camera...</div>
+        <button class="btn-scan" id="scan-action">SCATTA E ANALIZZA</button>
+        <div id="log" style="text-align:center; font-size:11px; color:#555; margin-bottom:5px;">Attiva la fotocamera</div>
 
-        <div class="field full"><label>TIPO</label><input type="text" value="CARTA D'IDENTITÀ" readonly></div>
+        <div class="field full"><label>TIPO DOCUMENTO</label><input type="text" value="CARTA D'IDENTITÀ" readonly></div>
         <div class="row">
-            <div class="field" id="c-doc"><label>NUMERO</label><input type="text" id="out-doc"></div>
+            <div class="field" id="c-doc"><label>NUMERO DOC</label><input type="text" id="out-doc"></div>
             <div class="field" id="c-cit"><label>CITTADINANZA</label><input type="text" id="out-cit"></div>
         </div>
         <div class="row">
@@ -106,70 +106,56 @@
         const log = document.getElementById('log');
         const canvas = document.getElementById('cvs');
 
-        // FUNZIONE AVVIO CAMERA UNIVERSALE
         async function startCamera(deviceId = null) {
             startBtn.style.display = 'none';
             log.innerText = "Avvio camera...";
-            
-            // Vincoli MINIMI per evitare blocchi
-            const constraints = {
-                video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" }
-            };
+            const constraints = { video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" } };
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 video.style.display = 'block';
-                log.innerText = "Camera attiva. Inquadra il retro.";
+                log.innerText = "Pronto. Centra il retro e premi il tasto blu.";
                 
-                // Popola il menu se ci sono più camere
                 const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(d => d.kind === 'videoinput');
-                
-                if (videoDevices.length > 1) {
+                const vDevs = devices.filter(d => d.kind === 'videoinput');
+                if (vDevs.length > 1) {
                     camSelect.style.display = 'block';
                     camSelect.innerHTML = "";
-                    videoDevices.forEach(d => {
+                    vDevs.forEach(d => {
                         const opt = document.createElement('option');
                         opt.value = d.deviceId;
-                        opt.text = d.label || `Camera ${camSelect.length + 1}`;
+                        opt.text = d.label || `Cam ${camSelect.length + 1}`;
                         camSelect.appendChild(opt);
                     });
-                    // Se l'utente cambia camera dal menu
                     camSelect.onchange = () => startCamera(camSelect.value);
                 }
-
             } catch (err) {
-                console.error(err);
-                alert("Errore Camera: " + err.message + "\nProva a cambiare browser o ricaricare.");
+                alert("Errore Camera: " + err.message);
                 startBtn.style.display = 'block';
-                startBtn.innerText = "RIPROVA";
             }
         }
-
         startBtn.addEventListener('click', () => startCamera());
 
-        // LOGICA SCANSIONE (V37 + V36 mixed)
         document.getElementById('scan-action').addEventListener('click', async () => {
-            log.innerText = "Elaborazione...";
+            log.innerText = "Analisi profonda...";
             const ctx = canvas.getContext('2d');
-            
-            // Dimensioni attuali video
             const w = video.videoWidth;
             const h = video.videoHeight;
             
-            if(w === 0) { alert("Attendi che il video appaia!"); return; }
+            if(w === 0) return;
 
-            // Ritaglio centrale
-            const cw = w * 0.90;
-            const ch = h * 0.35;
+            // Ritaglio
+            const cw = w * 0.95; // Più largo
+            const ch = h * 0.40; // Più alto
             const cx = (w - cw) / 2;
             const cy = (h - ch) / 2;
 
-            canvas.width = cw * 2; // Zoom digitale
+            canvas.width = cw * 2; 
             canvas.height = ch * 2;
             
-            ctx.filter = 'grayscale(100%) contrast(200%)';
+            // FILTRO AGGRESSIVO: Aumenta molto il contrasto per leggere il numero
+            ctx.filter = 'grayscale(100%) contrast(300%) brightness(110%)';
             ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
 
             try {
@@ -177,14 +163,14 @@
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
                 });
                 parseData(text);
-                log.innerText = "Finito.";
-            } catch (e) { log.innerText = "Errore OCR"; }
+                log.innerText = "Scansione terminata.";
+            } catch (e) { log.innerText = "Riprova."; }
         });
 
-        // Helpers
+        // Helpers di pulizia
         function fix(s, t) {
             if(!s) return "";
-            if(t==='N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4');
+            if(t==='N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
             if(t==='L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
             return s;
         }
@@ -197,12 +183,25 @@
 
         function parseData(raw) {
             const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
-            
-            // DOCUMENTO
+            console.log(lines);
+
+            // 1. NUMERO DOCUMENTO (LOGICA AGGRESSIVA)
+            // Cerchiamo C<IT... OPPURE direttamente il pattern CA50322TW
             let docRow = lines.find(l => (l.includes('IT') || l.includes('1T')) && l.includes('<') && l.match(/\d/));
+            
+            // Se non trova la riga standard, cerca qualsiasi riga con il pattern del documento (2L 5N 2L)
+            if (!docRow) {
+                docRow = lines.find(l => l.match(/[A-Z]{2}[0-9]{5}[A-Z]{2}/));
+            }
+
             if(docRow) {
+                // Tentativo 1: Standard CIE
                 let m = docRow.match(/IT([A-Z0-9]{9})/);
                 if(!m) m = docRow.match(/1T([A-Z0-9]{9})/);
+                
+                // Tentativo 2: Pattern Puro (se manca IT)
+                if(!m) m = docRow.match(/([A-Z]{2}[0-9]{5}[A-Z]{2})/);
+
                 if(m) {
                     let c = m[1];
                     let final = fix(c.substr(0,2),'L')+fix(c.substr(2,5),'N')+fix(c.substr(7,2),'L');
@@ -212,7 +211,7 @@
                 }
             }
 
-            // DATI
+            // 2. DATI, SESSO, SCADENZA
             let datRow = lines.find(l => l.match(/^\d{6}/) && (l.includes('M')||l.includes('F')));
             if(datRow) {
                 let dob = fix(datRow.substr(0,6), 'N');
@@ -233,7 +232,7 @@
                 }
             }
 
-            // NOME
+            // 3. NOME
             let nomRow = lines.find(l => l.includes('<<') && !l.includes('IT') && !l.match(/^\d/));
             if(nomRow) {
                 let p = nomRow.split('<<');
