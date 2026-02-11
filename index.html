@@ -2,139 +2,131 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner Pro V8 - Nitidezza Attiva</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Pro V9</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         :root { --blue: #007AFF; --green: #34C759; }
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #000; color: white; overflow: hidden; }
+        /* Rimosso overflow hidden: ora la pagina scorre */
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #f0f2f5; color: #1c1e21; overflow-y: auto; }
         
-        #camera-area { position: relative; width: 100vw; height: 50vh; background: #000; }
+        .camera-box { position: relative; width: 100%; height: 300px; background: #000; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Rettangolo di guida più sottile per non disturbare l'autofocus */
-        .guide-rect {
+        /* Mirino per aiutare l'utente a centrare il testo */
+        .reticolo {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80%; height: 55%; border: 2px solid var(--green); border-radius: 10px;
-            box-shadow: 0 0 0 2000px rgba(0,0,0,0.7); z-index: 10;
+            width: 80%; height: 60%; border: 2px solid var(--green); border-radius: 10px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); z-index: 5; pointer-events: none;
         }
 
-        .panel { background: white; color: #1c1e21; padding: 20px; border-radius: 25px 25px 0 0; margin-top: -20px; position: relative; z-index: 50; height: 55vh; overflow-y: auto; }
-        .btn-main { background: var(--blue); color: white; width: 100%; padding: 18px; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+        .container { padding: 20px; }
+        .btn-main { 
+            background: var(--blue); color: white; width: 100%; padding: 18px; 
+            border: none; border-radius: 12px; font-size: 18px; font-weight: bold; margin-bottom: 20px;
+        }
         
-        #status { text-align: center; font-weight: bold; color: var(--blue); margin-bottom: 10px; font-size: 14px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .full { grid-column: span 2; }
-        label { font-size: 10px; font-weight: bold; color: #8e8e93; text-transform: uppercase; }
-        input { width: 100%; padding: 10px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f2f2f7; }
-        
+        .form-group { margin-bottom: 15px; }
+        label { font-size: 11px; font-weight: bold; color: #8e8e93; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        input { 
+            width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; 
+            font-size: 16px; box-sizing: border-box; background: white; 
+        }
+
+        #status { text-align: center; color: var(--blue); font-weight: bold; margin-bottom: 15px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div id="camera-area">
-    <video id="video" autoplay playsinline></video>
-    <div class="guide-rect"></div>
-</div>
-
-<div class="panel">
-    <div id="status">INQUADRA E ATTENDI IL FUOCO</div>
-    <button class="btn-main" id="btn-snap">SCATTA (NITIDEZZA ALTA)</button>
-
-    <div class="grid">
-        <div><label>Cognome</label><input type="text" id="res-cognome"></div>
-        <div><label>Nome</label><input type="text" id="res-nome"></div>
-        <div class="full"><label>Nascita / Residenza</label><input type="text" id="res-extra"></div>
-        <div class="full"><label>N. Documento</label><input type="text" id="res-doc"></div>
+    <div class="camera-box" onclick="forceFocus()">
+        <video id="webcam" autoplay playsinline></video>
+        <div class="reticolo"></div>
     </div>
-</div>
 
-<canvas id="hidden-canvas"></canvas>
+    <div class="container">
+        <div id="status">Tocca il video per mettere a fuoco</div>
+        <button class="btn-main" id="snap">SCATTA E ANALIZZA</button>
 
-<script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('hidden-canvas');
-    const status = document.getElementById('status');
+        <div class="form-group"><label>Cognome</label><input type="text" id="c-cognome"></div>
+        <div class="form-group"><label>Nome</label><input type="text" id="c-nome"></div>
+        <div class="form-group"><label>Numero Documento</label><input type="text" id="c-doc"></div>
+        <div class="form-group"><label>Data di Nascita</label><input type="text" id="c-nascita"></div>
+        <div class="form-group"><label>Indirizzo/Residenza</label><input type="text" id="c-via"></div>
+    </div>
 
-    // Funzione per avviare la camera con Focus Continuo
-    async function startCamera() {
-        const constraints = {
-            video: {
-                facingMode: "environment",
-                width: { ideal: 4096 }, // Cerchiamo la risoluzione 4K se disponibile
-                height: { ideal: 2160 },
-                focusMode: "continuous" // Comando per autofocus continuo (supportato da alcuni browser Android)
+    <canvas id="proc-canvas"></canvas>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('proc-canvas');
+        const status = document.getElementById('status');
+
+        // Avvio Camera con impostazioni di nitidezza elevate
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment", width: { ideal: 1920 } } 
+        }).then(stream => { video.srcObject = stream; });
+
+        // Funzione per aiutare il fuoco: cliccando sul video il browser tenta di ricalibrare
+        function forceFocus() {
+            const track = video.srcObject.getVideoTracks()[0];
+            if (track.applyConstraints) {
+                track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
             }
-        };
+            status.innerText = "Messa a fuoco inviata...";
+        }
 
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            video.srcObject = stream;
+        document.getElementById('snap').addEventListener('click', async () => {
+            status.innerText = "ELABORAZIONE...";
+            const ctx = canvas.getContext('2d');
             
-            // Applichiamo un leggero zoom digitale via CSS per aiutare l'ottica a stabilizzarsi sul centro
-            video.style.transform = "scale(1.1)";
-        } catch (err) {
-            status.innerText = "ERRORE CAMERA - USA HTTPS";
-        }
-    }
+            // Impostiamo il canvas per catturare solo la zona nitida centrale
+            canvas.width = 1200;
+            canvas.height = 800;
 
-    document.getElementById('btn-snap').addEventListener('click', async () => {
-        status.innerText = "ELABORAZIONE NITIDEZZA...";
-        const ctx = canvas.getContext('2d');
+            // Filtro software per simulare la messa a fuoco (Sharpening)
+            ctx.filter = 'contrast(160%) grayscale(100%) brightness(110%)';
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Usiamo una risoluzione fissa alta per l'OCR
-        canvas.width = 1600;
-        canvas.height = 900;
-
-        // FILTRO NITIDEZZA (Sharpening)
-        // Aumentiamo il contrasto e riduciamo la luminosità per far "saltare fuori" le lettere
-        ctx.filter = 'contrast(200%) brightness(90%) grayscale(100%)';
-        
-        // Disegniamo solo la parte centrale del video (dove c'è il rettangolo verde)
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        try {
-            const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
-            parseData(text);
-            status.innerText = "ANALISI COMPLETATA!";
-        } catch (e) {
-            status.innerText = "ERRORE OCR";
-        }
-    });
-
-    function parseData(raw) {
-        const t = raw.toUpperCase();
-        console.log("OCR:", t);
-
-        // Estrazione Numero Doc
-        const doc = t.match(/[A-Z]{2}\s?\d{5}[A-Z]{2}/) || t.match(/[A-Z]{2}\s?\d{7}/);
-        if (doc) document.getElementById('res-doc').value = doc[0].replace(/\s/g, '');
-
-        // Estrazione Cognome/Nome (Pulizia GIULIAL -> GIULIA)
-        const lines = t.split('\n').map(l => l.trim());
-        lines.forEach((l, i) => {
-            if (l.includes("COGNOME")) {
-                let cognome = lines[i+1]?.split(' ')[0] || "";
-                document.getElementById('res-cognome').value = cognome.replace(/[^A-Z]/g, "");
-            }
-            if (l.includes("NOME")) {
-                let nome = lines[i+1]?.split(' ')[0] || "";
-                // Rimuove la L spuria finale se presente (es. GIULIAL -> GIULIA)
-                if (nome.endsWith('L') && nome.length > 4) nome = nome.slice(0, -1);
-                document.getElementById('res-nome').value = nome.replace(/[^A-Z]/g, "");
+            try {
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
+                processData(text);
+                status.innerText = "COMPLETATO!";
+            } catch (e) {
+                status.innerText = "ERRORE OCR";
             }
         });
 
-        // MRZ Retro
-        const mrz = t.replace(/\s/g, '').match(/([A-Z]+)<<([A-Z]+)/);
-        if (mrz) {
-            document.getElementById('res-cognome').value = mrz[1];
-            document.getElementById('res-nome').value = mrz[2];
-        }
-    }
+        function processData(raw) {
+            const t = raw.toUpperCase();
+            console.log("Analisi:", t);
 
-    startCamera();
-</script>
+            // Estrazione Nome/Cognome
+            const lines = t.split('\n').map(l => l.trim());
+            lines.forEach((l, i) => {
+                if (l.includes("COGNOME")) {
+                    let cognome = lines[i+1]?.split(' ')[0] || "";
+                    document.getElementById('c-cognome').value = cognome.replace(/[^A-Z]/g, "");
+                }
+                if (l.includes("NOME")) {
+                    let nome = lines[i+1]?.split(' ')[0] || "";
+                    if (nome.endsWith('L') && nome.length > 4) nome = nome.slice(0, -1);
+                    document.getElementById('c-nome').value = nome.replace(/[^A-Z]/g, "");
+                }
+            });
+
+            // Numero Documento
+            const doc = t.match(/[A-Z]{2}\d{5}[A-Z]{2}/) || t.match(/[A-Z]{2}\d{7}/);
+            if (doc) document.getElementById('c-doc').value = doc[0];
+
+            // Data Nascita
+            const date = t.match(/\d{2}.\d{2}.\d{4}/);
+            if (date) document.getElementById('c-nascita').value = date[0];
+            
+            // Residenza
+            const via = t.match(/(VIA|PIAZZA|CORSO|LUNGO).*?\d+/);
+            if (via) document.getElementById('c-via').value = via[0];
+        }
+    </script>
 </body>
 </html>
