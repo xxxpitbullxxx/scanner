@@ -3,189 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner ID Pro - Fronte/Retro</title>
+    <title>Scanner Professionale V5</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        :root { --blue: #007AFF; --green: #34C759; --red: #FF3B30; }
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #f0f2f5; padding-bottom: 40px; }
+        :root { --blue: #007AFF; --green: #34C759; }
+        body { font-family: sans-serif; margin: 0; background: #000; color: white; overflow-x: hidden; }
         
-        .header { position: relative; width: 100%; height: 35vh; background: #000; overflow: hidden; }
-        video, #preview-img { width: 100%; height: 100%; object-fit: contain; }
-        .guide { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 85%; height: 60%; border: 3px solid var(--green); border-radius: 12px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); z-index: 10; pointer-events: none;
+        /* Obbliga l'utente a capire l'orientamento */
+        @media screen and (orientation: portrait) {
+            #landscape-warning { display: flex; }
+        }
+        #landscape-warning {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 9999; color: white;
+            flex-direction: column; align-items: center; justify-content: center; text-align: center;
         }
 
-        .container { background: white; padding: 20px; border-radius: 25px 25px 0 0; margin-top: -20px; position: relative; z-index: 20; }
+        #camera-container { position: relative; width: 100vw; height: 50vh; background: #000; }
+        video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Selettore Fronte/Retro */
-        .mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
-        .mode-btn { flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 10px; background: white; font-weight: bold; cursor: pointer; }
-        .mode-btn.active { border-color: var(--blue); color: var(--blue); background: #eef6ff; }
+        /* Rettangolo di guida più preciso */
+        .guide-box {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 70%; height: 70%; border: 3px solid var(--green);
+            border-radius: 15px; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+            z-index: 10; pointer-events: none;
+        }
 
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        /* Effetto Flash allo scatto */
+        #flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; pointer-events: none; z-index: 100;
+        }
+
+        .panel { background: white; color: #333; padding: 15px; border-radius: 20px 20px 0 0; margin-top: -10px; position: relative; z-index: 50; }
+        .btn-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .btn-blue { background: var(--blue); color: white; }
         
-        #status { text-align: center; color: var(--blue); font-weight: bold; margin-bottom: 10px; min-height: 20px; }
-        
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .full { grid-column: span 2; }
-        label { font-size: 10px; font-weight: bold; color: #8e8e93; text-transform: uppercase; display: block; margin-bottom: 4px; }
-        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 15px; box-sizing: border-box; background: #f9f9f9; margin-bottom: 10px; }
+        label { font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+        
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <video id="video" autoplay playsinline></video>
-        <img id="preview-img" style="display:none">
-        <div class="guide"></div>
+<div id="landscape-warning">
+    <p style="font-size: 24px;">🔄</p>
+    <p>Ruota il telefono in ORIZZONTALE<br>per scannerizzare correttamente.</p>
+</div>
+
+<div id="flash"></div>
+
+<div id="camera-container">
+    <video id="video" autoplay playsinline></video>
+    <div class="guide-box"></div>
+</div>
+
+<div class="panel">
+    <div id="status" style="text-align: center; color: var(--blue); font-weight: bold; margin-bottom: 10px;">PRONTO</div>
+    
+    <div class="btn-row">
+        <button class="btn" id="btn-mode" style="background:#f0f0f0;" onclick="toggleSide()">MODALITÀ: FRONTE</button>
+        <button class="btn btn-blue" id="btn-snap">SCATTA ORA</button>
     </div>
 
-    <div class="container">
-        <div id="status">Seleziona lato e scatta</div>
+    <div class="input-grid">
+        <div><label>Cognome</label><input type="text" id="res-cognome"></div>
+        <div><label>Nome</label><input type="text" id="res-nome"></div>
+        <div><label>Nato il</label><input type="text" id="res-nascita"></div>
+        <div><label>Sesso</label><input type="text" id="res-sesso"></div>
+        <div class="full"><label>Residenza/Via</label><input type="text" id="res-via"></div>
+        <div class="full"><label>Documento n.</label><input type="text" id="res-doc"></div>
+    </div>
+</div>
 
-        <div class="mode-selector">
-            <button class="mode-btn active" id="mode-fronte" onclick="setMode('fronte')">FRONTE (Dati)</button>
-            <button class="mode-btn" id="mode-retro" onclick="setMode('retro')">RETRO (MRZ/Via)</button>
-        </div>
+<canvas id="canvas"></canvas>
 
-        <div class="btn-row">
-            <button class="btn btn-blue" id="btn-snap">SCATTA ORA</button>
-            <button class="btn" onclick="document.getElementById('file-in').click()">CARICA FILE</button>
-        </div>
+<script>
+    let mode = 'fronte';
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const status = document.getElementById('status');
+    const flash = document.getElementById('flash');
+
+    // Avvio camera con risoluzione alta
+    navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+    }).then(s => video.srcObject = s);
+
+    function toggleSide() {
+        mode = (mode === 'fronte') ? 'retro' : 'fronte';
+        document.getElementById('btn-mode').innerText = "MODALITÀ: " + mode.toUpperCase();
+        status.innerText = "Passato a " + mode;
+    }
+
+    document.getElementById('btn-snap').addEventListener('click', async () => {
+        // Feedback visivo (Flash)
+        flash.style.opacity = '1';
+        setTimeout(() => flash.style.opacity = '0', 100);
+
+        status.innerText = "ELABORAZIONE...";
+        const ctx = canvas.getContext('2d');
         
-        <input type="file" id="file-in" accept="image/*" capture="environment" style="display:none">
+        // Ritaglio preciso dell'area verde
+        const sw = video.videoWidth;
+        const sh = video.videoHeight;
+        
+        // Prendiamo il 70% centrale
+        const cw = sw * 0.7;
+        const ch = sh * 0.7;
+        const cx = (sw - cw) / 2;
+        const cy = (sh - ch) / 2;
 
-        <div class="grid">
-            <div><label>Cognome</label><input type="text" id="res-cognome"></div>
-            <div><label>Nome</label><input type="text" id="res-nome"></div>
-            <div><label>Nato il</label><input type="text" id="res-nascita"></div>
-            <div><label>Sesso</label><input type="text" id="res-sesso"></div>
-            <div class="full"><label>Luogo di Nascita</label><input type="text" id="res-luogo"></div>
-            <div class="full"><label>Indirizzo di Residenza</label><input type="text" id="res-via"></div>
-            <div><label>Comune</label><input type="text" id="res-comune"></div>
-            <div><label>N. Documento</label><input type="text" id="res-doc"></div>
-        </div>
-    </div>
+        canvas.width = cw;
+        canvas.height = ch;
 
-    <canvas id="hidden-canvas"></canvas>
+        // Filtro contrasto elevatissimo
+        ctx.filter = 'grayscale(100%) contrast(200%) brightness(110%)';
+        ctx.drawImage(video, cx, cy, cw, ch, 0, 0, cw, ch);
 
-    <script>
-        let currentMode = 'fronte';
-        const video = document.getElementById('video');
-        const previewImg = document.getElementById('preview-img');
-        const status = document.getElementById('status');
-        const canvas = document.getElementById('hidden-canvas');
-        const fileIn = document.getElementById('file-in');
-
-        // Attivazione fotocamera live
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280 } })
-                .then(s => video.srcObject = s)
-                .catch(e => {
-                    status.innerText = "Usa 'Carica File' per scattare";
-                    video.style.display = 'none';
-                });
+        try {
+            const result = await Tesseract.recognize(canvas, 'ita+eng');
+            parseData(result.data.text);
+            status.innerText = "COMPLETATO!";
+        } catch (e) {
+            status.innerText = "ERRORE OCR";
         }
-        startCamera();
+    });
 
-        function setMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('mode-' + mode).classList.add('active');
-            status.innerText = "Modalità: " + mode.toUpperCase();
+    function parseData(raw) {
+        const t = raw.toUpperCase();
+        console.log("OCR RAW:", t);
+
+        if (mode === 'retro') {
+            // Logica MRZ (Righe <<<<)
+            const clean = t.replace(/\s/g, '');
+            const mrz = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if (mrz) {
+                document.getElementById('res-cognome').value = mrz[1];
+                document.getElementById('res-nome').value = mrz[2];
+            }
+            // Indirizzo
+            const via = t.match(/(VIA|PIAZZA|CORSO|LUNGO).*?\d+/);
+            if (via) document.getElementById('res-via').value = via[0];
+        } else {
+            // Logica Fronte
+            const lines = t.split('\n').map(l => l.trim());
+            lines.forEach((l, i) => {
+                if (l.includes("COGNOME")) document.getElementById('res-cognome').value = lines[i+1]?.split(' ')[0] || "";
+                if (l.includes("NOME")) document.getElementById('res-nome').value = lines[i+1]?.split(' ')[0] || "";
+                const dataMatch = l.match(/\d{2}.\d{2}.\d{4}/);
+                if (dataMatch) document.getElementById('res-nascita').value = dataMatch[0];
+            });
         }
-
-        // Se "Scatta Ora" fallisce perché non c'è video, apre il selettore file
-        document.getElementById('btn-snap').addEventListener('click', () => {
-            if (video.srcObject) {
-                process(video);
-            } else {
-                fileIn.click();
-            }
-        });
-
-        fileIn.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                previewImg.src = ev.target.result;
-                previewImg.style.display = "block";
-                video.style.display = "none";
-                const img = new Image();
-                img.src = ev.target.result;
-                img.onload = () => process(img);
-            };
-            reader.readAsDataURL(file);
-        });
-
-        async function process(source) {
-            status.innerText = "Analisi " + currentMode + "...";
-            const ctx = canvas.getContext('2d');
-            canvas.width = source.videoWidth || source.width;
-            canvas.height = source.videoHeight || source.height;
-
-            // ELABORAZIONE SFORZATA
-            // Se retro, contrasto massimo per MRZ. Se fronte, bilanciamento per nomi.
-            if (currentMode === 'retro') {
-                ctx.filter = 'grayscale(100%) contrast(250%) brightness(120%)';
-            } else {
-                ctx.filter = 'grayscale(100%) contrast(180%) brightness(100%)';
-            }
-            
-            ctx.drawImage(source, 0, 0);
-
-            try {
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
-                extractData(text);
-            } catch (err) {
-                status.innerText = "Errore lettura";
-            }
-        }
-
-        function extractData(raw) {
-            const t = raw.toUpperCase();
-            console.log("Dati:", t);
-            const lines = t.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-
-            if (currentMode === 'retro') {
-                // LOGICA MRZ (FRECCETTE)
-                const clean = t.replace(/\s/g, '');
-                const mrz = clean.match(/([A-Z]+)<<([A-Z]+)/);
-                if (mrz) {
-                    document.getElementById('res-cognome').value = mrz[1];
-                    document.getElementById('res-nome').value = mrz[2];
-                }
-                // Residenza
-                lines.forEach((l, i) => {
-                    if (l.includes("VIA") || l.includes("PIAZZA") || l.includes("RESIDENZA")) {
-                        document.getElementById('res-via').value = (l.includes("VIA") ? l : lines[i+1]) || "";
-                        document.getElementById('res-comune').value = (lines[i+1]?.includes("(") ? lines[i+1] : lines[i+2])?.split('(')[0] || "";
-                    }
-                });
-            } else {
-                // LOGICA FRONTE
-                lines.forEach((l, i) => {
-                    if (l.includes("COGNOME")) document.getElementById('res-cognome').value = lines[i+1]?.split(' ')[0] || "";
-                    if (l.includes("NOME")) document.getElementById('res-nome').value = lines[i+1]?.split(' ')[0] || "";
-                    if (l.includes("DATA") || l.includes("NASCITA")) {
-                        const dt = l.match(/\d{2}.\d{2}.\d{4}/) || lines[i+1]?.match(/\d{2}.\d{2}.\d{4}/);
-                        if (dt) document.getElementById('res-nascita').value = dt[0];
-                    }
-                });
-            }
-
-            // Numero Documento (Sempre attivo)
-            const doc = t.replace(/\s/g, '').match(/[A-Z]{2}\d{5}[A-Z]{2}/) || t.replace(/\s/g, '').match(/ITA([A-Z0-9]{9})/);
-            if (doc) document.getElementById('res-doc').value = doc[1] || doc[0];
-
-            status.innerText = "Completato!";
-        }
-    </script>
+        
+        const doc = t.replace(/\s/g, '').match(/[A-Z]{2}\d{5}[A-Z]{2}/) || t.replace(/\s/g, '').match(/[A-Z]{2}\d{7}/);
+        if (doc) document.getElementById('res-doc').value = doc[0];
+    }
+</script>
 </body>
 </html>
