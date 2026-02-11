@@ -3,59 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner Integrale - Power Mode</title>
+    <title>Scanner ID - Deep Scan</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        html, body { background: #f4f4f9; margin: 0; padding: 0; overflow-y: auto !important; height: auto !important; }
-        .cam-wrap { position: relative; width: 100%; height: 350px; background: #000; }
+        body { font-family: sans-serif; margin: 0; background: #f0f2f5; overflow-y: auto !important; }
+        .camera-wrapper { position: relative; width: 100%; height: 350px; background: #000; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .guide { position: absolute; top: 10%; left: 5%; width: 90%; height: 80%; border: 3px solid #34C759; border-radius: 15px; box-shadow: 0 0 0 2000px rgba(0,0,0,0.5); pointer-events: none; z-index: 10; }
-        .panel { padding: 20px; }
-        .btn-work { background: #007AFF; color: white; width: 100%; padding: 20px; border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer; }
-        .field-group { margin-bottom: 15px; }
-        label { font-size: 12px; font-weight: bold; color: #666; display: block; margin-bottom: 5px; }
+        .guide-rect { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; height: 65%; border: 3px solid #34C759; border-radius: 15px;
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.6); z-index: 10; pointer-events: none;
+        }
+        .controls { padding: 20px; text-align: center; }
+        .btn-scan { background: #007AFF; color: white; width: 100%; padding: 20px; border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer; }
+        .results-area { padding: 20px; background: white; border-top: 1px solid #ddd; }
+        .input-box { margin-bottom: 15px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; }
         input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        #log-status { text-align: center; color: #007AFF; font-weight: bold; margin-bottom: 10px; }
-        canvas { display: none; }
+        #debug-canvas { width: 100%; border: 1px solid #000; margin-top: 10px; display: none; }
+        #status-msg { font-weight: bold; color: #007AFF; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="cam-wrap">
+    <div class="camera-wrapper">
         <video id="video" autoplay playsinline></video>
-        <div class="guide"></div>
+        <div class="guide-rect"></div>
     </div>
 
-    <div class="panel">
-        <div id="log-status">PUNTI IL DOCUMENTO E SCATTI</div>
-        <button class="btn-work" id="run-ocr">SCANSIONA ADESSO</button>
-
-        <div class="field-group"><label>Cognome</label><input type="text" id="r-cognome"></div>
-        <div class="field-group"><label>Nome</label><input type="text" id="r-nome"></div>
-        <div class="field-group"><label>Numero Documento</label><input type="text" id="r-doc"></div>
-        <div class="field-group"><label>Dati MRZ (Retro)</label><input type="text" id="r-mrz"></div>
+    <div class="controls">
+        <div id="status-msg">Inquadra il documento</div>
+        <button class="btn-scan" id="start-ocr">SCANSIONA (B&W MODE)</button>
+        <canvas id="debug-canvas"></canvas>
     </div>
 
-    <canvas id="big-canvas"></canvas>
+    <div class="results-area">
+        <div class="input-box"><label>Cognome</label><input type="text" id="out-cognome"></div>
+        <div class="input-box"><label>Nome</label><input type="text" id="out-nome"></div>
+        <div class="input-box"><label>N. Documento</label><input type="text" id="out-doc"></div>
+        <div class="input-box"><label>Residenza</label><input type="text" id="out-res"></div>
+    </div>
 
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('big-canvas');
-        const log = document.getElementById('log-status');
+        const canvas = document.getElementById('debug-canvas');
+        const msg = document.getElementById('status-msg');
 
+        // Avvio camera
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280 } })
-        .then(s => video.srcObject = s);
+            .then(stream => video.srcObject = stream);
 
-        document.getElementById('run-ocr').addEventListener('click', async () => {
-            log.innerText = "ANALISI PROFONDA...";
+        document.getElementById('start-ocr').addEventListener('click', async () => {
+            msg.innerText = "ELABORAZIONE BIANCO E NERO...";
             const ctx = canvas.getContext('2d');
             
-            // SUPER-RISOLUZIONE: Ingrandiamo l'immagine di 3 volte per l'OCR
-            canvas.width = 2500;
-            canvas.height = 1800;
+            // 1. AUMENTO RISOLUZIONE (Upscaling)
+            canvas.width = 2000; 
+            canvas.height = 1400;
+            canvas.style.display = "block"; // Mostriamo il canvas così vedi se l'immagine è dritta
 
-            // ROTAZIONE E SCALING
-            // Se il video è verticale, lo ruotiamo nel canvas per leggere orizzontale
+            // 2. ROTAZIONE SOFTWARE & CROP
             ctx.save();
             if (video.videoHeight > video.videoWidth) {
                 ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -66,42 +73,47 @@
             }
             ctx.restore();
 
-            // FILTRO ESTREMO: Bianco e nero puro (Soglia)
-            ctx.filter = 'contrast(250%) grayscale(100%) brightness(100%)';
-            ctx.drawImage(canvas, 0, 0); // Riapplica il filtro su se stesso
+            // 3. FILTRO BIANCO E NERO ESTREMO (Thresholding)
+            // Questo filtro elimina i colori e lascia solo testo nero su fondo bianco
+            ctx.filter = 'threshold(0.5) grayscale(100%) contrast(300%) brightness(100%)';
+            ctx.drawImage(canvas, 0, 0);
+
+            msg.innerText = "LETTURA TESTO...";
 
             try {
-                // Esecuzione OCR forzata
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
-                processData(text);
-                log.innerText = "SCANSIONE COMPLETATA!";
-            } catch (e) { log.innerText = "ERRORE OCR"; }
+                processOutput(text);
+                msg.innerText = "COMPLETATO!";
+            } catch (e) {
+                msg.innerText = "ERRORE!";
+            }
         });
 
-        function processData(raw) {
+        function processOutput(raw) {
             const t = raw.toUpperCase();
-            console.log("OCR:", t);
-            
-            // Pulizia e ricerca MRZ (Zona con <<<<)
-            const clean = t.replace(/\s/g, '');
-            const mrz = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if (mrz) {
-                document.getElementById('r-cognome').value = mrz[1];
-                document.getElementById('r-nome').value = mrz[2];
-                document.getElementById('r-mrz').value = mrz[0];
-            }
+            console.log("TESTO ESTRATTO:", t);
 
-            // Ricerca Documento
+            // Estrazione Numero Doc
             const doc = t.match(/[A-Z]{2}\s?\d{5}[A-Z]{2}/) || t.match(/[A-Z]{2}\s?\d{7}/);
-            if (doc) document.getElementById('r-doc').value = doc[0].replace(/\s/g, '');
+            if (doc) document.getElementById('out-doc').value = doc[0].replace(/\s/g, '');
 
-            // Fallback per Nomi se MRZ fallisce
-            if (!mrz) {
-                const lines = t.split('\n');
-                lines.forEach((l, i) => {
-                    if (l.includes("COGNOME")) document.getElementById('r-cognome').value = lines[i+1]?.split(' ')[0] || "";
-                    if (l.includes("NOME")) document.getElementById('r-nome').value = lines[i+1]?.split(' ')[0] || "";
-                });
+            // Estrazione Cognome e Nome
+            const lines = t.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+            lines.forEach((l, i) => {
+                if (l.includes("COGNOME")) document.getElementById('out-cognome').value = lines[i+1]?.split(' ')[0] || "";
+                if (l.includes("NOME")) {
+                    let n = lines[i+1]?.split(' ')[0] || "";
+                    if (n.endsWith('L') && n.length > 4) n = n.slice(0, -1);
+                    document.getElementById('out-nome').value = n;
+                }
+                if (l.includes("VIA") || l.includes("PIAZZA")) document.getElementById('out-res').value = l;
+            });
+
+            // MRZ (Retro)
+            const mrz = t.replace(/\s/g, '').match(/([A-Z]+)<<([A-Z]+)/);
+            if (mrz) {
+                document.getElementById('res-cognome').value = mrz[1];
+                document.getElementById('res-nome').value = mrz[2];
             }
         }
     </script>
