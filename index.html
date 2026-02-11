@@ -17,7 +17,16 @@
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Mirino Ciano Tecnico */
+        /* BADGE VERSIONE: Se non vedi questo, sei sulla cache vecchia */
+        .version-badge {
+            position: absolute; top: 10px; left: 10px; z-index: 100;
+            background: rgba(0, 0, 0, 0.8); color: #00E0FF;
+            padding: 5px 10px; border: 1px solid #00E0FF; border-radius: 4px;
+            font-size: 12px; font-weight: bold; font-family: monospace;
+            pointer-events: none;
+        }
+
+        /* Mirino per MRZ */
         .guide { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
             width: 95%; height: 25%; 
@@ -33,7 +42,7 @@
             text-shadow: 0 1px 2px black;
         }
 
-        /* Pannello controlli scuro e fisso */
+        /* Pannello controlli */
         .panel { 
             height: 40vh; background: #121212; 
             border-top: 2px solid #333;
@@ -53,7 +62,6 @@
             background: #1E1E1E; padding: 12px; margin-bottom: 8px; border-radius: 6px;
             border-left: 4px solid #555;
         }
-        /* Stile verde successo */
         .result-row.ok { border-left-color: #32d74b; background: #1a2e1e; }
 
         .lbl { font-size: 11px; color: #888; font-weight: bold; }
@@ -64,6 +72,8 @@
     </style>
 </head>
 <body>
+
+    <div class="version-badge">V36 - ANCHOR LOCK</div>
 
     <div class="cam-view">
         <video id="webcam" autoplay playsinline></video>
@@ -101,10 +111,9 @@
         }).then(s => video.srcObject = s);
 
         document.getElementById('btn-snap').addEventListener('click', async () => {
-            log.innerText = "Analisi Anchor Lock...";
+            log.innerText = "Analisi V36...";
             const ctx = canvas.getContext('2d');
             
-            // Ritaglio che combacia col mirino ciano
             const vw = video.videoWidth;
             const vh = video.videoHeight;
             const cw = vw * 0.95; 
@@ -112,11 +121,9 @@
             const cx = (vw - cw) / 2;
             const cy = (vh * 0.40) - (ch / 2);
 
-            // Zoom 2x per massima nitidezza
             canvas.width = cw * 2;
             canvas.height = ch * 2;
             
-            // Filtro Binarizzato
             ctx.filter = 'grayscale(100%) contrast(300%)';
             ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
 
@@ -125,11 +132,10 @@
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
                 });
                 parseV36(text);
-                log.innerText = "Scan terminato";
+                log.innerText = "Finito";
             } catch (e) { log.innerText = "Errore OCR"; }
         });
 
-        // Correzione CIE (Lettere vs Numeri)
         function fix(s, type) {
             if(!s) return "";
             if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
@@ -140,8 +146,7 @@
         function parseV36(raw) {
             const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
             
-            // 1. NUMERO DOCUMENTO (LOGICA "ANCHOR LOCK")
-            // Cerca ESPLICITAMENTE "ITA", "1TA" o "IT4"
+            // 1. ANCHOR LOCK (Cerca ITA)
             let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA') || l.includes('IT4')) && l.length > 10);
             
             let foundDoc = false;
@@ -149,7 +154,6 @@
                 let anchor = docLine.match(/(ITA|1TA|IT4)/);
                 if (anchor) {
                     let idx = anchor.index;
-                    // Prendi i 9 caratteri SUBITO DOPO l'ancora
                     let rawCode = docLine.substr(idx + 3, 9);
                     
                     if (rawCode.length === 9) {
@@ -158,7 +162,6 @@
                         let p3 = fix(rawCode.substr(7,2), 'L');
                         let finalCode = p1 + p2 + p3;
 
-                        // VALIDAZIONE: Deve rispettare LL NNNNN LL
                         if(finalCode.match(/^[A-Z]{2}\d{5}[A-Z]{2}$/)) {
                             document.getElementById('out-doc').innerText = finalCode;
                             document.getElementById('row-doc').classList.add('ok');
@@ -172,7 +175,7 @@
                 document.getElementById('row-doc').classList.remove('ok');
             }
 
-            // 2. DATA DI NASCITA
+            // 2. DATA
             let dateLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
             if (dateLine) {
                 let dobRaw = fix(dateLine.substr(0, 6), 'N');
