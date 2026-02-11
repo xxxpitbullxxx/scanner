@@ -3,120 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner ID V28 - Ghost Filter</title>
+    <title>Scanner ID V29 - Sniper Scope</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #f8f9fa; padding-bottom: 60px; overflow-y: auto !important; }
-        .cam-frame { position: relative; width: 100%; height: 320px; background: #000; overflow: hidden; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #000; color: white; overflow: hidden; }
+        
+        /* Area Camera a tutto schermo */
+        .cam-area { position: relative; width: 100vw; height: 60vh; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        /* Mirino ultra-selettivo */
-        .ghost-guide { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            width: 85%; height: 35%; border: 4px solid #007AFF; border-radius: 10px; 
-            box-shadow: 0 0 0 2000px rgba(0,0,0,0.85); z-index: 5; pointer-events: none; 
+
+        /* MIRINO DI PRECISIONE (SNIPER) */
+        /* È stretto e lungo, serve solo per la riga MRZ */
+        .sniper-guide { 
+            position: absolute; 
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 90%; 
+            height: 15%; /* Molto sottile per prendere SOLO la riga */
+            border: 3px solid #ff3b30; /* Rosso per alta visibilità */
+            border-radius: 8px; 
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.9); /* Oscura tutto il resto */
+            z-index: 10;
         }
-        .ui-panel { padding: 20px; }
-        .btn-ghost { 
-            background: #007AFF; color: white; width: 100%; padding: 20px; 
-            border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,122,255,0.4);
+
+        /* Linea centrale per aiutare l'allineamento */
+        .sniper-line {
+            position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
+            background: rgba(255, 59, 48, 0.5);
         }
-        .data-card { background: white; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
-        .field { margin-bottom: 15px; }
-        label { display: block; font-size: 10px; font-weight: 800; color: #adb5bd; text-transform: uppercase; margin-bottom: 5px; }
-        input { width: 100%; padding: 14px; border: 1px solid #dee2e6; border-radius: 10px; font-size: 18px; font-weight: bold; box-sizing: border-box; background: #fff; color: #212529; }
-        #log-ghost { font-family: monospace; font-size: 11px; color: #dc3545; background: #fff; padding: 10px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; }
+
+        .controls { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 40vh; 
+            background: white; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; 
+            color: #333; display: flex; flex-direction: column; align-items: center;
+        }
+
+        .btn-fire { 
+            background: #ff3b30; color: white; width: 100%; padding: 18px; 
+            border: none; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer;
+            margin-bottom: 20px; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+        }
+
+        .result-box { width: 100%; text-align: left; }
+        label { font-size: 10px; font-weight: 800; color: #888; text-transform: uppercase; }
+        input { 
+            width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px;
+            border: 2px solid #ddd; border-radius: 8px; font-size: 22px; 
+            font-weight: bold; text-align: center; letter-spacing: 2px;
+        }
+        
+        /* Se valido diventa verde */
+        input.valid { border-color: #34C759; color: #34C759; background: #f0fff4; }
+
+        #debug { font-size: 10px; color: #aaa; margin-top: 10px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="cam-frame">
+    <div class="cam-area">
         <video id="webcam" autoplay playsinline></video>
-        <div class="ghost-guide"></div>
-    </div>
-
-    <div class="ui-panel">
-        <div id="status-msg" style="text-align:center; font-weight:bold; color:#007AFF; margin-bottom:12px;">FILTRO GHOST ATTIVO</div>
-        <button class="btn-ghost" id="btn-scan">SCANSIONE GHOST FILTER</button>
-
-        <div class="data-card">
-            <div class="field"><label>Cognome</label><input type="text" id="res-cog"></div>
-            <div class="field"><label>Nome</label><input type="text" id="res-nom"></div>
-            <div class="field"><label>N. Documento (Geometria CIE)</label><input type="text" id="res-doc" style="border-color: #007AFF; color: #007AFF; background: #f0f7ff;"></div>
+        <div class="sniper-guide">
+            <div class="sniper-line"></div>
         </div>
-
-        <div id="log-ghost">Inquadra la riga MRZ (<<<<) su sfondo neutro.</div>
     </div>
 
-    <canvas id="canvas-ghost"></canvas>
+    <div class="controls">
+        <div id="status" style="margin-bottom: 10px; font-weight: bold; color: #ff3b30;">CENTRA SOLO LA RIGA "<<<"</div>
+        <button class="btn-fire" id="snap-btn">CATTURA MRZ</button>
+
+        <div class="result-box">
+            <label>Numero Documento Rilevato</label>
+            <input type="text" id="doc-result" placeholder="In attesa..." readonly>
+        </div>
+        <div id="debug">Ready.</div>
+    </div>
+
+    <canvas id="crop-canvas"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
-        const canvas = document.getElementById('canvas-ghost');
-        const log = document.getElementById('log-ghost');
-        const status = document.getElementById('status-msg');
+        const canvas = document.getElementById('crop-canvas');
+        const docInput = document.getElementById('doc-result');
+        const status = document.getElementById('status');
+        const debug = document.getElementById('debug');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
-            .then(s => { video.srcObject = s; });
+        // Avvio Camera 
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+        }).then(stream => { video.srcObject = stream; });
 
-        document.getElementById('btn-scan').addEventListener('click', async () => {
-            status.innerText = "ISOLAMENTO...";
+        document.getElementById('snap-btn').addEventListener('click', async () => {
+            status.innerText = "ELABORAZIONE...";
+            docInput.value = "";
+            docInput.classList.remove('valid');
+
             const ctx = canvas.getContext('2d');
-            canvas.width = 1600;
-            canvas.height = 800;
+            
+            // Calcoliamo le dimensioni reali del video rispetto allo schermo
+            const videoW = video.videoWidth;
+            const videoH = video.videoHeight;
+            
+            // Il mirino è al centro, largo 90% e alto 15%
+            // Dobbiamo ritagliare ESATTAMENTE quella porzione dal video originale
+            const cropW = videoW * 0.80; // Margine di sicurezza
+            const cropH = videoH * 0.15;
+            const cropX = (videoW - cropW) / 2;
+            const cropY = (videoH - cropH) / 2;
 
-            // FILTRO GHOST: Contrast estremo + binarizzazione per eliminare ombre
-            ctx.filter = 'grayscale(100%) contrast(450%) brightness(100%)';
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.width = cropW;
+            canvas.height = cropH;
+
+            // Filtro Estremo: Solo Bianco e Nero puro
+            ctx.filter = 'grayscale(100%) contrast(300%)';
+            
+            // Disegniamo solo la strisciolina centrale
+            ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
             try {
-                const result = await Tesseract.recognize(canvas, 'ita+eng', {
-                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Ghost Engine: " + (m.progress * 100).toFixed(0) + "%"; }
+                // Whitelist: diciamo a Tesseract di cercare SOLO lettere maiuscole e numeri e il simbolo <
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+                    logger: m => debug.innerText = `Scan: ${Math.round(m.progress * 100)}%`
                 });
 
-                processV28(result.data.text);
-                status.innerText = "DATI PULITI";
-            } catch (err) {
-                log.innerText = "Errore: " + err;
+                analyzeSniperData(text);
+            } catch (e) {
+                status.innerText = "ERRORE TECNICO";
             }
         });
 
-        // GEOMETRIA CIE: Forza CA50322TW (LL NNNNN LL)
-        function ghostFix(d) {
-            let s = d.replace(/[^A-Z0-9]/g, '');
-            if (s.length < 9) return s;
-            s = s.substring(0, 9);
+        function fixCIE(str) {
+            // Correzione forzata: LL NNNNN LL
             let res = "";
-            for (let i = 0; i < 9; i++) {
-                let c = s[i];
-                if ([0, 1, 7, 8].includes(i)) {
-                    res += c.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z').replace(/3/g, 'B');
-                } else {
-                    res += c.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2').replace(/B/g, '8').replace(/T/g, '7').replace(/A/g, '4');
+            for(let i=0; i<Math.min(9, str.length); i++) {
+                let c = str[i];
+                if ([0,1,7,8].includes(i)) { // Lettere
+                    res += c.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+                } else { // Numeri
+                    res += c.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/A/g,'4');
                 }
             }
             return res;
         }
 
-        function processV28(raw) {
-            const t = raw.toUpperCase();
-            const clean = t.replace(/\s/g, '');
+        function analyzeSniperData(raw) {
+            console.log("Raw:", raw);
+            const clean = raw.replace(/\s/g, '');
             
-            // Priorità MRZ (Retro)
-            const mrzMatch = clean.match(/C<IT([A-Z0-9]{9})/);
-            if (mrzMatch) {
-                document.getElementById('res-doc').value = ghostFix(mrzMatch[1]);
-            }
+            // Cerchiamo il pattern specifico: CA50322TW
+            // Pattern 1: Troviamo "ITA" seguito da 9 caratteri
+            let match = clean.match(/ITA([A-Z0-9]{9})/);
+            
+            // Pattern 2: Troviamo 2 lettere, 5 numeri, 2 lettere (anche senza ITA)
+            if (!match) match = clean.match(/[A-Z]{2}[0-9]{5}[A-Z]{2}/);
+            
+            // Pattern 3: C<IT...
+            if (!match) match = clean.match(/C<IT([A-Z0-9]{9})/);
 
-            const nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if (nameMatch) {
-                document.getElementById('res-cog').value = nameMatch[1];
-                document.getElementById('res-nom').value = nameMatch[2];
-            }
-            
-            if (!document.getElementById('res-doc').value) {
-                const docFallback = t.match(/[A-Z0-9]{2}\s?[0-9A-Z]{5}\s?[A-Z0-9]{2}/);
-                if (docFallback) document.getElementById('res-doc').value = ghostFix(docFallback[0].replace(/\s/g, ''));
+            if (match) {
+                let found = match[1] || match[0];
+                // Pulizia finale
+                let finalCode = fixCIE(found);
+                
+                docInput.value = finalCode;
+                docInput.classList.add('valid');
+                status.innerText = "DOCUMENTO IDENTIFICATO";
+                status.style.color = "#34C759";
+            } else {
+                status.innerText = "NESSUN DATO VALIDO - RIPROVA";
+                debug.innerText = "Letto: " + raw.substring(0, 15) + "...";
             }
         }
     </script>
