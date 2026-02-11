@@ -3,154 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner ID V27 - NATIVE</title>
+    <title>Scanner ID V27 - Final Polish</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #f2f2f7; padding: 20px; }
-        
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        
-        h2 { text-align: center; color: #333; margin-top: 0; }
-        
-        /* Nascondiamo l'input file brutto */
-        #native-cam { display: none; }
-        
-        /* Bottone Gigante */
-        .btn-big {
-            display: block; width: 100%; padding: 20px; 
-            background: #007AFF; color: white; font-size: 20px; font-weight: bold; 
-            text-align: center; border-radius: 15px; cursor: pointer; border: none;
-            box-shadow: 0 4px 10px rgba(0,122,255,0.3); margin-bottom: 20px;
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #f4f7f9; padding-bottom: 60px; overflow-y: auto !important; }
+        .cam-frame { position: relative; width: 100%; height: 320px; background: #000; overflow: hidden; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .polish-guide { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 85%; height: 40%; border: 4px solid #34C759; border-radius: 12px; 
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.8); z-index: 5; pointer-events: none; 
         }
-        
-        .preview-box {
-            width: 100%; height: 250px; background: #eee; border-radius: 10px; 
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
-            margin-bottom: 20px; border: 2px dashed #ccc;
+        .ui-panel { padding: 20px; }
+        .btn-polish { 
+            background: #007AFF; color: white; width: 100%; padding: 20px; 
+            border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer;
         }
-        
-        #preview-img { max-width: 100%; max-height: 100%; display: none; }
-        
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 11px; font-weight: 800; color: #888; text-transform: uppercase; margin-bottom: 5px; }
-        input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-weight: 600; box-sizing: border-box; }
-        
-        #log { font-family: monospace; font-size: 11px; color: #ff3b30; text-align: center; min-height: 20px; }
+        .data-card { background: white; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
+        .field { margin-bottom: 15px; }
+        label { display: block; font-size: 10px; font-weight: 800; color: #a0a0a0; text-transform: uppercase; margin-bottom: 5px; }
+        input { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 18px; font-weight: bold; box-sizing: border-box; background: #fdfdfd; color: #333; }
+        #log-polish { font-family: monospace; font-size: 11px; color: #ff3b30; background: #fff; padding: 10px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Scanner CIE Nativo</h2>
-    
-    <div class="preview-box">
-        <span id="placeholder">La foto apparirà qui</span>
-        <img id="preview-img" alt="Anteprima">
+    <div class="cam-frame">
+        <video id="webcam" autoplay playsinline></video>
+        <div class="polish-guide"></div>
     </div>
 
-    <label for="native-cam" class="btn-big">📸 APRI FOTOCAMERA</label>
-    <input type="file" id="native-cam" accept="image/*" capture="environment">
+    <div class="ui-panel">
+        <div id="status-msg" style="text-align:center; font-weight:bold; color:#34C759; margin-bottom:12px;">PULIZIA DATI ATTIVA</div>
+        <button class="btn-polish" id="btn-scan">SCANSIONE FINALE</button>
 
-    <div id="log">In attesa di foto...</div>
+        <div class="data-card">
+            <div class="field"><label>Cognome</label><input type="text" id="res-cog"></div>
+            <div class="field"><label>Nome</label><input type="text" id="res-nom"></div>
+            <div class="field"><label>Numero Documento (Ricostruito)</label><input type="text" id="res-doc" style="border-color: #007AFF; color: #007AFF; background: #f0f7ff;"></div>
+        </div>
 
-    <div class="input-group"><label>Cognome</label><input type="text" id="res-cognome"></div>
-    <div class="input-group"><label>Nome</label><input type="text" id="res-nome"></div>
-    <div class="input-group"><label>Numero Documento</label><input type="text" id="res-doc" style="color: #007AFF;"></div>
-</div>
+        <div id="log-polish">Inquadra solo la riga MRZ (<<<<) del RETRO.</div>
+    </div>
 
-<canvas id="proc-canvas" style="display:none;"></canvas>
+    <canvas id="canvas-polish"></canvas>
 
-<script>
-    const fileInput = document.getElementById('native-cam');
-    const preview = document.getElementById('preview-img');
-    const placeholder = document.getElementById('placeholder');
-    const log = document.getElementById('log');
-    const canvas = document.getElementById('proc-canvas');
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas-polish');
+        const log = document.getElementById('log-polish');
+        const status = document.getElementById('status-msg');
 
-    fileInput.addEventListener('change', function(e) {
-        if (e.target.files.length === 0) return;
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
+            .then(s => { video.srcObject = s; });
 
-        const file = e.target.files[0];
-        const reader = new FileReader();
+        document.getElementById('btn-scan').addEventListener('click', async () => {
+            status.innerText = "RICOSTRUZIONE...";
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1600;
+            canvas.height = 800;
 
-        log.innerText = "Caricamento foto...";
+            // Filtro di pulizia profonda
+            ctx.filter = 'grayscale(100%) contrast(350%) brightness(110%)';
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                // Mostra anteprima
-                preview.src = img.src;
-                preview.style.display = 'block';
-                placeholder.style.display = 'none';
-                
-                // Avvia elaborazione
-                processImage(img);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
+            try {
+                const result = await Tesseract.recognize(canvas, 'ita+eng', {
+                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Polish Engine: " + (m.progress * 100).toFixed(0) + "%"; }
+                });
 
-    async function processImage(imgSource) {
-        log.innerText = "Ottimizzazione immagine...";
-        const ctx = canvas.getContext('2d');
-        
-        // Ridimensioniamo se troppo grande (max 2000px larghezza) per non bloccare il telefono
-        const ratio = Math.min(2000 / imgSource.width, 1);
-        canvas.width = imgSource.width * ratio;
-        canvas.height = imgSource.height * ratio;
+                processV27(result.data.text);
+                status.innerText = "ACQUISITO";
+            } catch (err) {
+                log.innerText = "Errore: " + err;
+            }
+        });
 
-        // Applichiamo filtro B/N per aiutare l'OCR
-        ctx.filter = 'grayscale(100%) contrast(200%)';
-        ctx.drawImage(imgSource, 0, 0, canvas.width, canvas.height);
-
-        log.innerText = "Lettura dati in corso (attendi)...";
-
-        try {
-            const result = await Tesseract.recognize(canvas, 'ita+eng');
-            log.innerText = "Dati estratti!";
-            parseData(result.data.text);
-        } catch (err) {
-            log.innerText = "Errore: " + err;
-        }
-    }
-
-    // Solita logica di correzione CIE (2 Lettere, 5 Numeri, 2 Lettere)
-    function fixCIE(str) {
-        let s = str.replace(/[^A-Z0-9]/g, '');
-        if (s.length < 9) return s;
-        s = s.substring(0, 9);
-        let res = "";
-        for (let i = 0; i < 9; i++) {
-            let c = s[i];
-            if ([0, 1, 7, 8].includes(i)) res += c.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/3/g,'B');
-            else res += c.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'3').replace(/T/g,'7');
-        }
-        return res;
-    }
-
-    function parseData(text) {
-        const t = text.toUpperCase();
-        const clean = t.replace(/\s/g, '');
-        console.log(t);
-
-        // 1. Cerca MRZ (Retro)
-        const mrz = clean.match(/C<IT([A-Z0-9]{9})/);
-        if (mrz) document.getElementById('res-doc').value = fixCIE(mrz[1]);
-
-        // 2. Cerca Nomi
-        const names = clean.match(/([A-Z]+)<<([A-Z]+)/);
-        if (names) {
-            document.getElementById('res-cognome').value = names[1];
-            document.getElementById('res-nome').value = names[2];
+        function polishFix(d) {
+            let s = d.replace(/[^A-Z0-9]/g, '');
+            if (s.length < 9) return s;
+            s = s.substring(0, 9);
+            let res = "";
+            for (let i = 0; i < 9; i++) {
+                let c = s[i];
+                if ([0, 1, 7, 8].includes(i)) {
+                    res += c.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z').replace(/3/g, 'B');
+                } else {
+                    res += c.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2').replace(/B/g, '8').replace(/T/g, '7').replace(/A/g, '4');
+                }
+            }
+            return res;
         }
 
-        // 3. Fallback Documento (Fronte)
-        if (!document.getElementById('res-doc').value) {
-            const docPat = t.match(/[A-Z0-9]{2}\s?[0-9A-Z]{5}\s?[A-Z0-9]{2}/);
-            if (docPat) document.getElementById('res-doc').value = fixCIE(docPat[0].replace(/\s/g,''));
+        function processV27(raw) {
+            const t = raw.toUpperCase();
+            const clean = t.replace(/\s/g, '');
+            
+            const mrzMatch = clean.match(/C<IT([A-Z0-9]{9})/) || clean.match(/IT([A-Z0-9]{9})/);
+            if (mrzMatch) {
+                document.getElementById('res-doc').value = polishFix(mrzMatch[1]);
+            }
+
+            const nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if (nameMatch) {
+                document.getElementById('res-cog').value = nameMatch[1];
+                document.getElementById('res-nom').value = nameMatch[2];
+            }
+            
+            if (!document.getElementById('res-doc').value) {
+                const docFallback = t.match(/[A-Z0-9]{2}\s?[0-9A-Z]{5}\s?[A-Z0-9]{2}/);
+                if (docFallback) document.getElementById('res-doc').value = polishFix(docFallback[0].replace(/\s/g, ''));
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
