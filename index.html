@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V36 - Anchor Lock</title>
+    <title>Scanner V41 - Anchor Max</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { 
@@ -17,49 +17,48 @@
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Mirino per MRZ (stretto e lungo) */
+        /* Mirino V36 Originale */
         .guide { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
             width: 95%; height: 25%; 
-            border: 3px solid #00E0FF; /* Ciano Tecnico: Alta visibilità */
+            border: 3px solid #00E0FF; 
             border-radius: 6px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.85);
             z-index: 10;
         }
-        /* Istruzione visiva direttamente sul mirino */
         .guide::after {
-            content: "CENTRA LA SCRITTA 'ITA...'";
+            content: "CENTRA LA RIGA 'C<ITA...'";
             position: absolute; bottom: -25px; width: 100%; text-align: center;
             color: #00E0FF; font-size: 12px; font-weight: bold; letter-spacing: 1px;
             text-shadow: 0 1px 2px black;
         }
 
-        /* Pannello controlli FISSO in basso */
+        /* Pannello controlli FISSO */
         .panel { 
-            height: 40vh; background: #121212; 
+            height: 45vh; background: #121212; 
             border-top: 2px solid #333;
             display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
-            z-index: 20; color: white;
+            z-index: 20; color: white; overflow-y: auto; /* Abilita scroll se i dati sono tanti */
         }
 
         .btn-scan { 
             background: #00E0FF; color: #000; width: 100%; padding: 16px; 
             border: none; border-radius: 8px; font-size: 18px; font-weight: 800; 
-            text-transform: uppercase; cursor: pointer; margin-bottom: 20px;
+            text-transform: uppercase; cursor: pointer; margin-bottom: 20px; flex-shrink: 0;
         }
         .btn-scan:active { opacity: 0.8; }
 
         .result-row { 
             display: flex; justify-content: space-between; align-items: center;
-            background: #1E1E1E; padding: 12px; margin-bottom: 8px; border-radius: 6px;
+            background: #1E1E1E; padding: 10px; margin-bottom: 6px; border-radius: 6px;
             border-left: 4px solid #555;
         }
         .result-row.ok { border-left-color: #32d74b; background: #1a2e1e; }
 
-        .lbl { font-size: 11px; color: #888; font-weight: bold; }
-        .val { font-size: 16px; font-family: monospace; font-weight: bold; letter-spacing: 1px; }
+        .lbl { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; }
+        .val { font-size: 15px; font-family: monospace; font-weight: bold; letter-spacing: 1px; }
 
-        #debug-log { font-size: 10px; color: #555; text-align: center; margin-top: auto; }
+        #debug-log { font-size: 10px; color: #555; text-align: center; margin-top: 10px; }
         canvas { display: none; }
     </style>
 </head>
@@ -80,6 +79,14 @@
         <div class="result-row" id="row-dob">
             <span class="lbl">NASCITA</span>
             <span class="val" id="out-dob">---</span>
+        </div>
+        <div class="result-row" id="row-scad">
+            <span class="lbl">SCADENZA</span>
+            <span class="val" id="out-scad">---</span>
+        </div>
+        <div class="result-row" id="row-sex">
+            <span class="lbl">SESSO</span>
+            <span class="val" id="out-sex">---</span>
         </div>
         <div class="result-row" id="row-name">
             <span class="lbl">NOME</span>
@@ -104,7 +111,6 @@
             log.innerText = "Blocco Ancora attivo...";
             const ctx = canvas.getContext('2d');
             
-            // Ritaglio che combacia col mirino ciano
             const vw = video.videoWidth;
             const vh = video.videoHeight;
             const cw = vw * 0.95; 
@@ -112,11 +118,9 @@
             const cx = (vw - cw) / 2;
             const cy = (vh * 0.40) - (ch / 2);
 
-            // Zoom 2x per leggere meglio i dettagli
             canvas.width = cw * 2;
             canvas.height = ch * 2;
             
-            // Filtro Binarizzato per eliminare ombre e sfumature
             ctx.filter = 'grayscale(100%) contrast(300%)';
             ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
 
@@ -124,12 +128,11 @@
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
                 });
-                parseV36(text);
+                parseV41(text);
                 log.innerText = "Scan terminato";
             } catch (e) { log.innerText = "Errore OCR"; }
         });
 
-        // Correzione CIE (Lettere vs Numeri)
         function fix(s, type) {
             if(!s) return "";
             if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
@@ -137,33 +140,20 @@
             return s;
         }
 
-        function parseV36(raw) {
+        function parseV41(raw) {
             const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
             console.log(lines);
 
-            // 1. NUMERO DOCUMENTO (LOGICA "ANCHOR LOCK")
-            // Cerchiamo una riga che contenga "ITA" o "C<IT"
+            // 1. NUMERO DOCUMENTO (Logica V36)
             let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA') || l.includes('IT4')) && l.length > 10);
-            
             let foundDoc = false;
             if (docLine) {
-                // Troviamo dove inizia l'ancora "ITA" (o simili errori OCR)
                 let anchor = docLine.match(/(ITA|1TA|IT4)/);
-                
                 if (anchor) {
                     let idx = anchor.index;
-                    // Il numero CIE inizia SUBITO DOPO 'ITA' (3 caratteri dopo)
-                    // Preleviamo esattamente 9 caratteri
                     let rawCode = docLine.substr(idx + 3, 9);
-                    
                     if (rawCode.length === 9) {
-                         // Applica correzione geometrica (LL NNNNN LL)
-                        let p1 = fix(rawCode.substr(0,2), 'L');
-                        let p2 = fix(rawCode.substr(2,5), 'N');
-                        let p3 = fix(rawCode.substr(7,2), 'L');
-                        let finalCode = p1 + p2 + p3;
-
-                        // VALIDAZIONE FINALE: Deve rispettare il formato CIE
+                        let finalCode = fix(rawCode.substr(0,2), 'L') + fix(rawCode.substr(2,5), 'N') + fix(rawCode.substr(7,2), 'L');
                         if(finalCode.match(/^[A-Z]{2}\d{5}[A-Z]{2}$/)) {
                             document.getElementById('out-doc').innerText = finalCode;
                             document.getElementById('row-doc').classList.add('ok');
@@ -172,17 +162,19 @@
                     }
                 }
             }
-
-            // Se non ha trovato l'ancora "ITA", resetta il campo (NIENTE PIÙ CODICI INVENTATI)
             if (!foundDoc) {
                 document.getElementById('out-doc').innerText = "Riprova (Sfocato?)";
                 document.getElementById('row-doc').classList.remove('ok');
             }
 
-            // 2. DATA DI NASCITA
-            let dateLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
-            if (dateLine) {
-                let dobRaw = fix(dateLine.substr(0, 6), 'N');
+            // 2. DATA DI NASCITA, SESSO E SCADENZA
+            // La riga è tipo: 9912016M331201...
+            // (Nascita 6 cifre) + (Check) + (Sesso 1 char) + (Scadenza 6 cifre)
+            let datLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
+            
+            if (datLine) {
+                // A. NASCITA
+                let dobRaw = fix(datLine.substr(0, 6), 'N');
                 let y = parseInt(dobRaw.substr(0,2));
                 let m = parseInt(dobRaw.substr(2,2));
                 let d = parseInt(dobRaw.substr(4,2));
@@ -192,6 +184,41 @@
                     let dd = d < 10 ? '0'+d : d;
                     document.getElementById('out-dob').innerText = `${dd}/${mm}/${fullY}`;
                     document.getElementById('row-dob').classList.add('ok');
+                }
+
+                // B. SESSO
+                // Cerchiamo M o F dopo la 7ima posizione (per saltare la data e il check digit)
+                let sexChar = datLine.substr(7).match(/[MF]/);
+                let sexIndex = -1;
+                
+                if (sexChar) {
+                    document.getElementById('out-sex').innerText = sexChar[0];
+                    document.getElementById('row-sex').classList.add('ok');
+                    // Salviamo l'indice del sesso per trovare la scadenza subito dopo
+                    sexIndex = datLine.indexOf(sexChar[0], 7);
+                }
+
+                // C. SCADENZA
+                // La scadenza inizia subito dopo il sesso
+                // Esempio: ...M331201... -> M è il sesso, 331201 è la scadenza (YYMMDD)
+                if (sexIndex > -1 && datLine.length > sexIndex + 6) {
+                    let expRaw = datLine.substr(sexIndex + 1, 6); // Prendi 6 cifre dopo il sesso
+                    expRaw = fix(expRaw.replace(/</g, ''), 'N'); // Pulisci eventuali <
+                    
+                    if (expRaw.length === 6) {
+                        let ey = parseInt(expRaw.substr(0,2));
+                        let em = parseInt(expRaw.substr(2,2));
+                        let ed = parseInt(expRaw.substr(4,2));
+                        
+                        // Validazione base
+                        if (em >= 1 && em <= 12 && ed >= 1 && ed <= 31) {
+                            let fullExpY = '20' + ey; // Scadenza è sempre nel futuro (20xx)
+                            let emm = em < 10 ? '0'+em : em;
+                            let edd = ed < 10 ? '0'+ed : ed;
+                            document.getElementById('out-scad').innerText = `${edd}/${emm}/${fullExpY}`;
+                            document.getElementById('row-scad').classList.add('ok');
+                        }
+                    }
                 }
             }
 
