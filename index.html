@@ -3,21 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V41 - Precision Anchor</title>
+    <title>Scanner V42 - Full Back</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
-        .header { background: #1c1c1e; padding: 12px; text-align: center; border-bottom: 1px solid #333; font-weight: 800; font-size: 13px; color: #00E0FF; }
-        .cam-box { position: relative; flex: 0 0 40%; overflow: hidden; }
+        .header { background: #1c1c1e; padding: 10px; text-align: center; border-bottom: 1px solid #333; font-weight: 800; font-size: 12px; color: #00E0FF; }
+        
+        .cam-box { position: relative; flex: 0 0 45%; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Mirino calibrato per coprire tutta l'area sopra l'MRZ */
         .guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 92%; height: 40%; border: 3px solid #00E0FF; border-radius: 10px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.75); z-index: 10;
+            width: 94%; height: 75%; border: 2px dashed #00E0FF; border-radius: 8px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); z-index: 10;
         }
-        .results-panel { flex: 1; background: #121212; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #333; }
-        .scroll-box { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 100px; }
-        .btn-main { width: 94%; padding: 16px; margin: 8px auto; border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; background: #00E0FF; color: #000; }
+        .guide-res { position: absolute; top: 10%; width: 100%; border-bottom: 1px solid rgba(0,224,255,0.3); text-align: center; font-size: 10px; color: #00E0FF; }
+
+        .results-panel { flex: 1; background: #121212; display: flex; flex-direction: column; overflow: hidden; }
+        .scroll-box { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 80px; }
+        .btn-main { width: 94%; padding: 15px; margin: 8px auto; border: none; border-radius: 12px; font-weight: 900; background: #00E0FF; color: #000; cursor: pointer; }
+
         .data-card { background: #1c1c1e; padding: 10px; margin-bottom: 6px; border-radius: 8px; border-left: 4px solid #333; }
         .data-card.ok { border-left-color: #32d74b; background: #1a261a; }
         .lbl { font-size: 9px; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; display: block; }
@@ -27,24 +33,21 @@
 </head>
 <body>
 
-    <div class="header" id="status-header">FASE 1: SCANSIONA IL RETRO (INDIRIZZO E CODICI)</div>
+    <div class="header">INQUADRA IL RETRO COMPLETO (INDIRIZZO + CODICI)</div>
 
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
-        <div class="guide" id="guide-box"></div>
+        <div class="guide"><div class="guide-res">ZONA RESIDENZA</div></div>
     </div>
 
     <div class="results-panel">
-        <button id="btn-action" class="btn-main">SCANSIONA RETRO</button>
-        
+        <button id="btn-scan" class="btn-main">ANALISI COMPLETA RETRO</button>
         <div class="scroll-box">
-            <div class="data-card" id="c-res"><span class="lbl">Residenza (dal Retro)</span><div class="val" id="v-res">---</div></div>
+            <div class="data-card" id="c-res"><span class="lbl">Indirizzo di Residenza</span><div class="val" id="v-res">---</div></div>
+            <div class="data-card" id="c-cf"><span class="lbl">Codice Fiscale</span><div class="val" id="v-cf">---</div></div>
             <div class="data-card" id="c-nom"><span class="lbl">Cognome e Nome</span><div class="val" id="v-nom">---</div></div>
-            <div class="data-card" id="c-doc"><span class="lbl">N. Documento</span><div class="val" id="v-doc">---</div></div>
-            <div class="data-card" id="c-dob"><span class="lbl">Data Nascita</span><div class="val" id="v-dob">---</div></div>
-            <div class="data-card" id="c-luogo"><span class="lbl">Luogo di Nascita</span><div class="val" id="v-luogo">---</div></div>
-            <div class="data-card" id="c-ente"><span class="lbl">Emesso da</span><div class="val" id="v-ente">---</div></div>
-            <div class="data-card" id="c-scad"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+            <div class="data-card" id="c-doc"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
+            <div class="data-card" id="c-dob"><span class="lbl">Data di Nascita</span><div class="val" id="v-dob">---</div></div>
         </div>
     </div>
 
@@ -53,83 +56,59 @@
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
-        const btn = document.getElementById('btn-action');
-        const header = document.getElementById('status-header');
-        let isFront = false;
+        const btn = document.getElementById('btn-scan');
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
             .then(s => video.srcObject = s);
 
         btn.addEventListener('click', async () => {
-            btn.innerText = "ANALISI...";
+            btn.innerText = "LETTURA IN CORSO...";
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            // Filtro specifico per scritte piccole su plastica
-            ctx.filter = 'grayscale(100%) contrast(300%) brightness(95%)';
+            // Ottimizzazione per testo nero su sfondo chiaro (zona residenza)
+            ctx.filter = 'grayscale(100%) contrast(250%) brightness(100%)';
             ctx.drawImage(video, 0, 0);
             
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-            if (!isFront) processRetro(text); else processFronte(text);
+            processFullBack(text);
+            btn.innerText = "ANALISI COMPLETA RETRO";
         });
 
-        function processRetro(raw) {
+        function processFullBack(raw) {
             const up = raw.toUpperCase();
-            const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+            console.log("Dati letti:", lines);
 
-            // 1. RESIDENZA (Cerca VIA, PIAZZA, CORSO nella parte alta del retro)
-            let resLine = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("VIA."));
+            // 1. ESTRAZIONE RESIDENZA (Cerca VIA o indirizzo sopra il codice a barre)
+            let resLine = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("MONTERIGGIONI"));
             if (resLine) {
-                document.getElementById('v-res').innerText = resLine;
-                document.getElementById('c-res').classList.add('ok');
+                // Pulizia etichette "INDIRIZZO DI RESIDENZA"
+                let cleanRes = resLine.replace("INDIRIZZO DI RESIDENZA / RESIDENCE", "").trim();
+                fill('v-res', 'c-res', cleanRes);
             }
 
-            // 2. CODICI MRZ (Anchor Lock)
-            let m = clean.match(/ITA([A-Z0-9]{9})/);
-            if (m) {
-                document.getElementById('v-doc').innerText = m[1];
-                document.getElementById('c-doc').classList.add('ok');
-                // Switch automatico al fronte
-                isFront = true;
-                btn.style.background = "#FFD60A";
-                btn.innerText = "SCANSIONA FRONTE";
-                header.innerText = "FASE 2: SCANSIONA IL FRONTE (DETTAGLI)";
-                header.style.color = "#FFD60A";
-                alert("Retro completato! Gira la carta sul FRONTE.");
-            }
+            // 2. ESTRAZIONE CODICE FISCALE
+            let cfMatch = up.match(/[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]/);
+            if (cfMatch) fill('v-cf', 'c-cf', cfMatch[0]);
 
-            // 3. NOME E DATA
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nameMatch) {
-                document.getElementById('v-nom').innerText = nameMatch[1] + " " + nameMatch[2];
-                document.getElementById('c-nom').classList.add('ok');
-            }
-            let dobMatch = clean.match(/(\d{6})/);
-            if(dobMatch) {
-                let d = dobMatch[1];
-                document.getElementById('v-dob').innerText = d.substr(4,2)+"/"+d.substr(2,2)+"/"+d.substr(0,2);
-                document.getElementById('c-dob').classList.add('ok');
+            // 3. ESTRAZIONE MRZ (Nome, Doc, Nascita)
+            const cleanRaw = up.replace(/\s/g, '');
+            let mrzDoc = cleanRaw.match(/ITA([A-Z0-9]{9})/);
+            if (mrzDoc) fill('v-doc', 'c-doc', mrzDoc[1]);
+
+            let mrzName = cleanRaw.match(/([A-Z]+)<<([A-Z]+)/);
+            if (mrzName) fill('v-nom', 'c-nom', mrzName[1] + " " + mrzName[2]);
+
+            let mrzDob = cleanRaw.match(/(\d{6})/);
+            if (mrzDob) {
+                let d = mrzDob[1];
+                fill('v-dob', 'c-dob', d.substr(4,2)+"/"+d.substr(2,2)+"/"+d.substr(0,2));
             }
         }
 
-        function processFronte(raw) {
-            const up = raw.toUpperCase();
-            const lines = up.split('\n');
-            
-            // Luogo Nascita
-            let nato = lines.find(l => l.includes("NATO A") || l.includes("NATA A"));
-            if(nato) {
-                document.getElementById('v-luogo').innerText = nato.replace(/NAT[OA] A/, "").trim();
-                document.getElementById('c-luogo').classList.add('ok');
-            }
-            // Ente e Scadenza
-            if(up.includes("MINISTERO")) document.getElementById('v-ente').innerText = "MINISTERO DELL'INTERNO";
-            let scad = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
-            if(scad) {
-                document.getElementById('v-scad').innerText = scad[0];
-                document.getElementById('c-scad').classList.add('ok');
-            }
-            btn.innerText = "SCANSIONA FRONTE";
+        function fill(valId, cardId, text) {
+            document.getElementById(valId).innerText = text;
+            document.getElementById(cardId).classList.add('ok');
         }
     </script>
 </body>
