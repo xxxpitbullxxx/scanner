@@ -3,60 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V47 - OCR Precision</title>
+    <title>Scanner V39 - Deep Scan</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: monospace; margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .status-bar { flex: 0 0 auto; display: flex; background: #111; z-index: 50; }
-        .step { flex: 1; padding: 15px; text-align: center; color: #444; font-weight: bold; font-size: 12px; cursor: pointer; border-bottom: 3px solid transparent; }
-        .step.active { color: #fff; border-bottom-color: #00E0FF; }
-        .step.active.front { border-bottom-color: #FFD60A; }
+        body { 
+            font-family: -apple-system, sans-serif; 
+            margin: 0; background: #000; height: 100dvh; 
+            display: flex; flex-direction: column; overflow: hidden;
+        }
 
-        .cam-view { flex: 0 0 35%; position: relative; overflow: hidden; }
+        /* Navigazione Superiore */
+        .tabs { display: flex; background: #1c1c1e; border-bottom: 1px solid #333; }
+        .tab { 
+            flex: 1; padding: 15px; text-align: center; color: #666; 
+            font-weight: 800; font-size: 12px; cursor: pointer;
+        }
+        .tab.active { color: #fff; border-bottom: 3px solid #FFD60A; background: #2c2c2e; }
+
+        /* Area Telecamera */
+        .cam-container { position: relative; flex: 0 0 35%; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .guide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; height: 30%; border: 3px solid #00E0FF; border-radius: 6px; box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); z-index: 10; }
-        .guide.front-mode { border-color: #FFD60A; height: 75%; width: 90%; }
-        .guide-msg { position: absolute; bottom: 8px; width: 100%; text-align: center; color: #00E0FF; font-size: 11px; font-weight: bold; z-index: 20; text-shadow: 1px 1px 0 #000; }
+        .guide { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; height: 70%; border: 3px solid #FFD60A; border-radius: 12px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.6);
+        }
 
-        .panel { flex: 1; background: #121212; display: flex; flex-direction: column; border-top: 1px solid #333; min-height: 0; }
-        .action-area { flex: 0 0 auto; padding: 10px; border-bottom: 1px solid #222; }
-        .btn-main { background: #00E0FF; color: #000; width: 100%; padding: 14px; border: none; border-radius: 6px; font-size: 16px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
-        .btn-main.front { background: #FFD60A; }
+        /* Pannello Dati Scorrevole */
+        .data-panel { 
+            flex: 1; background: #121212; display: flex; flex-direction: column; 
+            border-top: 1px solid #333; overflow: hidden;
+        }
 
-        .scroll-list { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 120px; }
-        .field { background: #1E1E1E; padding: 10px; margin-bottom: 6px; border-left: 4px solid #444; border-radius: 4px; }
-        .field.ok { border-left-color: #32d74b; background: #1a2e1a; }
-        .lbl { font-size: 9px; color: #888; font-weight: bold; display: block; margin-bottom: 2px; text-transform: uppercase; }
-        .val { font-size: 15px; color: #fff; font-weight: bold; word-break: break-word; min-height: 18px; }
+        .scroll-area { 
+            flex: 1; overflow-y: auto; padding: 15px; 
+            padding-bottom: 100px; /* Spazio per non coprire l'ultimo dato */
+        }
+
+        .btn-main { 
+            background: #FFD60A; color: #000; width: 90%; padding: 15px; 
+            border: none; border-radius: 10px; font-weight: 900; 
+            margin: 10px auto; display: block; cursor: pointer;
+        }
+
+        .field { 
+            background: #1c1c1e; padding: 12px; margin-bottom: 8px; 
+            border-radius: 8px; border-left: 4px solid #333;
+        }
+        .field.ok { border-left-color: #32d74b; background: #1a241a; }
+        
+        .lbl { font-size: 10px; color: #aaa; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .val { font-size: 15px; color: #fff; font-weight: 600; min-height: 18px; }
+
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="status-bar">
-        <div class="step active" id="step1" onclick="setPhase(1)">1. RETRO</div>
-        <div class="step" id="step2" onclick="setPhase(2)">2. FRONTE</div>
+    <div class="tabs">
+        <div class="tab">1. RETRO (Completato)</div>
+        <div class="tab active">2. FRONTE (Deep Scan)</div>
     </div>
 
-    <div class="cam-view">
-        <video id="webcam" autoplay playsinline muted></video>
-        <div class="guide" id="guide-box"></div>
-        <div class="guide-msg" id="msg">ALLINEA LE 3 RIGHE MRZ</div>
+    <div class="cam-container">
+        <video id="webcam" autoplay playsinline></video>
+        <div class="guide"></div>
     </div>
 
-    <div class="panel">
-        <div class="action-area"><button class="btn-main" id="btn-snap">SCANSIONA RETRO</button></div>
-        <div class="scroll-list">
-            <div class="field"><span class="lbl">COGNOME</span><div class="val" id="out-cog">---</div></div>
-            <div class="field"><span class="lbl">NOME</span><div class="val" id="out-nom">---</div></div>
-            <div class="field"><span class="lbl">NUMERO DOCUMENTO</span><div class="val" id="out-doc">---</div></div>
-            <div class="field"><span class="lbl">DATA NASCITA</span><div class="val" id="out-dob">---</div></div>
-            <div class="field"><span class="lbl">SESSO</span><div class="val" id="out-sex">---</div></div>
-            <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="out-scad">---</div></div>
-            <div style="height: 1px; background: #333; margin: 15px 0;"></div>
-            <div class="field"><span class="lbl">RESIDENZA (INDIRIZZO)</span><div class="val" id="out-res">---</div></div>
-            <div class="field"><span class="lbl">LUOGO NASCITA</span><div class="val" id="out-luogo">---</div></div>
-            <div class="field"><span class="lbl">ENTE RILASCIO</span><div class="val" id="out-ente">---</div></div>
+    <div class="data-panel">
+        <button class="btn-main" id="snap">SCANSIONA FRONTE COMPLETO</button>
+        
+        <div class="scroll-area">
+            <div class="field" id="f-nom"><span class="lbl">Cognome e Nome</span><div class="val" id="v-nom">---</div></div>
+            <div class="field" id="f-luogo"><span class="lbl">Luogo di Nascita</span><div class="val" id="v-luogo">---</div></div>
+            <div class="field" id="f-sex"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
+            <div class="field" id="f-cit"><span class="lbl">Cittadinanza</span><div class="val" id="v-cit">---</div></div>
+            <div class="field" id="f-scad"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+            <div class="field" id="f-res"><span class="lbl">Residenza / Indirizzo</span><div class="val" id="v-res">---</div></div>
+            <div class="field" id="f-ente"><span class="lbl">Ente Rilascio</span><div class="val" id="v-ente">---</div></div>
         </div>
     </div>
 
@@ -65,87 +89,69 @@
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
-        const btn = document.getElementById('btn-snap');
-        const guide = document.getElementById('guide-box');
-        const msg = document.getElementById('msg');
-        let currentPhase = 1;
+        const btn = document.getElementById('snap');
 
-        window.addEventListener('load', async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            video.srcObject = stream;
-        });
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
+            .then(s => video.srcObject = s);
 
-        function setPhase(p) {
-            currentPhase = p;
-            if (p === 1) {
-                document.getElementById('step1').className = 'step active'; document.getElementById('step2').className = 'step';
-                guide.className = 'guide'; btn.className = 'btn-main'; btn.innerText = "SCANSIONA RETRO";
-                msg.innerText = "ALLINEA LE 3 RIGHE MRZ"; msg.style.color = "#00E0FF";
-            } else {
-                document.getElementById('step1').className = 'step'; document.getElementById('step2').className = 'step active front';
-                guide.className = 'guide front-mode'; btn.className = 'btn-main front'; btn.innerText = "SCANSIONA FRONTE";
-                msg.innerText = "INQUADRA TUTTO IL FRONTE"; msg.style.color = "#FFD60A";
-            }
-        }
-
-        document.getElementById('btn-snap').addEventListener('click', async () => {
-            btn.innerText = "ELABORAZIONE...";
+        btn.addEventListener('click', async () => {
+            btn.innerText = "ANALISI PROFONDA...";
             const ctx = canvas.getContext('2d');
-            const vw = video.videoWidth; const vh = video.videoHeight;
-            let cw = vw * 0.95, ch = (currentPhase === 1 ? vh * 0.30 : vh * 0.70);
-            let cx = (vw - cw) / 2, cy = (vh / 2) - (ch / 2);
-            canvas.width = cw * 2.5; canvas.height = ch * 2.5;
-            ctx.filter = currentPhase === 1 ? 'grayscale(100%) contrast(300%)' : 'grayscale(100%) contrast(600%) brightness(120%)';
-            ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
+            
+            // Cattura il fronte a risoluzione aumentata
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
+            ctx.drawImage(video, 0, 0);
 
-            const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-            if (currentPhase === 1) processRetro(text); else processFronte(text);
-            btn.innerText = currentPhase === 1 ? "SCANSIONA RETRO" : "SCANSIONA FRONTE";
+            try {
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
+                    logger: m => console.log(m)
+                });
+                parseFrontData(text);
+                btn.innerText = "SCANSIONA FRONTE COMPLETO";
+            } catch (e) { btn.innerText = "ERRORE - RIPROVA"; }
         });
 
-        function fill(id, val) { if (val && val.length > 1) { document.getElementById(id).innerText = val; document.getElementById(id).parentElement.classList.add('ok'); } }
+        function parseFrontData(raw) {
+            const up = raw.toUpperCase();
+            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
 
-        function processRetro(raw) {
-            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase());
-            // DOC
-            let docL = lines.find(l => (l.includes('ITA') || l.includes('1TA')) && l.length > 15);
-            if (docL) {
-                let m = docL.match(/(ITA|1TA)/);
-                if (m) {
-                    let c = docL.substr(m.index + 3, 9).replace(/0/g,'O').replace(/1/g,'I');
-                    fill('out-doc', c.substr(0,2)+c.substr(2,5).replace(/O/g,'0').replace(/I/g,'1')+c.substr(7,2));
-                }
+            // 1. CITTADINANZA
+            if (up.includes("ITALIANA")) fill("v-cit", "f-cit", "ITALIANA");
+
+            // 2. SESSO
+            if (up.includes(" M ") || up.includes("/M")) fill("v-sex", "f-sex", "M");
+            else if (up.includes(" F ") || up.includes("/F")) fill("v-sex", "f-sex", "F");
+
+            // 3. ENTE RILASCIO
+            if (up.includes("MINISTERO")) fill("v-ente", "f-ente", "MINISTERO DELL'INTERNO");
+            else {
+                let comune = lines.find(l => l.includes("COMUNE"));
+                if (comune) fill("v-ente", "f-ente", comune);
             }
-            // DATI PERSONALI (Riga 2 e 3)
-            let datL = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
-            if (datL) {
-                fill('out-dob', datL.substr(4,2)+'/'+datL.substr(2,2)+'/'+(parseInt(datL.substr(0,2))>40?'19':'20')+datL.substr(0,2));
-                fill('out-sex', datL.includes('M') ? 'M' : 'F');
-                let sIdx = datL.search(/[MF]/);
-                fill('out-scad', datL.substr(sIdx+5,2)+'/'+datL.substr(sIdx+3,2)+'/20'+datL.substr(sIdx+1,2));
+
+            // 4. SCADENZA (Cerca formato DD.MM.YYYY o DD/MM/YYYY)
+            let scadMatch = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/g);
+            if (scadMatch) {
+                // Prendi la data più lontana nel futuro come scadenza
+                fill("v-scad", "f-scad", scadMatch[scadMatch.length - 1]);
             }
-            // NOME/COGNOME (Rimuove numeri per evitare errori riga 2)
-            let namL = lines.find(l => l.includes('<<') && !l.includes('ITA') && !l.match(/^\d{10}/));
-            if (namL) {
-                let parts = namL.replace(/[0-9]/g, '').split('<<');
-                fill('out-cog', parts[0].replace(/</g,'').trim());
-                fill('out-nom', (parts[1]||'').replace(/</g,' ').trim());
+
+            // 5. RESIDENZA (Cerca parole chiave Via, Piazza, ecc.)
+            let resLine = lines.find(l => l.includes("VIA ") || l.includes("PIAZZA ") || l.includes("CORSO ") || l.includes("LOC."));
+            if (resLine) fill("v-res", "f-res", resLine);
+
+            // 6. LUOGO DI NASCITA
+            let luogoLine = lines.find(l => l.includes("NATO A") || l.includes("NATA A"));
+            if (luogoLine) {
+                fill("v-luogo", "f-luogo", luogoLine.replace("NATO A", "").replace("NATA A", "").trim());
             }
-            if (document.getElementById('out-doc').innerText !== '---') { alert("RETRO OK! Passa al Fronte."); setPhase(2); }
         }
 
-        function processFronte(raw) {
-            const up = raw.toUpperCase();
-            if (up.includes('MINISTERO') || up.includes('INTERNO')) fill('out-ente', 'MINISTERO DELL\'INTERNO');
-            let lines = up.split('\n');
-            for (let i = 0; i < lines.length; i++) {
-                let l = lines[i].trim();
-                if (l.match(/^(VIA|PIAZZA|CORSO|VIALE|P\.ZZA|C\.SO|V\.)\s+/)) {
-                    fill('out-res', l + (lines[i+1] ? ' ' + lines[i+1] : ''));
-                }
-            }
-            let nIdx = up.indexOf('NATO A');
-            if (nIdx > -1) fill('out-luogo', up.substr(nIdx+6, 30).split('\n')[0].replace(/[^A-Z ]/g,'').trim());
+        function fill(valId, fieldId, text) {
+            document.getElementById(valId).innerText = text;
+            document.getElementById(fieldId).classList.add('ok');
         }
     </script>
 </body>
