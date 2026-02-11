@@ -3,56 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V39 - Deep Scan</title>
+    <title>Scanner V40 - Dual Engine</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { 
-            font-family: -apple-system, sans-serif; 
-            margin: 0; background: #000; height: 100dvh; 
-            display: flex; flex-direction: column; overflow: hidden;
-        }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
+        
+        /* HEADER STATO */
+        .header { background: #1c1c1e; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
+        .step-indicator { font-size: 14px; font-weight: 800; color: #00E0FF; text-transform: uppercase; }
+        .step-indicator.front-active { color: #FFD60A; }
 
-        /* Navigazione Superiore */
-        .tabs { display: flex; background: #1c1c1e; border-bottom: 1px solid #333; }
-        .tab { 
-            flex: 1; padding: 15px; text-align: center; color: #666; 
-            font-weight: 800; font-size: 12px; cursor: pointer;
-        }
-        .tab.active { color: #fff; border-bottom: 3px solid #FFD60A; background: #2c2c2e; }
-
-        /* Area Telecamera */
-        .cam-container { position: relative; flex: 0 0 35%; overflow: hidden; }
+        /* AREA CAMERA (40%) */
+        .cam-box { position: relative; flex: 0 0 40%; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
         .guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 85%; height: 70%; border: 3px solid #FFD60A; border-radius: 12px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.6);
+            width: 90%; height: 35%; border: 3px solid #00E0FF; border-radius: 10px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); z-index: 10;
         }
+        .guide.front-mode { border-color: #FFD60A; height: 70%; }
 
-        /* Pannello Dati Scorrevole */
-        .data-panel { 
-            flex: 1; background: #121212; display: flex; flex-direction: column; 
-            border-top: 1px solid #333; overflow: hidden;
-        }
-
-        .scroll-area { 
-            flex: 1; overflow-y: auto; padding: 15px; 
-            padding-bottom: 100px; /* Spazio per non coprire l'ultimo dato */
-        }
-
-        .btn-main { 
-            background: #FFD60A; color: #000; width: 90%; padding: 15px; 
-            border: none; border-radius: 10px; font-weight: 900; 
-            margin: 10px auto; display: block; cursor: pointer;
-        }
-
-        .field { 
-            background: #1c1c1e; padding: 12px; margin-bottom: 8px; 
-            border-radius: 8px; border-left: 4px solid #333;
-        }
-        .field.ok { border-left-color: #32d74b; background: #1a241a; }
+        /* PANNELLO RISULTATI (SCORREVOLE) */
+        .results-panel { flex: 1; background: #121212; display: flex; flex-direction: column; overflow: hidden; }
+        .scroll-box { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
         
-        .lbl { font-size: 10px; color: #aaa; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .btn-main { width: 90%; padding: 16px; margin: 10px auto; border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .btn-retro { background: #00E0FF; color: #000; }
+        .btn-front { background: #FFD60A; color: #000; display: none; }
+
+        .data-card { background: #1c1c1e; padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #333; }
+        .data-card.found { border-left-color: #32d74b; background: #1a261a; }
+        .lbl { font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; display: block; }
         .val { font-size: 15px; color: #fff; font-weight: 600; min-height: 18px; }
 
         canvas { display: none; }
@@ -60,27 +41,29 @@
 </head>
 <body>
 
-    <div class="tabs">
-        <div class="tab">1. RETRO (Completato)</div>
-        <div class="tab active">2. FRONTE (Deep Scan)</div>
+    <div class="header">
+        <div id="step-txt" class="step-indicator">FASE 1: SCANSIONA IL RETRO (LATO CODICI)</div>
     </div>
 
-    <div class="cam-container">
+    <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
-        <div class="guide"></div>
+        <div id="guide-box" class="guide"></div>
     </div>
 
-    <div class="data-panel">
-        <button class="btn-main" id="snap">SCANSIONA FRONTE COMPLETO</button>
+    <div class="results-panel">
+        <button id="btn-retro" class="btn-main btn-retro">CATTURA RETRO</button>
+        <button id="btn-front" class="btn-main btn-front">CATTURA FRONTE</button>
         
-        <div class="scroll-area">
-            <div class="field" id="f-nom"><span class="lbl">Cognome e Nome</span><div class="val" id="v-nom">---</div></div>
-            <div class="field" id="f-luogo"><span class="lbl">Luogo di Nascita</span><div class="val" id="v-luogo">---</div></div>
-            <div class="field" id="f-sex"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
-            <div class="field" id="f-cit"><span class="lbl">Cittadinanza</span><div class="val" id="v-cit">---</div></div>
-            <div class="field" id="f-scad"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
-            <div class="field" id="f-res"><span class="lbl">Residenza / Indirizzo</span><div class="val" id="v-res">---</div></div>
-            <div class="field" id="f-ente"><span class="lbl">Ente Rilascio</span><div class="val" id="v-ente">---</div></div>
+        <div class="scroll-box">
+            <div class="data-card" id="c-nom"><span class="lbl">Cognome e Nome</span><div class="val" id="v-nom">---</div></div>
+            <div class="data-card" id="c-doc"><span class="lbl">N. Documento</span><div class="val" id="v-doc">---</div></div>
+            <div class="data-card" id="c-dob"><span class="lbl">Data Nascita</span><div class="val" id="v-dob">---</div></div>
+            
+            <div class="data-card" id="c-res"><span class="lbl">Residenza Completa</span><div class="val" id="v-res">---</div></div>
+            <div class="data-card" id="c-luogo"><span class="lbl">Luogo di Nascita</span><div class="val" id="v-luogo">---</div></div>
+            <div class="data-card" id="c-cit"><span class="lbl">Cittadinanza</span><div class="val" id="v-cit">---</div></div>
+            <div class="data-card" id="c-ente"><span class="lbl">Rilasciato da</span><div class="val" id="v-ente">---</div></div>
+            <div class="data-card" id="c-scad"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
         </div>
     </div>
 
@@ -89,69 +72,100 @@
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
-        const btn = document.getElementById('snap');
+        const btnRetro = document.getElementById('btn-retro');
+        const btnFront = document.getElementById('btn-front');
+        const guide = document.getElementById('guide-box');
+        const stepTxt = document.getElementById('step-txt');
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
             .then(s => video.srcObject = s);
 
-        btn.addEventListener('click', async () => {
-            btn.innerText = "ANALISI PROFONDA...";
+        // --- FASE 1: RETRO (Basato su tua V36 Anchor Lock) ---
+        btnRetro.addEventListener('click', async () => {
             const ctx = canvas.getContext('2d');
-            
-            // Cattura il fronte a risoluzione aumentata
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            ctx.filter = 'grayscale(100%) contrast(250%)';
             ctx.drawImage(video, 0, 0);
-
-            try {
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
-                    logger: m => console.log(m)
-                });
-                parseFrontData(text);
-                btn.innerText = "SCANSIONA FRONTE COMPLETO";
-            } catch (e) { btn.innerText = "ERRORE - RIPROVA"; }
+            
+            const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
+            processRetro(text);
         });
 
-        function parseFrontData(raw) {
-            const up = raw.toUpperCase();
-            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
-
-            // 1. CITTADINANZA
-            if (up.includes("ITALIANA")) fill("v-cit", "f-cit", "ITALIANA");
-
-            // 2. SESSO
-            if (up.includes(" M ") || up.includes("/M")) fill("v-sex", "f-sex", "M");
-            else if (up.includes(" F ") || up.includes("/F")) fill("v-sex", "f-sex", "F");
-
-            // 3. ENTE RILASCIO
-            if (up.includes("MINISTERO")) fill("v-ente", "f-ente", "MINISTERO DELL'INTERNO");
-            else {
-                let comune = lines.find(l => l.includes("COMUNE"));
-                if (comune) fill("v-ente", "f-ente", comune);
+        function processRetro(raw) {
+            const up = raw.toUpperCase().replace(/\s/g, '');
+            // Ricerca Numero Documento (Anchor ITA)
+            let m = up.match(/ITA([A-Z0-9]{9})/);
+            if (m) {
+                document.getElementById('v-doc').innerText = m[1];
+                document.getElementById('c-doc').classList.add('found');
+                
+                // Se abbiamo il documento, sblocchiamo il fronte
+                btnRetro.style.display = 'none';
+                btnFront.style.display = 'block';
+                guide.classList.add('front-mode');
+                stepTxt.innerText = "FASE 2: SCANSIONA IL FRONTE (DATI)";
+                stepTxt.classList.add('front-active');
+                alert("Retro ok! Ora gira la carta sul FRONTE.");
             }
-
-            // 4. SCADENZA (Cerca formato DD.MM.YYYY o DD/MM/YYYY)
-            let scadMatch = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/g);
-            if (scadMatch) {
-                // Prendi la data più lontana nel futuro come scadenza
-                fill("v-scad", "f-scad", scadMatch[scadMatch.length - 1]);
+            // Nome
+            let nameMatch = up.match(/([A-Z]+)<<([A-Z]+)/);
+            if(nameMatch) {
+                document.getElementById('v-nom').innerText = nameMatch[1] + " " + nameMatch[2];
+                document.getElementById('c-nom').classList.add('found');
             }
-
-            // 5. RESIDENZA (Cerca parole chiave Via, Piazza, ecc.)
-            let resLine = lines.find(l => l.includes("VIA ") || l.includes("PIAZZA ") || l.includes("CORSO ") || l.includes("LOC."));
-            if (resLine) fill("v-res", "f-res", resLine);
-
-            // 6. LUOGO DI NASCITA
-            let luogoLine = lines.find(l => l.includes("NATO A") || l.includes("NATA A"));
-            if (luogoLine) {
-                fill("v-luogo", "f-luogo", luogoLine.replace("NATO A", "").replace("NATA A", "").trim());
+            // Data Nascita
+            let dobMatch = up.match(/(\d{6})/);
+            if(dobMatch) {
+                document.getElementById('v-dob').innerText = dobMatch[1].substr(4,2)+"/"+dobMatch[1].substr(2,2)+"/"+dobMatch[1].substr(0,2);
+                document.getElementById('c-dob').classList.add('found');
             }
         }
 
-        function fill(valId, fieldId, text) {
-            document.getElementById(valId).innerText = text;
-            document.getElementById(fieldId).classList.add('ok');
+        // --- FASE 2: FRONTE (Ricerca Keyword) ---
+        btnFront.addEventListener('click', async () => {
+            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
+            ctx.drawImage(video, 0, 0);
+            
+            const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
+            processFront(text);
+        });
+
+        function processFront(raw) {
+            const up = raw.toUpperCase();
+            const lines = up.split('\n');
+            
+            // Residenza
+            let resLine = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("LOC."));
+            if(resLine) {
+                document.getElementById('v-res').innerText = resLine.trim();
+                document.getElementById('c-res').classList.add('found');
+            }
+            // Ente
+            if(up.includes("MINISTERO")) document.getElementById('v-ente').innerText = "MINISTERO DELL'INTERNO";
+            else {
+                let com = lines.find(l => l.includes("COMUNE"));
+                if(com) document.getElementById('v-ente').innerText = com.trim();
+            }
+            document.getElementById('c-ente').classList.add('found');
+            // Cittadinanza
+            if(up.includes("ITALIANA")) {
+                document.getElementById('v-cit').innerText = "ITALIANA";
+                document.getElementById('c-cit').classList.add('found');
+            }
+            // Luogo Nascita
+            let nato = lines.find(l => l.includes("NATO A") || l.includes("NATA A"));
+            if(nato) {
+                document.getElementById('v-luogo').innerText = nato.replace(/NAT[OA] A/, "").trim();
+                document.getElementById('c-luogo').classList.add('found');
+            }
+            // Scadenza
+            let scad = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
+            if(scad) {
+                document.getElementById('v-scad').innerText = scad[0];
+                document.getElementById('c-scad').classList.add('found');
+            }
         }
     </script>
 </body>
