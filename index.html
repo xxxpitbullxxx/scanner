@@ -3,88 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V48 - Landscape</title>
+    <title>Scanner V49 - Real Map</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
         
-        .nav-tabs { display: flex; background: #1c1c1e; border-bottom: 1px solid #333; }
+        .tabs { display: flex; background: #1c1c1e; border-bottom: 1px solid #333; }
         .tab { flex: 1; padding: 14px; text-align: center; color: #666; font-weight: 800; font-size: 11px; cursor: pointer; text-transform: uppercase; }
         .tab.active { color: #fff; border-bottom: 3px solid #007AFF; background: #2c2c2e; }
 
         .viewport { position: relative; flex: 0 0 45%; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* SAGOMA GRIGIA ORIZZONTALE (Rapporto 85.6 / 53.9) */
+        /* SAGOMA GRIGIA ORIZZONTALE SOTTILE */
         .card-outline {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 85vw; height: calc(85vw / 1.586); /* Rapporto dimensionale reale ID-1 */
-            border: 1.5px solid rgba(200,200,200,0.6); border-radius: 12px;
+            width: 88vw; height: calc(88vw / 1.586); 
+            border: 1px solid rgba(200,200,200,0.6); border-radius: 12px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); z-index: 5; pointer-events: none;
         }
 
-        /* RIQUADRI INTERNI POSIZIONATI PER IL RETRO ORIZZONTALE */
-        .box { position: absolute; border: 1.5px solid; border-radius: 4px; left: 4%; width: 92%; z-index: 10; }
-        .box-res { top: 38%; height: 15%; border-color: #FFD60A; background: rgba(255, 214, 10, 0.05); }
-        .box-mrz { bottom: 8%; height: 30%; border-color: #00E0FF; background: rgba(0, 224, 255, 0.05); }
+        /* RETTANGOLI DI SCANSIONE - POSIZIONI REALI */
+        .box { position: absolute; border: 1.5px solid; border-radius: 4px; z-index: 10; transition: all 0.3s; }
+        
+        /* Modalità Retro (Giallo in alto, Azzurro in basso) */
+        .box-top-retro { top: 25%; left: 5%; width: 65%; height: 22%; border-color: #FFD60A; }
+        .box-bot-retro { bottom: 8%; left: 3%; width: 94%; height: 32%; border-color: #00E0FF; }
+        
+        /* Modalità Fronte (Rettangolo specifico per zona dati destra) */
+        .box-front-data { top: 30%; right: 5%; width: 55%; height: 45%; border-color: #FFD60A; display: none; }
+
         .box-tag { position: absolute; top: -14px; left: 0; font-size: 8px; font-weight: bold; padding: 1px 4px; border-radius: 2px; color: #000; text-transform: uppercase; }
 
         .results { flex: 1; background: #121212; overflow-y: auto; padding: 10px; padding-bottom: 80px; }
-        .btn-scan { width: 100%; padding: 16px; background: #007AFF; color: #fff; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 15px; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); }
+        .btn-scan { width: 100%; padding: 16px; background: #007AFF; color: #fff; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 15px; cursor: pointer; }
 
         .cat { font-size: 10px; color: #007AFF; margin: 12px 0 6px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 2px; }
-        .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 6px; }
-        .full { grid-column: span 3; }
-        .half { grid-column: span 1.5; } /* Approssimativo per grid */
-        .item { background: #1c1c1e; padding: 8px; border-radius: 6px; border-left: 3px solid #333; }
+        .row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; margin-bottom: 5px; }
+        .item { background: #1c1c1e; padding: 7px; border-radius: 5px; border-left: 3px solid #333; }
         .item.found { border-left-color: #32d74b; background: #1a261a; }
         .label { font-size: 7px; color: #888; font-weight: 700; display: block; text-transform: uppercase; margin-bottom: 2px; }
-        .value { font-size: 12px; font-weight: 700; min-height: 14px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        canvas { display: none; }
+        .value { font-size: 11px; font-weight: 700; color: #fff; }
     </style>
 </head>
 <body>
 
-    <div class="nav-tabs">
-        <div class="tab active" id="t1" onclick="setTab(1)">1. Retro (Residenza)</div>
-        <div class="tab" id="t2" onclick="setTab(2)">2. Fronte (Dati)</div>
+    <div class="tabs">
+        <div class="tab active" id="t-retro" onclick="toggleMode('RETRO')">1. RETRO (Residenza/CF)</div>
+        <div class="tab" id="t-front" onclick="setTab('FRONT')">2. FRONTE (Nascita/Ente)</div>
     </div>
 
     <div class="viewport">
         <video id="webcam" autoplay playsinline></video>
         <div class="card-outline">
-            <div class="box box-res" id="guide-top"><span class="box-tag" style="background:#FFD60A">Indirizzo</span></div>
-            <div class="box box-mrz" id="guide-bot"><span class="box-tag" style="background:#00E0FF">MRZ Codici</span></div>
+            <div class="box box-top-retro" id="box-y"><span class="box-tag" style="background:#FFD60A" id="tag-y">Residenza / CF</span></div>
+            <div class="box box-bot-retro" id="box-b"><span class="box-tag" style="background:#00E0FF" id="tag-b">Codici MRZ</span></div>
+            <div class="box box-front-data" id="box-f"><span class="box-tag" style="background:#FFD60A">Dati Fronte</span></div>
         </div>
     </div>
 
     <div class="results">
-        <button id="snap" class="btn-scan">SCANSIONE BLU ORIZZONTALE</button>
+        <button id="snap" class="btn-scan">AVVIA SCANSIONE BLU</button>
 
-        <div class="cat">Identità (Retro)</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-            <div class="item"><span class="label">Cognome</span><div class="value" id="v-cog">---</div></div>
-            <div class="item"><span class="label">Nome</span><div class="value" id="v-nom">---</div></div>
+        <div class="cat">Anagrafica & Documento</div>
+        <div class="row">
+            <div class="item" style="grid-column: span 2;"><span class="label">Cognome</span><div class="value" id="v-cog">---</div></div>
+            <div class="item" style="grid-column: span 2;"><span class="label">Nome</span><div class="value" id="v-nom">---</div></div>
             <div class="item" style="grid-column: span 2;"><span class="label">Codice Fiscale</span><div class="value" id="v-cf">---</div></div>
+            <div class="item" style="grid-column: span 2;"><span class="label">N. Documento</span><div class="value" id="v-doc">---</div></div>
         </div>
 
-        <div class="cat">Indirizzo Residuo (Retro)</div>
+        <div class="cat">Residenza (Retro Alto)</div>
         <div class="row">
-            <div class="item full"><span class="label">Via / Piazza</span><div class="value" id="v-via">---</div></div>
+            <div class="item" style="grid-column: span 3;"><span class="label">Via / Piazza</span><div class="value" id="v-via">---</div></div>
             <div class="item"><span class="label">Civico</span><div class="value" id="v-civ">---</div></div>
-            <div class="item"><span class="label">CAP</span><div class="value" id="v-cap">---</div></div>
+            <div class="item" style="grid-column: span 2;"><span class="label">Città</span><div class="value" id="v-com">---</div></div>
             <div class="item"><span class="label">Prov.</span><div class="value" id="v-pr">---</div></div>
-            <div class="item full"><span class="label">Città</span><div class="value" id="v-com">---</div></div>
+            <div class="item"><span class="label">CAP</span><div class="value" id="v-cap">---</div></div>
         </div>
 
-        <div class="cat">Dati Fronte</div>
+        <div class="cat">Dati Personali (Fronte)</div>
         <div class="row">
-            <div class="item full"><span class="label">Luogo di Nascita</span><div class="value" id="v-luogo">---</div></div>
-            <div class="item full"><span class="label">Ente di Rilascio</span><div class="value" id="v-ente">---</div></div>
-            <div class="item"><span class="label">Scadenza</span><div class="value" id="v-scad">---</div></div>
+            <div class="item" style="grid-column: span 3;"><span class="label">Luogo di Nascita</span><div class="value" id="v-luogo">---</div></div>
             <div class="item"><span class="label">Sesso</span><div class="value" id="v-sex">---</div></div>
-            <div class="item"><span class="label">Statura</span><div class="value" id="v-stat">---</div></div>
+            <div class="item" style="grid-column: span 2;"><span class="label">Cittadinanza</span><div class="value" id="v-cit">---</div></div>
+            <div class="item" style="grid-column: span 2;"><span class="label">Scadenza</span><div class="value" id="v-scad">---</div></div>
+            <div class="item" style="grid-column: span 4;"><span class="label">Comune Rilascio</span><div class="value" id="v-ente">---</div></div>
         </div>
     </div>
 
@@ -94,43 +98,46 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
         const btn = document.getElementById('snap');
-        let currentTab = 1;
+        let mode = 'RETRO';
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
             .then(s => video.srcObject = s);
 
-        function setTab(n) {
-            currentTab = n;
-            document.getElementById('t1').className = n===1 ? 'tab active' : 'tab';
-            document.getElementById('t2').className = n===2 ? 'tab active' : 'tab';
+        function toggleMode(m) {
+            mode = m;
+            const isRetro = m === 'RETRO';
+            document.getElementById('t-retro').className = isRetro ? 'tab active' : 'tab';
+            document.getElementById('t-front').className = !isRetro ? 'tab active' : 'tab';
+            document.getElementById('box-y').style.display = isRetro ? 'block' : 'none';
+            document.getElementById('box-b').style.display = isRetro ? 'block' : 'none';
+            document.getElementById('box-f').style.display = isRetro ? 'none' : 'block';
         }
 
+        function setTab(m) { toggleMode(m); }
+
         btn.addEventListener('click', async () => {
-            btn.innerText = "SCANSIONE IN CORSO...";
+            btn.innerText = "SCANSIONE...";
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            ctx.filter = 'grayscale(100%) contrast(280%)';
+            ctx.filter = 'grayscale(100%) contrast(300%)';
             ctx.drawImage(video, 0, 0);
+            
+            // Filtro lingua: Solo Italiano
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-            
-            if(currentTab === 1) parseRetro(text);
-            else parseFronte(text);
-            
-            btn.innerText = "SCANSIONE BLU ORIZZONTALE";
+            if(mode === 'RETRO') parseRetro(text); else parseFront(text);
+            btn.innerText = "AVVIA SCANSIONE BLU";
         });
 
         function parseRetro(raw) {
             const up = raw.toUpperCase();
-            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 4);
             const clean = up.replace(/\s/g, '');
 
+            // Codice Fiscale (Sotto la scritta 'Codice Fiscale')
             let cf = clean.match(/[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]/);
             if(cf) fill("v-cf", cf[0]);
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nameMatch) { fill("v-cog", nameMatch[1]); fill("v-nom", nameMatch[2]); }
-            let sex = clean.match(/([MF])\d{7}/);
-            if(sex) fill("v-sex", sex[1]);
 
+            // Residenza (Tra Codice Fiscale e MRZ)
             let res = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO"));
             if(res) {
                 let via = res.match(/(VIA|PIAZZA|CORSO|VIALE)\s+[A-Z\s]+/);
@@ -144,18 +151,34 @@
                 let com = res.match(/[A-Z\s]+(?=\s\()/);
                 if(com) fill("v-com", com[0].trim());
             }
+
+            // MRZ
+            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if(nameMatch) { fill("v-cog", nameMatch[1]); fill("v-nom", nameMatch[2]); }
+            let docMatch = clean.match(/ITA([A-Z0-9]{9})/);
+            if(docMatch) fill("v-doc", docMatch[1]);
         }
 
-        function parseFronte(raw) {
+        function parseFront(raw) {
             const up = raw.toUpperCase();
             const lines = up.split('\n').map(l => l.trim());
+            
+            // Cittadinanza (Esclude inglese)
+            if(up.includes("ITALIANA")) fill("v-cit", "ITALIANA");
+            
+            // Luogo Nascita
             let nato = lines.find(l => l.includes("NATO A") || l.includes("LUOGO"));
             if(nato) fill("v-luogo", nato.replace(/.*NATO A|.*NASCITA/g, "").trim());
+
+            // Comune di rilascio (Sotto la foto/titolo)
+            let ente = lines.find(l => l.includes("COMUNE DI"));
+            if(ente) fill("v-ente", ente.trim());
+
+            // Sesso e Scadenza
+            let sex = up.match(/\b([MF])\b/);
+            if(sex) fill("v-sex", sex[1]);
             let scad = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
             if(scad) fill("v-scad", scad[0]);
-            if(up.includes("MINISTERO")) fill("v-ente", "MINISTERO DELL'INTERNO");
-            let stat = up.match(/STATURA\s*(\d{3})/);
-            if(stat) fill("v-stat", stat[1]);
         }
 
         function fill(id, txt) {
