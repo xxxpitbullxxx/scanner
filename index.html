@@ -3,233 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V41 - Anchor Max</title>
+    <title>Scanner V43 - Split & Scroll</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
+        /* LAYOUT MOBILE-FIRST FLUIDO */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; background: #000; height: 100vh; overflow: hidden; 
-            display: flex; flex-direction: column;
+            margin: 0; background: #000; 
+            height: 100dvh; /* Altezza dinamica reale */
+            display: flex; flex-direction: column; overflow: hidden;
         }
 
+        /* 1. BARRA DI STATO (Fissa in alto) */
+        .status-bar {
+            flex: 0 0 auto; background: #111; border-bottom: 1px solid #333; 
+            display: flex; padding: 0; z-index: 50;
+        }
+        .step { 
+            flex: 1; padding: 15px; text-align: center; color: #666; font-weight: bold; 
+            font-size: 13px; cursor: pointer; border-bottom: 3px solid transparent;
+        }
+        .step.active { background: #000; color: #fff; border-bottom-color: #00E0FF; }
+        .step.active.front { border-bottom-color: #FFD60A; }
+
+        /* 2. CAMERA (Altezza fissa 35%) */
         .cam-view { 
-            position: relative; flex: 1; overflow: hidden; background: #000;
+            flex: 0 0 35%; position: relative; overflow: hidden; background: #000; 
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Mirino V36 Originale */
         .guide { 
-            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            width: 95%; height: 25%; 
-            border: 3px solid #00E0FF; 
-            border-radius: 6px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.85);
-            z-index: 10;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 95%; height: 30%; 
+            border: 3px solid #00E0FF; border-radius: 6px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); z-index: 10;
+            transition: all 0.3s;
         }
-        .guide::after {
-            content: "CENTRA LA RIGA 'C<ITA...'";
-            position: absolute; bottom: -25px; width: 100%; text-align: center;
-            color: #00E0FF; font-size: 12px; font-weight: bold; letter-spacing: 1px;
-            text-shadow: 0 1px 2px black;
+        .guide.front-mode { border-color: #FFD60A; height: 70%; width: 90%; }
+        
+        .guide-msg {
+            position: absolute; bottom: 8px; width: 100%; text-align: center;
+            color: #00E0FF; font-size: 12px; font-weight: bold; z-index: 20;
+            text-shadow: 1px 1px 0 #000;
         }
 
-        /* Pannello controlli FISSO */
+        /* 3. PANNELLO DATI (Occupa tutto il resto) */
         .panel { 
-            height: 45vh; background: #121212; 
-            border-top: 2px solid #333;
-            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
-            z-index: 20; color: white; overflow-y: auto; /* Abilita scroll se i dati sono tanti */
+            flex: 1; /* Prende tutto lo spazio rimasto */
+            min-height: 0; /* FONDAMENTALE PER LO SCROLL SU MOBILE */
+            background: #121212; display: flex; flex-direction: column; 
+            border-top: 1px solid #333;
         }
 
-        .btn-scan { 
-            background: #00E0FF; color: #000; width: 100%; padding: 16px; 
-            border: none; border-radius: 8px; font-size: 18px; font-weight: 800; 
-            text-transform: uppercase; cursor: pointer; margin-bottom: 20px; flex-shrink: 0;
+        /* Pulsante sempre visibile in cima alla lista */
+        .action-area { 
+            flex: 0 0 auto; padding: 12px; background: #121212; 
+            border-bottom: 1px solid #222; z-index: 30;
         }
-        .btn-scan:active { opacity: 0.8; }
-
-        .result-row { 
-            display: flex; justify-content: space-between; align-items: center;
-            background: #1E1E1E; padding: 10px; margin-bottom: 6px; border-radius: 6px;
-            border-left: 4px solid #555;
+        .btn-main { 
+            background: #00E0FF; color: #000; width: 100%; padding: 14px; 
+            border: none; border-radius: 6px; font-size: 16px; font-weight: 900; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .result-row.ok { border-left-color: #32d74b; background: #1a2e1e; }
+        .btn-main.front { background: #FFD60A; }
 
-        .lbl { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; }
-        .val { font-size: 15px; font-family: monospace; font-weight: bold; letter-spacing: 1px; }
+        /* LISTA DATI (Scrollabile) */
+        .scroll-list {
+            flex: 1; overflow-y: auto; /* Abilita scroll */
+            padding: 15px; 
+            padding-bottom: 150px; /* SPAZIO EXTRA PER NON COPRIRE L'ULTIMO DATO */
+            -webkit-overflow-scrolling: touch; /* Scroll fluido su iOS */
+        }
 
-        #debug-log { font-size: 10px; color: #555; text-align: center; margin-top: 10px; }
+        .section-header {
+            color: #555; font-size: 10px; font-weight: bold; text-transform: uppercase;
+            margin-top: 15px; margin-bottom: 5px; letter-spacing: 1px;
+            border-bottom: 1px solid #333; padding-bottom: 2px;
+        }
+
+        .field { 
+            background: #1E1E1E; padding: 10px; margin-bottom: 8px; 
+            border-left: 4px solid #444; border-radius: 4px;
+        }
+        .field.ok { border-left-color: #32d74b; background: #1a2e1a; }
+        
+        .lbl { font-size: 9px; color: #888; font-weight: bold; display: block; margin-bottom: 3px; text-transform: uppercase;}
+        .val { font-size: 15px; color: #fff; font-weight: bold; word-break: break-word; min-height: 18px;}
+
         canvas { display: none; }
     </style>
 </head>
 <body>
 
+    <div class="status-bar">
+        <div class="step active" id="step1" onclick="setPhase(1)">1. RETRO (MRZ)</div>
+        <div class="step" id="step2" onclick="setPhase(2)">2. FRONTE (DATI)</div>
+    </div>
+
     <div class="cam-view">
         <video id="webcam" autoplay playsinline></video>
-        <div class="guide"></div>
+        <div class="guide" id="guide-box"></div>
+        <div class="guide-msg" id="msg">CENTRA LA RIGA "C&lt;ITA..."</div>
     </div>
 
     <div class="panel">
-        <button class="btn-scan" id="btn-snap">SCANSIONA MRZ</button>
+        <div class="action-area">
+            <button class="btn-main" id="btn-snap">SCANSIONA RETRO</button>
+        </div>
         
-        <div class="result-row" id="row-doc">
-            <span class="lbl">DOCUMENTO</span>
-            <span class="val" id="out-doc">---</span>
-        </div>
-        <div class="result-row" id="row-dob">
-            <span class="lbl">NASCITA</span>
-            <span class="val" id="out-dob">---</span>
-        </div>
-        <div class="result-row" id="row-scad">
-            <span class="lbl">SCADENZA</span>
-            <span class="val" id="out-scad">---</span>
-        </div>
-        <div class="result-row" id="row-sex">
-            <span class="lbl">SESSO</span>
-            <span class="val" id="out-sex">---</span>
-        </div>
-        <div class="result-row" id="row-name">
-            <span class="lbl">NOME</span>
-            <span class="val" id="out-name">---</span>
-        </div>
+        <div class="scroll-list">
+            
+            <div class="section-header">DATI BIOMETRICI (RETRO)</div>
+            
+            <div class="field"><span class="lbl">COGNOME</span><div class="val" id="out-cog">---</div></div>
+            <div class="field"><span class="lbl">NOME</span><div class="val" id="out-nom">---</div></div>
+            
+            <div class="field"><span class="lbl">NUMERO DOCUMENTO</span><div class="val" id="out-doc">---</div></div>
+            <div class="field"><span class="lbl">DATA DI NASCITA</span><div class="val" id="out-dob">---</div></div>
+            <div class="field"><span class="lbl">SESSO</span><div class="val" id="out-sex">---</div></div>
+            <div class="field"><span class="lbl">SCADENZA (Da MRZ)</span><div class="val" id="out-scad">---</div></div>
 
-        <div id="debug-log">Pronto - Tieni la mano ferma</div>
+            <div class="section-header">DATI ANAGRAFICI (FRONTE)</div>
+            
+            <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="out-cit">---</div></div>
+            <div class="field"><span class="lbl">LUOGO DI NASCITA</span><div class="val" id="out-luogo">---</div></div>
+            <div class="field"><span class="lbl">RESIDENZA (INDIRIZZO)</span><div class="val" id="out-res">---</div></div>
+            <div class="field"><span class="lbl">ENTE DI RILASCIO</span><div class="val" id="out-ente">---</div></div>
+            
+            <div style="height: 50px;"></div>
+        </div>
     </div>
 
-    <canvas id="hidden-cvs"></canvas>
+    <canvas id="cvs"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
-        const canvas = document.getElementById('hidden-cvs');
-        const log = document.getElementById('debug-log');
+        const canvas = document.getElementById('cvs');
+        const btn = document.getElementById('btn-snap');
+        const guide = document.getElementById('guide-box');
+        const msg = document.getElementById('msg');
+        let currentPhase = 1;
 
         navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: "environment", width: { ideal: 1920 } } 
-        }).then(s => video.srcObject = s);
+        }).then(s => video.srcObject = s).catch(e => alert("Errore Camera: " + e));
+
+        function setPhase(p) {
+            currentPhase = p;
+            if (p === 1) {
+                document.getElementById('step1').className = 'step active';
+                document.getElementById('step2').className = 'step';
+                guide.className = 'guide';
+                btn.className = 'btn-main';
+                btn.innerText = "SCANSIONA RETRO";
+                msg.innerText = "CENTRA LA RIGA C<ITA...";
+                msg.style.color = "#00E0FF";
+            } else {
+                document.getElementById('step1').className = 'step';
+                document.getElementById('step2').className = 'step active front';
+                guide.className = 'guide front-mode';
+                btn.className = 'btn-main front';
+                btn.innerText = "SCANSIONA FRONTE";
+                msg.innerText = "INQUADRA TUTTO IL FRONTE";
+                msg.style.color = "#FFD60A";
+            }
+        }
 
         document.getElementById('btn-snap').addEventListener('click', async () => {
-            log.innerText = "Blocco Ancora attivo...";
+            btn.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
-            
-            const vw = video.videoWidth;
-            const vh = video.videoHeight;
-            const cw = vw * 0.95; 
-            const ch = vh * 0.25;
-            const cx = (vw - cw) / 2;
-            const cy = (vh * 0.40) - (ch / 2);
-
-            canvas.width = cw * 2;
-            canvas.height = ch * 2;
-            
-            ctx.filter = 'grayscale(100%) contrast(300%)';
-            ctx.drawImage(video, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
-
-            try {
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
-                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
-                });
-                parseV41(text);
-                log.innerText = "Scan terminato";
-            } catch (e) { log.innerText = "Errore OCR"; }
-        });
-
-        function fix(s, type) {
-            if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
-            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
-            return s;
-        }
-
-        function parseV41(raw) {
-            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
-            console.log(lines);
-
-            // 1. NUMERO DOCUMENTO (Logica V36)
-            let docLine = lines.find(l => (l.includes('ITA') || l.includes('1TA') || l.includes('IT4')) && l.length > 10);
-            let foundDoc = false;
-            if (docLine) {
-                let anchor = docLine.match(/(ITA|1TA|IT4)/);
-                if (anchor) {
-                    let idx = anchor.index;
-                    let rawCode = docLine.substr(idx + 3, 9);
-                    if (rawCode.length === 9) {
-                        let finalCode = fix(rawCode.substr(0,2), 'L') + fix(rawCode.substr(2,5), 'N') + fix(rawCode.substr(7,2), 'L');
-                        if(finalCode.match(/^[A-Z]{2}\d{5}[A-Z]{2}$/)) {
-                            document.getElementById('out-doc').innerText = finalCode;
-                            document.getElementById('row-doc').classList.add('ok');
-                            foundDoc = true;
-                        }
-                    }
-                }
-            }
-            if (!foundDoc) {
-                document.getElementById('out-doc').innerText = "Riprova (Sfocato?)";
-                document.getElementById('row-doc').classList.remove('ok');
-            }
-
-            // 2. DATA DI NASCITA, SESSO E SCADENZA
-            // La riga è tipo: 9912016M331201...
-            // (Nascita 6 cifre) + (Check) + (Sesso 1 char) + (Scadenza 6 cifre)
-            let datLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
-            
-            if (datLine) {
-                // A. NASCITA
-                let dobRaw = fix(datLine.substr(0, 6), 'N');
-                let y = parseInt(dobRaw.substr(0,2));
-                let m = parseInt(dobRaw.substr(2,2));
-                let d = parseInt(dobRaw.substr(4,2));
-                if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-                    let fullY = (y > 40) ? '19'+y : '20'+y;
-                    let mm = m < 10 ? '0'+m : m;
-                    let dd = d < 10 ? '0'+d : d;
-                    document.getElementById('out-dob').innerText = `${dd}/${mm}/${fullY}`;
-                    document.getElementById('row-dob').classList.add('ok');
-                }
-
-                // B. SESSO
-                // Cerchiamo M o F dopo la 7ima posizione (per saltare la data e il check digit)
-                let sexChar = datLine.substr(7).match(/[MF]/);
-                let sexIndex = -1;
-                
-                if (sexChar) {
-                    document.getElementById('out-sex').innerText = sexChar[0];
-                    document.getElementById('row-sex').classList.add('ok');
-                    // Salviamo l'indice del sesso per trovare la scadenza subito dopo
-                    sexIndex = datLine.indexOf(sexChar[0], 7);
-                }
-
-                // C. SCADENZA
-                // La scadenza inizia subito dopo il sesso
-                // Esempio: ...M331201... -> M è il sesso, 331201 è la scadenza (YYMMDD)
-                if (sexIndex > -1 && datLine.length > sexIndex + 6) {
-                    let expRaw = datLine.substr(sexIndex + 1, 6); // Prendi 6 cifre dopo il sesso
-                    expRaw = fix(expRaw.replace(/</g, ''), 'N'); // Pulisci eventuali <
-                    
-                    if (expRaw.length === 6) {
-                        let ey = parseInt(expRaw.substr(0,2));
-                        let em = parseInt(expRaw.substr(2,2));
-                        let ed = parseInt(expRaw.substr(4,2));
-                        
-                        // Validazione base
-                        if (em >= 1 && em <= 12 && ed >= 1 && ed <= 31) {
-                            let fullExpY = '20' + ey; // Scadenza è sempre nel futuro (20xx)
-                            let emm = em < 10 ? '0'+em : em;
-                            let edd = ed < 10 ? '0'+ed : ed;
-                            document.getElementById('out-scad').innerText = `${edd}/${emm}/${fullExpY}`;
-                            document.getElementById('row-scad').classList.add('ok');
-                        }
-                    }
-                }
-            }
-
-            // 3. NOME
-            let nameLine = lines.find(l => l.includes('<<') && !l.includes('ITA') && !l.match(/^\d/));
-            if (nameLine) {
-                let cleanName = nameLine.replace(/</g, ' ').replace(/[0-9]/g, '').trim();
-                document.getElementById('out-name').innerText = cleanName;
-                document.getElementById('row-name').classList.add('ok');
-            }
-        }
-    </script>
-</body>
-</html>
+            const vw = video.videoWidth
