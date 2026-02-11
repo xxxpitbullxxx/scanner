@@ -3,45 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner V33 - The Slicer</title>
+    <title>Scanner V34 - Precision Slicer</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: monospace; background: #000; color: #fff; margin: 0; overflow: hidden; }
-        .viewport { position: relative; width: 100vw; height: 60vh; background: #111; }
+        .viewport { position: relative; width: 100vw; height: 65vh; background: #111; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* GRIGLIA DI TAGLIO: 3 Rettangoli distinti */
-        .grid-container { 
+        /* GRIGLIA DI TAGLIO DINAMICA */
+        .slicer-container { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; height: 30%; 
+            width: 95%; 
+            /* L'altezza viene decisa dallo slider */
+            height: 120px; 
             display: flex; flex-direction: column;
             z-index: 10;
         }
         
-        /* Striscia 1: Documento */
-        .slice-doc { flex: 1; border: 2px solid #ff3b30; border-bottom: none; background: rgba(255, 59, 48, 0.1); }
-        /* Striscia 2: Data Nascita */
-        .slice-dob { flex: 1; border: 2px solid #ffcc00; border-bottom: none; background: rgba(255, 204, 0, 0.1); }
-        /* Striscia 3: Nome */
-        .slice-name { flex: 1; border: 2px solid #32d74b; background: rgba(50, 215, 75, 0.1); }
+        .slice { flex: 1; border: 1px solid rgba(255,255,255,0.3); box-sizing: border-box; }
+        
+        /* Colori semitrasparenti per vedere le righe sotto */
+        .s-doc { background: rgba(255, 59, 48, 0.2); border-color: #ff3b30; } /* ROSSO */
+        .s-dob { background: rgba(255, 204, 0, 0.2); border-color: #ffcc00; } /* GIALLO */
+        .s-nom { background: rgba(50, 215, 75, 0.2); border-color: #32d74b; } /* VERDE */
 
-        .hud { 
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 40vh; 
+        .controls { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 35vh; 
             background: #1c1c1e; padding: 15px; box-sizing: border-box; 
-            display: flex; flex-direction: column; gap: 10px;
+            display: flex; flex-direction: column; gap: 8px;
         }
 
-        .btn-slice { 
-            background: #fff; color: #000; width: 100%; padding: 15px; 
+        /* SLIDER PER REGOLARE L'ALTEZZA */
+        input[type=range] { width: 100%; margin: 10px 0; accent-color: #007AFF; cursor: pointer; }
+        
+        .btn-scan { 
+            background: #fff; color: #000; width: 100%; padding: 12px; 
             border: none; border-radius: 8px; font-size: 18px; font-weight: bold; 
-            text-transform: uppercase; cursor: pointer;
+            text-transform: uppercase; cursor: pointer; margin-top: 5px;
         }
 
-        label { color: #888; font-size: 10px; margin-bottom: 2px; }
-        input { 
-            background: #333; border: 1px solid #555; color: #fff; padding: 10px; 
-            width: 100%; box-sizing: border-box; font-family: monospace; font-size: 16px;
-        }
+        .result-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .lbl { font-size: 10px; font-weight: bold; }
+        .val { font-size: 14px; font-weight: bold; color: #fff; }
         
         #log { font-size: 10px; text-align: center; color: #aaa; margin-top: 5px; }
         canvas { display: none; }
@@ -51,70 +54,84 @@
 
     <div class="viewport">
         <video id="video" autoplay playsinline></video>
-        <div class="grid-container">
-            <div class="slice-doc"></div>
-            <div class="slice-dob"></div>
-            <div class="slice-name"></div>
-        </div>
+        
+        <div class="slicer-container" id="grid">
+            <div class="slice s-doc"></div> <div class="slice s-dob"></div> <div class="slice s-nom"></div> </div>
     </div>
 
-    <div class="hud">
-        <button class="btn-slice" id="btn-scan">SCANSIONA A STRISCE</button>
-        <div><label style="color:#ff3b30">NUMERO DOCUMENTO</label><input type="text" id="out-doc"></div>
-        <div><label style="color:#ffcc00">DATA DI NASCITA</label><input type="text" id="out-dob"></div>
-        <div><label style="color:#32d74b">COGNOME E NOME</label><input type="text" id="out-name"></div>
-        <div id="log">Allinea le 3 righe nelle 3 caselle colorate</div>
+    <div class="controls">
+        <div style="text-align:center; font-size:11px; color:#007AFF;">↕️ USA LA LEVA PER ADATTARE L'ALTEZZA ALLE RIGHE ↕️</div>
+        <input type="range" id="height-slider" min="80" max="250" value="120">
+        
+        <button class="btn-scan" id="btn-snap">SCANSIONA ORA</button>
+
+        <div class="result-row"><span class="lbl" style="color:#ff3b30">DOC:</span> <span class="val" id="out-doc">...</span></div>
+        <div class="result-row"><span class="lbl" style="color:#ffcc00">DATA:</span> <span class="val" id="out-dob">...</span></div>
+        <div class="result-row"><span class="lbl" style="color:#32d74b">NOM:</span> <span class="val" id="out-nom">...</span></div>
+        
+        <div id="log">Regola la griglia e scatta</div>
     </div>
 
     <canvas id="canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
+        const grid = document.getElementById('grid');
+        const slider = document.getElementById('height-slider');
         const canvas = document.getElementById('canvas');
         const log = document.getElementById('log');
 
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 1920 } } 
-        }).then(s => video.srcObject = s);
+        // Attiva Camera
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
+            .then(s => video.srcObject = s);
 
-        document.getElementById('btn-scan').addEventListener('click', async () => {
-            log.innerText = "TAGLIO IMMAGINE...";
-            
-            // Dimensioni totali video
-            const vw = video.videoWidth;
-            const vh = video.videoHeight;
-            
-            // Coordinate della griglia (che occupa il 90% larghezza e 30% altezza al centro)
-            const boxW = vw * 0.90;
-            const boxH = vh * 0.30;
-            const startX = (vw - boxW) / 2;
-            const startY = (vh - boxH) / 2;
-            const sliceH = boxH / 3; // Altezza di una singola striscia
-
-            // --- FASE 1: STRISCIA DOCUMENTO (ROSSA) ---
-            log.innerText = "Analisi Documento...";
-            let docTxt = await scanSlice(startX, startY, boxW, sliceH);
-            parseDoc(docTxt);
-
-            // --- FASE 2: STRISCIA DATA (GIALLA) ---
-            log.innerText = "Analisi Data...";
-            let dobTxt = await scanSlice(startX, startY + sliceH, boxW, sliceH);
-            parseDob(dobTxt);
-
-            // --- FASE 3: STRISCIA NOME (VERDE) ---
-            log.innerText = "Analisi Nome...";
-            let nameTxt = await scanSlice(startX, startY + (sliceH * 2), boxW, sliceH);
-            parseName(nameTxt);
-
-            log.innerText = "COMPLETATO";
+        // LOGICA SLIDER: Cambia l'altezza della griglia in tempo reale
+        slider.addEventListener('input', (e) => {
+            grid.style.height = e.target.value + 'px';
         });
 
-        async function scanSlice(x, y, w, h) {
+        document.getElementById('btn-snap').addEventListener('click', async () => {
+            log.innerText = "ELABORAZIONE...";
+            
+            // Calcoli geometrici precisi
+            const rect = grid.getBoundingClientRect(); // Posizione della griglia sullo schermo
+            const videoRect = video.getBoundingClientRect(); // Posizione del video
+            
+            // Fattore di scala (perché il video reale è più grande dello schermo)
+            const scaleX = video.videoWidth / videoRect.width;
+            const scaleY = video.videoHeight / videoRect.height;
+
+            // Coordinate reali sul video sorgente
+            const realX = (rect.left - videoRect.left) * scaleX;
+            const realY = (rect.top - videoRect.top) * scaleY;
+            const realW = rect.width * scaleX;
+            const realH = rect.height * scaleY;
+            const sliceH = realH / 3; // Altezza singola striscia
+
+            // --- ANALISI STRISCIA 1 (ROSSA) ---
+            log.innerText = "Leggo Riga 1...";
+            let t1 = await scanZone(realX, realY, realW, sliceH);
+            parseDoc(t1);
+
+            // --- ANALISI STRISCIA 2 (GIALLA) ---
+            log.innerText = "Leggo Riga 2...";
+            let t2 = await scanZone(realX, realY + sliceH, realW, sliceH);
+            parseDob(t2);
+
+            // --- ANALISI STRISCIA 3 (VERDE) ---
+            log.innerText = "Leggo Riga 3...";
+            let t3 = await scanZone(realX, realY + (sliceH*2), realW, sliceH);
+            parseName(t3);
+
+            log.innerText = "Finito!";
+        });
+
+        async function scanZone(x, y, w, h) {
             const ctx = canvas.getContext('2d');
             canvas.width = w;
             canvas.height = h;
-            // Filtro nitidezza
-            ctx.filter = 'grayscale(100%) contrast(250%)';
+            // Filtro nitidezza estrema
+            ctx.filter = 'grayscale(100%) contrast(300%)';
             ctx.drawImage(video, x, y, w, h, 0, 0, w, h);
             
             const { data } = await Tesseract.recognize(canvas, 'ita', {
@@ -123,43 +140,44 @@
             return data.text.replace(/\s/g, '').toUpperCase();
         }
 
+        // Funzioni di Pulizia Dati
         function fix(s, type) {
             if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
             if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
             return s;
         }
 
         function parseDoc(txt) {
-            // Cerca pattern: 2 lettere, 5 numeri, 2 lettere
-            // Oppure cerca "IT" seguito da 9 chars
+            // Cerca pattern CIE nella prima striscia
             let m = txt.match(/IT([A-Z0-9]{9})/) || txt.match(/[A-Z]{2}[0-9]{5}[A-Z]{2}/);
             if (m) {
                 let d = m[1] || m[0];
-                // Applica correzione posizionale
                 d = fix(d.substr(0,2),'L') + fix(d.substr(2,5),'N') + fix(d.substr(7,2),'L');
-                document.getElementById('out-doc').value = d;
+                document.getElementById('out-doc').innerText = d;
+                document.getElementById('out-doc').style.color = "#ff3b30";
             }
         }
 
         function parseDob(txt) {
-            // Cerca 6 numeri seguiti da una lettera (data + check)
-            let m = txt.match(/[0-9]{6}/); 
+            // Cerca data nella seconda striscia (inizia con numeri)
+            let m = txt.match(/[0-9]{6}/);
             if (m) {
                 let d = fix(m[0], 'N');
-                // Formatta YY MM DD
-                let year = parseInt(d.substr(0,2)) > 40 ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
-                document.getElementById('out-dob').value = `${d.substr(4,2)}/${d.substr(2,2)}/${year}`;
+                let y = parseInt(d.substr(0,2)) > 40 ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
+                document.getElementById('out-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
+                document.getElementById('out-dob').style.color = "#ffcc00";
             }
         }
 
         function parseName(txt) {
-            // Cerca Cognome<<Nome
+            // Cerca nome nella terza striscia
             if (txt.includes('<<')) {
                 let parts = txt.split('<<');
                 let cog = fix(parts[0].replace(/</g,''), 'L');
                 let nom = fix(parts[1].replace(/</g,''), 'L');
-                document.getElementById('out-name').value = `${cog} ${nom}`;
+                document.getElementById('out-nom').innerText = `${cog} ${nom}`;
+                document.getElementById('out-nom').style.color = "#32d74b";
             }
         }
     </script>
