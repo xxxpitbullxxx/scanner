@@ -3,48 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner ID V25 - Final Shield</title>
+    <title>Scanner ID V26 - Master Shield</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #f4f7f9; padding-bottom: 50px; overflow-y: auto !important; height: auto !important; }
-        .cam-box { position: relative; width: 100%; height: 320px; background: #000; overflow: hidden; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #f4f7f9; padding-bottom: 60px; overflow-y: auto !important; height: auto !important; }
+        .cam-frame { position: relative; width: 100%; height: 320px; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .shield-guide { 
+        /* Rettangolo di isolamento blu */
+        .master-guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             width: 90%; height: 45%; border: 4px solid #007AFF; border-radius: 12px; 
-            box-shadow: 0 0 0 2000px rgba(0,0,0,0.8); z-index: 5; pointer-events: none; 
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.85); z-index: 5; pointer-events: none; 
         }
-        .ui-container { padding: 20px; }
-        .btn-shield { 
+        .ui-panel { padding: 20px; }
+        .btn-master { 
             background: #34C759; color: white; width: 100%; padding: 20px; 
-            border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(52,199,89,0.4);
+            border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(52,199,89,0.4);
         }
         .data-card { background: white; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
         .field { margin-bottom: 15px; }
         label { display: block; font-size: 10px; font-weight: 800; color: #a0a0a0; text-transform: uppercase; margin-bottom: 5px; }
         input { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 18px; font-weight: bold; box-sizing: border-box; background: #fdfdfd; color: #333; }
-        #log-shield { font-family: monospace; font-size: 11px; color: #ff3b30; background: #fff; padding: 10px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; }
+        #log-master { font-family: monospace; font-size: 11px; color: #ff3b30; background: #fff; padding: 10px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="cam-box">
+    <div class="cam-frame">
         <video id="webcam" autoplay playsinline></video>
-        <div class="shield-guide"></div>
+        <div class="master-guide"></div>
     </div>
 
-    <div class="ui-container">
-        <div id="status-txt" style="text-align:center; font-weight:bold; color:#34C759; margin-bottom:12px;">PULIZIA SCANNER ATTIVA</div>
-        <button class="btn-shield" id="btn-run">SCANSIONE DEFINITIVA</button>
+    <div class="ui-panel">
+        <div id="status-msg" style="text-align:center; font-weight:bold; color:#34C759; margin-bottom:12px;">MODALITÀ ISOLAMENTO ATTIVA</div>
+        <button class="btn-master" id="btn-scan">SCANSIONE MASTER SHIELD</button>
 
         <div class="data-card">
-            <div class="field"><label>Cognome</label><input type="text" id="out-cog"></div>
-            <div class="field"><label>Nome</label><input type="text" id="out-nom"></div>
-            <div class="field"><label>N. Documento (Validato CIE)</label><input type="text" id="out-doc" style="border-color: #34C759; color: #34C759; background: #f0fff4;"></div>
+            <div class="field"><label>Cognome</label><input type="text" id="res-cog"></div>
+            <div class="field"><label>Nome</label><input type="text" id="res-nom"></div>
+            <div class="field"><label>N. Documento (Validazione CIE)</label><input type="text" id="res-doc" style="border-color: #34C759; color: #34C759; background: #f0fff4;"></div>
         </div>
 
-        <div id="log-shield">Allinea la riga del retro "<<<" nel riquadro blu.</div>
+        <div id="log-master">Punta il RETRO (riga con <<<<) nel rettangolo blu.</div>
     </div>
 
     <canvas id="canvas-shield"></canvas>
@@ -52,36 +53,36 @@
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('canvas-shield');
-        const log = document.getElementById('log-shield');
-        const status = document.getElementById('status-txt');
+        const log = document.getElementById('log-master');
+        const status = document.getElementById('status-msg');
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
             .then(s => { video.srcObject = s; });
 
-        document.getElementById('btn-run').addEventListener('click', async () => {
-            status.innerText = "ELIMINAZIONE RIFLESSI...";
+        document.getElementById('btn-scan').addEventListener('click', async () => {
+            status.innerText = "ISOLAMENTO PIXEL...";
             const ctx = canvas.getContext('2d');
             canvas.width = 1600;
             canvas.height = 900;
 
-            // FILTRO SHIELD: binarizzazione aggressiva (solo nero puro su bianco puro)
-            ctx.filter = 'grayscale(100%) contrast(500%) brightness(90%) threshold(0.5)';
+            // FILTRO MASTER: binarizzazione totale per eliminare ombre e riflessi
+            ctx.filter = 'grayscale(100%) contrast(500%) brightness(100%)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             try {
                 const result = await Tesseract.recognize(canvas, 'ita+eng', {
-                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Shield Engine: " + (m.progress * 100).toFixed(0) + "%"; }
+                    logger: m => { if(m.status === 'recognizing text') log.innerText = "Master Engine: " + (m.progress * 100).toFixed(0) + "%"; }
                 });
 
-                processV25(result.data.text);
-                status.innerText = "SCAN COMPLETATO";
+                processV26(result.data.text);
+                status.innerText = "DOCUMENTO ACQUISITO";
             } catch (err) {
                 log.innerText = "Errore: " + err;
             }
         });
 
-        // Correzione Posizionale Avanzata (LL NNNNN LL)
-        function shieldFix(d) {
+        // Correzione Posizionale Blindata (LL NNNNN LL)
+        function masterFix(d) {
             let s = d.replace(/[^A-Z0-9]/g, '');
             if (s.length < 9) return s;
             s = s.substring(0, 9);
@@ -89,34 +90,38 @@
             let res = "";
             for (let i = 0; i < 9; i++) {
                 let c = s[i];
+                // Posizioni Lettere (0,1,7,8)
                 if ([0, 1, 7, 8].includes(i)) {
-                    res += c.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z').replace(/3/g, 'B');
-                } else {
-                    res += c.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2').replace(/B/g, '8').replace(/T/g, '7').replace(/E/g, '3');
+                    res += c.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z').replace(/3/g, 'B').replace(/8/g, 'B');
+                } 
+                // Posizioni Numeri (2,3,4,5,6)
+                else {
+                    res += c.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2').replace(/B/g, '8').replace(/T/g, '7').replace(/E/g, '3').replace(/R/g, '8').replace(/A/g, '4');
                 }
             }
             return res;
         }
 
-        function processV25(raw) {
+        function processV26(raw) {
             const t = raw.toUpperCase();
             const clean = t.replace(/\s/g, '');
             
-            // Priorità alla riga MRZ (Retro)
+            // Priorità assoluta alla stringa MRZ (Retro)
             const mrzMatch = clean.match(/C<IT([A-Z0-9]{9})/);
             if (mrzMatch) {
-                document.getElementById('out-doc').value = shieldFix(mrzMatch[1]);
+                document.getElementById('res-doc').value = masterFix(mrzMatch[1]);
             }
 
             const nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if (nameMatch) {
-                document.getElementById('out-cog').value = nameMatch[1];
-                document.getElementById('out-nom').value = nameMatch[2];
+                document.getElementById('res-cog').value = nameMatch[1];
+                document.getElementById('res-nom').value = nameMatch[2];
             }
 
-            if (!document.getElementById('out-doc').value) {
+            // Fallback se MRZ è sfuocata
+            if (!document.getElementById('res-doc').value) {
                 const docPat = t.match(/[A-Z0-9]{2}\s?[0-9A-Z]{5}\s?[A-Z0-9]{2}/);
-                if (docPat) document.getElementById('out-doc').value = shieldFix(docPat[0].replace(/\s/g, ''));
+                if (docPat) document.getElementById('res-doc').value = masterFix(docPat[0].replace(/\s/g, ''));
             }
         }
     </script>
