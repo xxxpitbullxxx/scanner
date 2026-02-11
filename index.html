@@ -3,72 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner V33 - Sagoma Reale CIE</title>
+    <title>Scanner V32 - Matrix Solver</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { margin: 0; background: #000; overflow: hidden; font-family: sans-serif; }
+        body { font-family: monospace; background: #000; color: #fff; margin: 0; overflow: hidden; }
         
-        .viewport { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .viewport { position: relative; width: 100vw; height: 50vh; background: #111; }
+        video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* OVERLAY SCURO CON BUCO TRASPARENTE */
-        /* Questo crea l'effetto "maschera" scura attorno alla carta */
-        .overlay-mask {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            mask: radial-gradient(rect 300px 200px at center, transparent 40%, black 100%);
-            -webkit-mask: radial-gradient(transparent 0%, black 0%); /* Fallback semplice */
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        /* SAGOMA CARTA ID-1 (85.6mm x 54mm -> Ratio ~1.58) */
-        .card-outline {
-            position: relative;
-            width: 85vw; /* Larghezza relativa allo schermo */
-            max-width: 400px;
-            aspect-ratio: 1.586; /* PROPORZIONE ESATTA CARTA DI CREDITO/CIE */
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 15px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); /* Oscura tutto fuori dalla carta */
+        /* MIRINO RETTANGOLARE AMPIO PER LE 3 RIGHE */
+        .matrix-guide { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 90%; height: 35%; 
+            border: 3px solid #32d74b; /* Verde Matrix */
+            border-radius: 8px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.85);
             z-index: 10;
         }
 
-        /* ZONA MRZ (3 Righe in basso) */
-        /* Occupa circa il 30% inferiore della carta */
-        .mrz-zone {
-            position: absolute;
-            bottom: 5%; left: 3%; right: 3%;
-            height: 30%;
-            border: 2px solid #32d74b; /* Verde Matrix */
-            background: rgba(50, 215, 75, 0.1);
-            border-radius: 5px;
-        }
-        
-        .guide-text {
-            position: absolute; top: -30px; left: 0; width: 100%;
-            text-align: center; color: white; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;
+        .hud-panel { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 50vh; 
+            background: #1c1c1e; border-top: 2px solid #333; padding: 15px; box-sizing: border-box; 
+            overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
         }
 
-        /* PANNELLO RISULTATI */
-        .results-panel {
-            position: absolute; bottom: 0; left: 0; width: 100%; 
-            background: #fff; border-radius: 20px 20px 0 0; padding: 20px;
-            z-index: 20; box-sizing: border-box; transition: transform 0.3s;
-        }
-        
-        .btn-scan {
-            width: 100%; padding: 15px; background: #32d74b; border: none; 
-            border-radius: 10px; font-size: 18px; font-weight: bold; color: #000;
-            margin-bottom: 15px; cursor: pointer;
+        .btn-matrix { 
+            background: #32d74b; color: black; width: 100%; padding: 15px; 
+            border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; margin-bottom: 10px;
         }
 
-        .field-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .field { flex: 1; }
-        label { font-size: 10px; font-weight: bold; color: #666; display: block; }
-        input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-weight: bold; }
-        input.ok { border-color: #32d74b; color: #008000; background: #eaffea; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 10px; color: #888; margin-bottom: 2px; }
+        input { 
+            background: #2c2c2e; border: 1px solid #444; color: #fff; padding: 10px; 
+            font-size: 16px; border-radius: 6px; font-family: monospace; letter-spacing: 1px;
+        }
+        input.locked { border-color: #32d74b; color: #32d74b; background: #1a3b20; }
 
+        #log { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
         canvas { display: none; }
     </style>
 </head>
@@ -76,97 +49,62 @@
 
     <div class="viewport">
         <video id="video" autoplay playsinline></video>
-        
-        <div class="card-outline" id="card-guide">
-            <div class="guide-text">Allinea i bordi della carta</div>
-            <div class="mrz-zone"></div> </div>
+        <div class="matrix-guide"></div>
     </div>
 
-    <div class="results-panel">
-        <button class="btn-scan" id="snap">SCANSIONA MRZ</button>
+    <div class="hud-panel">
+        <button class="btn-matrix" id="scan-btn">DECODIFICA MATRICE</button>
         
-        <div class="field-row">
-            <div class="field"><label>NUMERO DOC</label><input type="text" id="r-doc"></div>
-            <div class="field"><label>DATA NASCITA</label><input type="text" id="r-dob"></div>
-        </div>
-        <div class="field-row">
-            <div class="field"><label>COGNOME</label><input type="text" id="r-cog"></div>
-            <div class="field"><label>NOME</label><input type="text" id="r-nom"></div>
-        </div>
-        <div id="status" style="text-align:center; font-size:12px; color:#888;">Allinea il rettangolo verde alle 3 righe sul retro</div>
+        <div class="field"><label>NUMERO DOCUMENTO</label><input type="text" id="res-doc"></div>
+        <div class="field"><label>COGNOME</label><input type="text" id="res-cog"></div>
+        <div class="field"><label>NOME</label><input type="text" id="res-nom"></div>
+        <div class="field"><label>DATA DI NASCITA</label><input type="text" id="res-dob"></div>
+        
+        <div id="log">Inquadra le 3 righe del retro</div>
     </div>
 
-    <canvas id="crop-canvas"></canvas>
+    <canvas id="proc-canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('crop-canvas');
-        const status = document.getElementById('status');
+        const canvas = document.getElementById('proc-canvas');
+        const log = document.getElementById('log');
 
         navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+            video: { facingMode: "environment", width: { ideal: 1920 } } 
         }).then(s => video.srcObject = s);
 
-        document.getElementById('snap').addEventListener('click', async () => {
-            status.innerText = "RITAGLIO DI PRECISIONE...";
+        document.getElementById('scan-btn').addEventListener('click', async () => {
+            log.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
-
-            // 1. CALCOLO GEOMETRICO
-            // Dobbiamo capire dove si trova il rettangolo verde rispetto al video reale
-            const videoW = video.videoWidth;
-            const videoH = video.videoHeight;
-            const screenW = window.innerWidth;
-            const screenH = window.innerHeight;
-
-            // Rapporto di scala tra video reale e schermo
-            // (Assumiamo object-fit: cover)
-            const scale = Math.max(videoW / screenW, videoH / screenH);
             
-            // Otteniamo le coordinate del rettangolo VERDE (MRZ)
-            const guide = document.querySelector('.mrz-zone').getBoundingClientRect();
-            
-            // Calcoliamo il centro del video per centrare il ritaglio
-            const vidOffsetX = (videoW - (screenW * scale)) / 2;
-            const vidOffsetY = (videoH - (screenH * scale)) / 2;
+            // Ritaglio basato sul mirino verde
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+            const cw = vw * 0.90;
+            const ch = vh * 0.35;
+            const cx = (vw - cw) / 2;
+            const cy = (vh - ch) / 2;
 
-            // Coordinate di ritaglio sul video originale
-            const cropX = (guide.left * scale) + vidOffsetX; // No offset se centrato perfetto, ma per sicurezza
-            const cropY = (guide.top * scale) + vidOffsetY; // Questo è approssimato per cover, usiamo metodo centro
-            
-            // METODO PIU SICURO: Centrare il ritaglio come la guida
-            // La guida è al centro orizzontale, e al (Bottom - 5%) verticale della carta
-            // Larghezza carta = 85vw. Altezza = 85vw / 1.58.
-            // Larghezza ritaglio = Larghezza carta * 0.94 (margini)
-            // Altezza ritaglio = Altezza carta * 0.30.
-            
-            const cardW_px = videoW * 0.85; // Se la guida è larga 85% dello schermo, nel video sarà proporzionale? 
-            // Semplificazione: Ritagliamo il centro basso del video.
-            
-            canvas.width = 1200; // Risoluzione fissa alta per l'OCR
-            canvas.height = 350; // Striscia panoramica
+            canvas.width = cw;
+            canvas.height = ch;
 
-            // Disegniamo prendendo il centro del video, ma spostati verso il basso dove sta l'MRZ
-            // MRZ è circa al 75% dell'altezza della carta
-            const sourceW = videoW * 0.80; // 80% della larghezza video
-            const sourceH = sourceW / 1.58 * 0.35; // Altezza proporzionale
-            const sourceX = (videoW - sourceW) / 2;
-            const sourceY = (videoH / 2) + (sourceW / 1.58 * 0.15); // Un po' sotto il centro
-
-            ctx.filter = 'grayscale(100%) contrast(200%)';
-            ctx.drawImage(video, sourceX, sourceY, sourceW, sourceH, 0, 0, canvas.width, canvas.height);
+            // Filtro ad alto contrasto (lo stesso della V29 che ha funzionato)
+            ctx.filter = 'grayscale(100%) contrast(250%)';
+            ctx.drawImage(video, cx, cy, cw, ch, 0, 0, cw, ch);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
-                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+                    logger: m => log.innerText = `Scan: ${Math.round(m.progress * 100)}%`
                 });
-                parseV33(text);
-                status.innerText = "FINITO";
-            } catch (e) { status.innerText = "ERRORE"; }
+                
+                parseMatrix(text);
+                log.innerText = "COMPLETATO";
+            } catch (e) { log.innerText = "Errore OCR"; }
         });
 
-        function clean(s) { return s ? s.replace(/</g, '').trim() : ""; }
-        
-        // Correttore automatico (O/0, S/5, ecc)
+        // Correzione CIE (Lettere vs Numeri)
         function fix(s, type) {
             if(!s) return "";
             if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
@@ -174,42 +112,53 @@
             return s;
         }
 
-        function parseV33(raw) {
-            console.log(raw);
-            const lines = raw.split('\n').map(l => l.replace(/\s/g,'').toUpperCase()).filter(l => l.length > 5);
+        function parseMatrix(raw) {
+            console.log("Raw:", raw);
+            // Puliamo tutto e dividiamo per righe
+            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
+
+            // LOGICA INTELLIGENTE: Identifica le righe in base al contenuto
             
-            // 1. CERCA RIGA "NOMI" (Quella con <<)
-            const nameLine = lines.find(l => l.includes('<<') && !l.includes('IT'));
-            if(nameLine) {
-                const parts = nameLine.split('<<');
-                document.getElementById('r-cog').value = fix(parts[0], 'L');
-                document.getElementById('r-nom').value = fix(parts[1].replace(/</g,''), 'L');
-                document.getElementById('r-cog').classList.add('ok');
-                document.getElementById('r-nom').classList.add('ok');
-            }
-
-            // 2. CERCA RIGA "DOC" (C<IT o ITA)
-            const docLine = lines.find(l => l.includes('IT') && l.match(/[0-9]/));
-            if(docLine) {
-                const m = docLine.match(/IT([A-Z0-9]{9})/);
+            // 1. TROVA RIGA DOCUMENTO (Contiene ITA e numeri misti a lettere)
+            // Cerca pattern: C<IT... o ITA...
+            let docRow = lines.find(l => l.includes('IT') && l.match(/[0-9]/) && l.match(/</));
+            if (docRow) {
+                let m = docRow.match(/IT([A-Z0-9]{9})/);
                 if(m) {
-                    let d = m[1];
-                    // Formato: LL NNNNN LL
-                    let final = fix(d.substr(0,2),'L') + fix(d.substr(2,5),'N') + fix(d.substr(7,2),'L');
-                    document.getElementById('r-doc').value = final;
-                    document.getElementById('r-doc').classList.add('ok');
+                    let dirty = m[1];
+                    // Applica LL NNNNN LL
+                    let cleanDoc = fix(dirty.substr(0,2),'L') + fix(dirty.substr(2,5),'N') + fix(dirty.substr(7,2),'L');
+                    document.getElementById('res-doc').value = cleanDoc;
+                    document.getElementById('res-doc').classList.add('locked');
                 }
             }
 
-            // 3. CERCA RIGA "NASCITA" (Inizia con numeri, ha M o F)
-            const birthLine = lines.find(l => l.match(/^[0-9]/) && (l.includes('M') || l.includes('F')));
-            if(birthLine) {
-                let dob = fix(birthLine.substr(0,6), 'N');
-                if(dob.length === 6) {
-                    let y = parseInt(dob.substr(0,2)) > 40 ? '19'+dob.substr(0,2) : '20'+dob.substr(0,2);
-                    document.getElementById('r-dob').value = `${dob.substr(4,2)}/${dob.substr(2,2)}/${y}`;
-                    document.getElementById('r-dob').classList.add('ok');
+            // 2. TROVA RIGA DATI (Inizia con numeri e contiene M o F)
+            // Esempio: 9912016M...
+            let dataRow = lines.find(l => l.match(/^[0-9]/) && (l.includes('M') || l.includes('F')));
+            if (dataRow) {
+                let dobRaw = dataRow.substr(0, 6); // Primi 6 caratteri sono YYMMDD
+                dobRaw = fix(dobRaw, 'N');
+                if(dobRaw.length === 6) {
+                    let y = dobRaw.substr(0,2);
+                    let m = dobRaw.substr(2,2);
+                    let d = dobRaw.substr(4,2);
+                    let fullY = (parseInt(y) > 40) ? '19'+y : '20'+y;
+                    document.getElementById('res-dob').value = `${d}/${m}/${fullY}`;
+                    document.getElementById('res-dob').classList.add('locked');
                 }
+            }
+
+            // 3. TROVA RIGA NOMI (Contiene << e poche cifre)
+            // Escludiamo le righe che abbiamo già identificato come Doc o Data
+            let nameRow = lines.find(l => l.includes('<<') && !l.includes('IT') && !l.match(/^[0-9]/));
+            if (nameRow) {
+                let parts = nameRow.split('<<');
+                if (parts[0]) document.getElementById('res-cog').value = fix(parts[0].replace(/</g,''), 'L');
+                if (parts[1]) document.getElementById('res-nom').value = fix(parts[1].replace(/</g,''), 'L');
+                
+                document.getElementById('res-cog').classList.add('locked');
+                document.getElementById('res-nom').classList.add('locked');
             }
         }
     </script>
