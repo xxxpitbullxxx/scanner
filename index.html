@@ -3,50 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner ID V31 - Total Sniper</title>
+    <title>Scanner V32 - Matrix Solver</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #121212; color: white; overflow: hidden; }
+        body { font-family: monospace; background: #000; color: #fff; margin: 0; overflow: hidden; }
         
-        .viewport { position: relative; width: 100vw; height: 55vh; background: #000; overflow: hidden; }
+        .viewport { position: relative; width: 100vw; height: 50vh; background: #111; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* MIRINO SNIPER: Leggermente più alto per prendere le 3 righe MRZ */
-        .sniper-box { 
+        /* MIRINO RETTANGOLARE AMPIO PER LE 3 RIGHE */
+        .matrix-guide { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; height: 30%; /* Altezza aumentata per le 3 righe */
-            border: 3px solid #ff3b30; 
-            border-radius: 12px;
+            width: 90%; height: 35%; 
+            border: 3px solid #32d74b; /* Verde Matrix */
+            border-radius: 8px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.85);
             z-index: 10;
         }
-        /* Linee guida interne per le righe di testo */
-        .sniper-grid {
-            width: 100%; height: 33%; border-bottom: 1px dashed rgba(255, 59, 48, 0.5);
-        }
 
         .hud-panel { 
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 45vh; 
-            background: #f2f2f7; border-radius: 25px 25px 0 0; padding: 20px; box-sizing: border-box; 
-            color: #333; overflow-y: auto;
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 50vh; 
+            background: #1c1c1e; border-top: 2px solid #333; padding: 15px; box-sizing: border-box; 
+            overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
         }
 
-        .btn-fire { 
-            background: #ff3b30; color: white; width: 100%; padding: 18px; 
-            border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 5px 15px rgba(255, 59, 48, 0.4); margin-bottom: 20px;
+        .btn-matrix { 
+            background: #32d74b; color: black; width: 100%; padding: 15px; 
+            border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; margin-bottom: 10px;
         }
 
-        .field-group { margin-bottom: 12px; }
-        label { font-size: 10px; font-weight: 900; color: #888; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 10px; color: #888; margin-bottom: 2px; }
         input { 
-            width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 8px; 
-            font-size: 16px; font-weight: 600; background: #fff; box-sizing: border-box;
+            background: #2c2c2e; border: 1px solid #444; color: #fff; padding: 10px; 
+            font-size: 16px; border-radius: 6px; font-family: monospace; letter-spacing: 1px;
         }
-        /* Highlight verde quando il dato è trovato */
-        input.found { border-color: #34C759; background-color: #e8fce8; color: #008000; }
+        input.locked { border-color: #32d74b; color: #32d74b; background: #1a3b20; }
 
-        #log { font-size: 11px; color: #aaa; text-align: center; margin-top: 10px; font-family: monospace; }
+        #log { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
         canvas { display: none; }
     </style>
 </head>
@@ -54,21 +49,18 @@
 
     <div class="viewport">
         <video id="video" autoplay playsinline></video>
-        <div class="sniper-box">
-            <div class="sniper-grid"></div>
-            <div class="sniper-grid"></div>
-        </div>
+        <div class="matrix-guide"></div>
     </div>
 
     <div class="hud-panel">
-        <button class="btn-fire" id="scan-btn">SCANSIONA RETRO (MRZ)</button>
+        <button class="btn-matrix" id="scan-btn">DECODIFICA MATRICE</button>
         
-        <div class="field-group"><label>Cognome</label><input type="text" id="res-cognome"></div>
-        <div class="field-group"><label>Nome</label><input type="text" id="res-nome"></div>
-        <div class="field-group"><label>N. Documento</label><input type="text" id="res-doc"></div>
-        <div class="field-group"><label>Data di Nascita</label><input type="text" id="res-nascita"></div>
+        <div class="field"><label>NUMERO DOCUMENTO</label><input type="text" id="res-doc"></div>
+        <div class="field"><label>COGNOME</label><input type="text" id="res-cog"></div>
+        <div class="field"><label>NOME</label><input type="text" id="res-nom"></div>
+        <div class="field"><label>DATA DI NASCITA</label><input type="text" id="res-dob"></div>
         
-        <div id="log">Inquadra le 3 righe con "<<" nel rettangolo rosso</div>
+        <div id="log">Inquadra le 3 righe del retro</div>
     </div>
 
     <canvas id="proc-canvas"></canvas>
@@ -77,107 +69,96 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('proc-canvas');
         const log = document.getElementById('log');
-        
+
         navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: "environment", width: { ideal: 1920 } } 
         }).then(s => video.srcObject = s);
 
         document.getElementById('scan-btn').addEventListener('click', async () => {
-            log.innerText = "ELABORAZIONE SNIPER...";
+            log.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
             
-            // Ritaglio esatto del mirino rosso (30% dell'altezza centrale)
+            // Ritaglio basato sul mirino verde
             const vw = video.videoWidth;
             const vh = video.videoHeight;
             const cw = vw * 0.90;
-            const ch = vh * 0.30;
+            const ch = vh * 0.35;
             const cx = (vw - cw) / 2;
             const cy = (vh - ch) / 2;
 
             canvas.width = cw;
             canvas.height = ch;
 
-            // Filtro Alto Contrasto per lettura perfetta
+            // Filtro ad alto contrasto (lo stesso della V29 che ha funzionato)
             ctx.filter = 'grayscale(100%) contrast(250%)';
             ctx.drawImage(video, cx, cy, cw, ch, 0, 0, cw, ch);
 
             try {
-                // OCR Generico ma limitato a caratteri MRZ
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
-                    logger: m => log.innerText = `Analisi: ${Math.round(m.progress * 100)}%`
+                    logger: m => log.innerText = `Scan: ${Math.round(m.progress * 100)}%`
                 });
-
-                parseMRZ(text);
-                log.innerText = "SCANSIONE COMPLETATA";
-            } catch (e) {
-                log.innerText = "ERRORE OCR";
-            }
+                
+                parseMatrix(text);
+                log.innerText = "COMPLETATO";
+            } catch (e) { log.innerText = "Errore OCR"; }
         });
 
-        // Funzione Correzione Caratteri (quella che ha funzionato!)
-        function fixChar(str, isNum) {
-            if (!str) return "";
-            if (isNum) {
-                return str.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/A/g,'4');
-            } else {
-                return str.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
-            }
+        // Correzione CIE (Lettere vs Numeri)
+        function fix(s, type) {
+            if(!s) return "";
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
+            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+            return s;
         }
 
-        function parseMRZ(raw) {
-            console.log("RAW:", raw);
+        function parseMatrix(raw) {
+            console.log("Raw:", raw);
+            // Puliamo tutto e dividiamo per righe
             const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
+
+            // LOGICA INTELLIGENTE: Identifica le righe in base al contenuto
             
-            // 1. TROVA NUMERO DOCUMENTO (Riga che inizia con C<IT o I<IT o ITA)
-            const docLine = lines.find(l => l.includes('IT') && (l.match(/\d/) || l.includes('<')));
-            if (docLine) {
-                // Cerca pattern 9 chars dopo ITA o C<IT
-                let m = docLine.match(/IT([A-Z0-9]{9})/);
-                if (m) {
-                    let dirtyDoc = m[1];
-                    // Applichiamo la logica posizionale LL NNNNN LL
-                    let p1 = fixChar(dirtyDoc.substr(0,2), false);
-                    let p2 = fixChar(dirtyDoc.substr(2,5), true);
-                    let p3 = fixChar(dirtyDoc.substr(7,2), false);
-                    let finalDoc = p1 + p2 + p3;
-                    
-                    document.getElementById('res-doc').value = finalDoc;
-                    document.getElementById('res-doc').classList.add('found');
+            // 1. TROVA RIGA DOCUMENTO (Contiene ITA e numeri misti a lettere)
+            // Cerca pattern: C<IT... o ITA...
+            let docRow = lines.find(l => l.includes('IT') && l.match(/[0-9]/) && l.match(/</));
+            if (docRow) {
+                let m = docRow.match(/IT([A-Z0-9]{9})/);
+                if(m) {
+                    let dirty = m[1];
+                    // Applica LL NNNNN LL
+                    let cleanDoc = fix(dirty.substr(0,2),'L') + fix(dirty.substr(2,5),'N') + fix(dirty.substr(7,2),'L');
+                    document.getElementById('res-doc').value = cleanDoc;
+                    document.getElementById('res-doc').classList.add('locked');
                 }
             }
 
-            // 2. TROVA NOME E COGNOME (Riga con <<)
-            const nameLine = lines.find(l => l.includes('<<') && !l.includes('IT'));
-            if (nameLine) {
-                let parts = nameLine.split('<<');
-                if (parts.length >= 2) {
-                    let surname = parts[0].replace(/</g, '').trim();
-                    let name = parts[1].replace(/</g, '').trim();
-                    
-                    document.getElementById('res-cognome').value = surname;
-                    document.getElementById('res-nome').value = name;
-                    document.getElementById('res-cognome').classList.add('found');
-                    document.getElementById('res-nome').classList.add('found');
-                }
-            }
-
-            // 3. DATA DI NASCITA (Seconda riga numerica)
-            // Solitamente è la riga che inizia con numeri e ha M o F
-            const birthLine = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
-            if (birthLine) {
-                // Le prime 6 cifre sono la data YYMMDD
-                let dob = birthLine.substr(0, 6);
-                dob = fixChar(dob, true); // Sicuro numeri
-                if (dob.length === 6) {
-                    let y = dob.substr(0,2);
-                    let m = dob.substr(2,2);
-                    let d = dob.substr(4,2);
-                    // Indovina secolo (se > 30 è 1900, altrimenti 2000)
+            // 2. TROVA RIGA DATI (Inizia con numeri e contiene M o F)
+            // Esempio: 9912016M...
+            let dataRow = lines.find(l => l.match(/^[0-9]/) && (l.includes('M') || l.includes('F')));
+            if (dataRow) {
+                let dobRaw = dataRow.substr(0, 6); // Primi 6 caratteri sono YYMMDD
+                dobRaw = fix(dobRaw, 'N');
+                if(dobRaw.length === 6) {
+                    let y = dobRaw.substr(0,2);
+                    let m = dobRaw.substr(2,2);
+                    let d = dobRaw.substr(4,2);
                     let fullY = (parseInt(y) > 40) ? '19'+y : '20'+y;
-                    document.getElementById('res-nascita').value = `${d}/${m}/${fullY}`;
-                    document.getElementById('res-nascita').classList.add('found');
+                    document.getElementById('res-dob').value = `${d}/${m}/${fullY}`;
+                    document.getElementById('res-dob').classList.add('locked');
                 }
+            }
+
+            // 3. TROVA RIGA NOMI (Contiene << e poche cifre)
+            // Escludiamo le righe che abbiamo già identificato come Doc o Data
+            let nameRow = lines.find(l => l.includes('<<') && !l.includes('IT') && !l.match(/^[0-9]/));
+            if (nameRow) {
+                let parts = nameRow.split('<<');
+                if (parts[0]) document.getElementById('res-cog').value = fix(parts[0].replace(/</g,''), 'L');
+                if (parts[1]) document.getElementById('res-nom').value = fix(parts[1].replace(/</g,''), 'L');
+                
+                document.getElementById('res-cog').classList.add('locked');
+                document.getElementById('res-nom').classList.add('locked');
             }
         }
     </script>
