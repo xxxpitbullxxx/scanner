@@ -3,152 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner V34 - Visual Feedback</title>
+    <title>Scanner V32 - Matrix Solver</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: monospace; background: #111; color: #fff; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: monospace; background: #000; color: #fff; margin: 0; overflow: hidden; }
         
-        /* AREA CAMERA (Sopra) */
-        .cam-area { position: relative; width: 100%; height: 50vh; background: #000; overflow: hidden; }
+        .viewport { position: relative; width: 100vw; height: 50vh; background: #111; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* BERSAGLIO GRANDE ROSSO (Solo per le righe in basso) */
-        .target-box { 
-            position: absolute; bottom: 10%; left: 5%; width: 90%; height: 35%; 
-            border: 4px solid #ff3b30; background: rgba(255, 59, 48, 0.1);
-            border-radius: 8px; box-sizing: border-box;
-        }
-        .guide-text { position: absolute; top: -25px; width: 100%; text-align: center; font-size: 12px; color: #ff3b30; font-weight: bold; }
-
-        /* AREA RISULTATI (Sotto) */
-        .results-area { flex: 1; background: #222; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; border-top: 2px solid #444; }
-
-        .btn-snap { 
-            background: #ff3b30; color: white; border: none; padding: 15px; 
-            font-size: 18px; border-radius: 8px; font-weight: bold; cursor: pointer;
+        /* MIRINO RETTANGOLARE AMPIO PER LE 3 RIGHE */
+        .matrix-guide { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 90%; height: 35%; 
+            border: 3px solid #32d74b; /* Verde Matrix */
+            border-radius: 8px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.85);
+            z-index: 10;
         }
 
-        /* ANTEPRIMA DELLO SCATTO */
-        .snapshot-container { height: 80px; background: #000; border: 2px solid #444; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        #snapshot-preview { height: 100%; width: auto; opacity: 0.5; } /* Semi-trasparente finché non scatta */
+        .hud-panel { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 50vh; 
+            background: #1c1c1e; border-top: 2px solid #333; padding: 15px; box-sizing: border-box; 
+            overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+        }
 
-        .field label { font-size: 10px; color: #888; display: block; margin-bottom: 2px; }
-        .field input { width: 100%; background: #333; border: 1px solid #555; color: #fff; padding: 8px; font-family: monospace; font-size: 14px; box-sizing: border-box;}
-        .field input.ok { border-color: #32d74b; color: #32d74b; background: #1a3b20; }
+        .btn-matrix { 
+            background: #32d74b; color: black; width: 100%; padding: 15px; 
+            border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; margin-bottom: 10px;
+        }
 
-        #log { font-size: 11px; text-align: center; color: #aaa; }
-        /* Canvas nascosto per l'elaborazione */
-        #proc-canvas { display: none; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 10px; color: #888; margin-bottom: 2px; }
+        input { 
+            background: #2c2c2e; border: 1px solid #444; color: #fff; padding: 10px; 
+            font-size: 16px; border-radius: 6px; font-family: monospace; letter-spacing: 1px;
+        }
+        input.locked { border-color: #32d74b; color: #32d74b; background: #1a3b20; }
+
+        #log { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="cam-area">
+    <div class="viewport">
         <video id="video" autoplay playsinline></video>
-        <div class="target-box">
-            <div class="guide-text">INQUADRA QUI LE 3 RIGHE MRZ (<<<<)</div>
-        </div>
+        <div class="matrix-guide"></div>
     </div>
 
-    <div class="results-area">
-        <button class="btn-snap" id="snap-btn">SCATTA E ANALIZZA</button>
+    <div class="hud-panel">
+        <button class="btn-matrix" id="scan-btn">DECODIFICA MATRICE</button>
         
-        <div class="snapshot-container">
-            <canvas id="snapshot-preview"></canvas> </div>
-        <div id="log">Anteprima scatto qui sopra...</div>
-
-        <div class="field"><label>NUMERO DOC</label><input type="text" id="r-doc"></div>
-        <div class="field"><label>DATA NASCITA</label><input type="text" id="r-dob"></div>
-        <div class="field"><label>COGNOME</label><input type="text" id="r-cog"></div>
-        <div class="field"><label>NOME</label><input type="text" id="r-nom"></div>
+        <div class="field"><label>NUMERO DOCUMENTO</label><input type="text" id="res-doc"></div>
+        <div class="field"><label>COGNOME</label><input type="text" id="res-cog"></div>
+        <div class="field"><label>NOME</label><input type="text" id="res-nom"></div>
+        <div class="field"><label>DATA DI NASCITA</label><input type="text" id="res-dob"></div>
+        
+        <div id="log">Inquadra le 3 righe del retro</div>
     </div>
 
     <canvas id="proc-canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const procCanvas = document.getElementById('proc-canvas');
-        const previewCanvas = document.getElementById('snapshot-preview');
+        const canvas = document.getElementById('proc-canvas');
         const log = document.getElementById('log');
 
         navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+            video: { facingMode: "environment", width: { ideal: 1920 } } 
         }).then(s => video.srcObject = s);
 
-        document.getElementById('snap-btn').addEventListener('click', async () => {
-            log.innerText = "CATTURA...";
+        document.getElementById('scan-btn').addEventListener('click', async () => {
+            log.innerText = "ELABORAZIONE...";
+            const ctx = canvas.getContext('2d');
             
+            // Ritaglio basato sul mirino verde
             const vw = video.videoWidth;
             const vh = video.videoHeight;
+            const cw = vw * 0.90;
+            const ch = vh * 0.35;
+            const cx = (vw - cw) / 2;
+            const cy = (vh - ch) / 2;
 
-            // Coordinate del bersaglio rosso (Bottom 10%, Left 5%, Width 90%, Height 35%)
-            // Adattiamo queste percentuali alla risoluzione reale del video
-            const cropX = vw * 0.05;
-            const cropY = vh * (1 - 0.10 - 0.35); // Inizia dal 55% dell'altezza
-            const cropW = vw * 0.90;
-            const cropH = vh * 0.35;
+            canvas.width = cw;
+            canvas.height = ch;
 
-            // 1. MOSTRA L'ANTEPRIMA ALL'UTENTE
-            previewCanvas.width = cropW;
-            previewCanvas.height = cropH;
-            const pCtx = previewCanvas.getContext('2d');
-            pCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-            previewCanvas.style.opacity = "1"; // Rendi visibile l'anteprima
-
-            log.innerText = "ANALISI OCR IN CORSO...";
-
-            // 2. PREPARA L'IMMAGINE PER TESSERACT (Alta risoluzione + Filtri)
-            procCanvas.width = cropW * 1.5; // Aumenta risoluzione
-            procCanvas.height = cropH * 1.5;
-            const ctx = procCanvas.getContext('2d');
+            // Filtro ad alto contrasto (lo stesso della V29 che ha funzionato)
             ctx.filter = 'grayscale(100%) contrast(250%)';
-            ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, procCanvas.width, procCanvas.height);
+            ctx.drawImage(video, cx, cy, cw, ch, 0, 0, cw, ch);
 
             try {
-                const { data: { text } } = await Tesseract.recognize(procCanvas, 'ita', {
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
-                    logger: m => { if(m.status==='recognizing text') log.innerText = `Decodifica: ${Math.round(m.progress*100)}%`; }
+                    logger: m => log.innerText = `Scan: ${Math.round(m.progress * 100)}%`
                 });
-                parseV34(text);
-                log.innerText = "COMPLETATO. CONTROLLA I CAMPI.";
-            } catch (e) { log.innerText = "ERRORE OCR"; }
+                
+                parseMatrix(text);
+                log.innerText = "COMPLETATO";
+            } catch (e) { log.innerText = "Errore OCR"; }
         });
 
-        function fix(s, t) {
+        // Correzione CIE (Lettere vs Numeri)
+        function fix(s, type) {
             if(!s) return "";
-            if(t==='N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
-            if(t==='L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
+            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
             return s;
         }
 
-        function parseV34(raw) {
-            console.log("RAW:", raw); // Utile per debug
-            const lines = raw.split('\n').map(l => l.replace(/\s/g,'').toUpperCase()).filter(l => l.length > 5);
+        function parseMatrix(raw) {
+            console.log("Raw:", raw);
+            // Puliamo tutto e dividiamo per righe
+            const lines = raw.split('\n').map(l => l.replace(/\s/g, '').toUpperCase()).filter(l => l.length > 5);
+
+            // LOGICA INTELLIGENTE: Identifica le righe in base al contenuto
             
-            let doc = lines.find(l => l.includes('IT') && l.match(/[0-9]/) && l.includes('<'));
-            if(doc) {
-                let m = doc.match(/IT([A-Z0-9]{9})/);
-                if(m) {
-                    let d = m[1];
-                    document.getElementById('r-doc').value = fix(d.substr(0,2),'L') + fix(d.substr(2,5),'N') + fix(d.substr(7,2),'L');
-                    document.getElementById('r-doc').classList.add('ok');
+            // 1. TROVA RIGA DATI (Unica riga che inizia con NUMERI)
+            // Esempio: 990201...
+            let dataRow = lines.find(l => l.match(/^[0-9]/) && (l.includes('M') || l.includes('F')));
+            if (dataRow) {
+                let dobRaw = dataRow.substr(0, 6); // Primi 6 caratteri sono YYMMDD
+                dobRaw = fix(dobRaw, 'N');
+                if(dobRaw.length === 6) {
+                    let y = dobRaw.substr(0,2);
+                    let m = dobRaw.substr(2,2);
+                    let d = dobRaw.substr(4,2);
+                    let fullY = (parseInt(y) > 40) ? '19'+y : '20'+y;
+                    document.getElementById('res-dob').value = `${d}/${m}/${fullY}`;
+                    document.getElementById('res-dob').classList.add('locked');
                 }
             }
 
-            let dobLine = lines.find(l => l.match(/^[0-9]/) && (l.includes('M') || l.includes('F')));
-            if(dobLine) {
-                let dob = fix(dobLine.substr(0,6), 'N');
-                if(dob.length===6) document.getElementById('r-dob').value = `${dob.substr(4,2)}/${dob.substr(2,2)}/${parseInt(dob.substr(0,2))>40?'19':'20'}${dob.substr(0,2)}`;
-                document.getElementById('r-dob').classList.add('ok');
+            // 2. TROVA RIGA DOCUMENTO (Contiene IT e numeri)
+            // Escludiamo la riga dati trovata sopra
+            let docRow = lines.find(l => l !== dataRow && (l.includes('IT') || l.includes('1T')) && l.match(/[0-9]/) && l.match(/</));
+            if (docRow) {
+                // Cerca pattern dopo C<IT o IT o ITA
+                let m = docRow.match(/IT([A-Z0-9]{9})/);
+                if(!m) m = docRow.match(/1T([A-Z0-9]{9})/); // Se OCR legge 1T invece di IT
+
+                if(m) {
+                    let dirty = m[1];
+                    // Applica LL NNNNN LL
+                    let cleanDoc = fix(dirty.substr(0,2),'L') + fix(dirty.substr(2,5),'N') + fix(dirty.substr(7,2),'L');
+                    document.getElementById('res-doc').value = cleanDoc;
+                    document.getElementById('res-doc').classList.add('locked');
+                }
             }
 
-            let nameLine = lines.find(l => l.includes('<<') && !l.includes('IT') && !l.match(/^[0-9]/));
-            if(nameLine) {
-                let p = nameLine.split('<<');
-                if(p[0]) document.getElementById('r-cog').value = fix(p[0].replace(/</g,''),'L');
-                if(p[1]) document.getElementById('r-nom').value = fix(p[1].replace(/</g,''),'L');
-                document.getElementById('r-cog').classList.add('ok');
-                document.getElementById('r-nom').classList.add('ok');
+            // 3. TROVA RIGA NOMI (Contiene << e NON inizia con numeri)
+            let nameRow = lines.find(l => l !== dataRow && l !== docRow && l.includes('<<'));
+            if (nameRow) {
+                let parts = nameRow.split('<<');
+                if (parts[0]) document.getElementById('res-cog').value = fix(parts[0].replace(/</g,''), 'L');
+                if (parts[1]) document.getElementById('res-nom').value = fix(parts[1].replace(/</g,''), 'L');
+                
+                document.getElementById('res-cog').classList.add('locked');
+                document.getElementById('res-nom').classList.add('locked');
             }
         }
     </script>
