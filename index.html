@@ -2,158 +2,91 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner ID Infallibile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Scanner ID Pro - Universal</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* RESET TOTALE PER LO SCORRIMENTO */
-        html, body { 
-            overflow: visible !important; 
-            height: auto !important; 
-            background: #f4f4f9; 
-            margin: 0; 
-            padding: 0; 
-            -webkit-overflow-scrolling: touch; 
-        }
-
-        /* CAMERA BOX - Niente blocchi di orientamento */
-        .camera-container {
-            position: relative;
-            width: 100%;
-            height: 350px;
-            background: #000;
-        }
-        
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Mirino che NON blocca i tocchi (pointer-events: none) */
-        .overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80%; height: 60%; border: 3px solid #34C759; border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); pointer-events: none; z-index: 10;
-        }
-
-        .ui-panel { padding: 20px; }
-        .btn-capture { 
-            background: #007AFF; color: white; width: 100%; padding: 18px; 
-            border: none; border-radius: 12px; font-size: 18px; font-weight: bold;
-            margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; font-weight: bold; color: #666; margin-bottom: 5px; text-transform: uppercase; }
-        input { 
-            width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 10px; 
-            font-size: 16px; box-sizing: border-box; background: white;
-        }
-        
-        #log { text-align: center; font-weight: bold; color: #007AFF; margin-bottom: 15px; }
+        /* Scorrimento forzato e layout semplice */
+        html, body { background: #f0f2f5; color: #1c1e21; margin: 0; padding: 0; overflow-y: scroll !important; -webkit-overflow-scrolling: touch; }
+        .camera-box { position: relative; width: 100%; height: 320px; background: #000; border-bottom: 3px solid #007AFF; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .reticolo { position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px solid #34C759; border-radius: 10px; pointer-events: none; z-index: 5; box-shadow: 0 0 0 2000px rgba(0,0,0,0.4); }
+        .content { padding: 20px; }
+        .btn-ocr { background: #007AFF; color: white; width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; margin-bottom: 20px; cursor: pointer; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #8e8e93; text-transform: uppercase; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        #status-log { text-align: center; color: #007AFF; font-weight: bold; margin-bottom: 10px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="camera-container">
+    <div class="camera-box">
         <video id="video" autoplay playsinline></video>
-        <div class="overlay"></div>
+        <div class="reticolo"></div>
     </div>
 
-    <div class="ui-panel">
-        <div id="log">Inquadra e scansiona</div>
-        
-        <button class="btn-capture" id="btn-scan">SCATTA ORA</button>
+    <div class="content">
+        <div id="status-log">Inquadra e premi Scansiona</div>
+        <button class="btn-ocr" id="scan-btn">SCANSIONA ORA</button>
 
-        <div class="input-group"><label>Cognome</label><input type="text" id="out-cognome"></div>
-        <div class="input-group"><label>Nome</label><input type="text" id="out-nome"></div>
-        <div class="input-group"><label>Documento</label><input type="text" id="out-doc"></div>
-        <div class="input-group"><label>Residenza</label><input type="text" id="out-via"></div>
-        
-        <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">
-            Se l'immagine è sfocata, allontana leggermente il telefono.
-        </p>
+        <div class="form-group"><label>Cognome</label><input type="text" id="res-cognome"></div>
+        <div class="form-group"><label>Nome</label><input type="text" id="res-nome"></div>
+        <div class="form-group"><label>Numero Doc</label><input type="text" id="res-doc"></div>
+        <div class="form-group"><label>Residenza</label><input type="text" id="res-via"></div>
     </div>
 
-    <canvas id="canvas-ocr"></canvas>
+    <canvas id="temp-canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas-ocr');
-        const log = document.getElementById('log');
+        const canvas = document.getElementById('temp-canvas');
+        const status = document.getElementById('status-log');
 
-        // FUNZIONE AUTOFOCUS FORZATA
-        async function setAutoFocus() {
-            const track = video.srcObject?.getVideoTracks()[0];
-            if (!track) return;
-            
-            const capabilities = track.getCapabilities();
-            if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                try {
-                    await track.applyConstraints({
-                        advanced: [{ focusMode: 'continuous' }]
-                    });
-                } catch (e) { console.log("Autofocus non supportato via software"); }
-            }
-        }
+        // Accesso camera base
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(s => video.srcObject = s);
 
-        // Avvio Camera
-        navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: "environment", 
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            } 
-        }).then(stream => {
-            video.srcObject = stream;
-            // Esegue autofocus ogni 3 secondi per sicurezza
-            setInterval(setAutoFocus, 3000);
-        });
-
-        document.getElementById('btn-scan').addEventListener('click', async () => {
-            log.innerText = "ANALISI...";
+        document.getElementById('scan-btn').addEventListener('click', async () => {
+            status.innerText = "ANALISI...";
             const ctx = canvas.getContext('2d');
             
-            // Usiamo risoluzione alta per compensare la sfocatura
-            canvas.width = 1600;
-            canvas.height = 1000;
+            // Definiamo una risoluzione fissa orizzontale
+            canvas.width = 1280;
+            canvas.height = 720;
 
-            // Filtro software per contrastare le lettere (Dilation/Sharpen)
-            ctx.filter = 'contrast(180%) grayscale(100%) brightness(105%)';
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // ROTAZIONE SOFTWARE: Se il video è verticale, lo forziamo orizzontale nel canvas
+            if (video.videoHeight > video.videoWidth) {
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(90 * Math.PI / 180);
+                ctx.drawImage(video, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+            } else {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            }
 
+            // Pulizia immagine
+            ctx.filter = 'contrast(170%) grayscale(100%)';
+            
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita+eng');
-                extractData(text);
-                log.innerText = "COMPLETATO!";
-            } catch (err) {
-                log.innerText = "ERRORE OCR";
-            }
+                parse(text);
+                status.innerText = "COMPLETATO!";
+            } catch (e) { status.innerText = "ERRORE OCR"; }
         });
 
-        function extractData(raw) {
+        function parse(raw) {
             const t = raw.toUpperCase();
-            console.log("OCR RAW:", t);
-
             const lines = t.split('\n').map(l => l.trim());
             lines.forEach((l, i) => {
-                if (l.includes("COGNOME")) {
-                    document.getElementById('out-cognome').value = lines[i+1]?.split(' ')[0].replace(/[^A-Z]/g, "") || "";
-                }
-                if (l.includes("NOME")) {
-                    let nome = lines[i+1]?.split(' ')[0].replace(/[^A-Z]/g, "") || "";
-                    if (nome.endsWith('L') && nome.length > 4) nome = nome.slice(0, -1);
-                    document.getElementById('out-nome').value = nome;
-                }
+                if (l.includes("COGNOME")) document.getElementById('res-cognome').value = lines[i+1]?.split(' ')[0].replace(/[^A-Z]/g, "") || "";
+                if (l.includes("NOME")) document.getElementById('res-nome').value = lines[i+1]?.split(' ')[0].replace(/[^A-Z]/g, "") || "";
             });
-
             const doc = t.match(/[A-Z]{2}\s?\d{5}[A-Z]{2}/) || t.match(/[A-Z]{2}\s?\d{7}/);
-            if (doc) document.getElementById('out-doc').value = doc[0].replace(/\s/g, '');
-            
+            if (doc) document.getElementById('res-doc').value = doc[0].replace(/\s/g, '');
             const via = t.match(/(VIA|PIAZZA|CORSO|LUNGO).*?\d+/);
-            if (via) document.getElementById('out-via').value = via[0];
+            if (via) document.getElementById('res-via').value = via[0];
         }
     </script>
 </body>
