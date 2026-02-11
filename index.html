@@ -3,30 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V43 - Precision Data</title>
+    <title>Scanner V43 - Full Identity Hub</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
-        .cam-box { position: relative; flex: 0 0 45%; overflow: hidden; border-bottom: 2px solid #333; }
+        .cam-box { position: relative; flex: 0 0 40%; overflow: hidden; border-bottom: 2px solid #333; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Guide calibrate sul retro della CIE */
-        .guide-res { position: absolute; top: 32%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 18%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
-        .guide-mrz { position: absolute; top: 68%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 28%; border: 2px solid #00E0FF; border-radius: 5px; z-index: 10; }
-        .label-guide { position: absolute; font-size: 9px; font-weight: bold; padding: 2px 4px; border-radius: 3px; text-transform: uppercase; }
-
-        .scroll-box { flex: 1; overflow-y: auto; padding: 12px; background: #121212; padding-bottom: 100px; }
-        .btn-scan { width: 100%; padding: 16px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 15px; cursor: pointer; text-transform: uppercase; }
-        
-        .section-title { font-size: 11px; color: #00E0FF; margin: 15px 0 8px 0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 4px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .full { grid-column: span 3; }
-        .two-cols { grid-column: span 2; }
-        
-        .field { background: #1c1c1e; padding: 10px; border-radius: 8px; border-left: 4px solid #333; }
+        .guide-res { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); width: 85%; height: 15%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
+        .guide-mrz { position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 25%; border: 2px solid #00E0FF; border-radius: 5px; z-index: 10; }
+        .scroll-box { flex: 1; overflow-y: auto; padding: 10px; background: #121212; padding-bottom: 80px; }
+        .btn-scan { width: 100%; padding: 15px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 15px; }
+        .section-title { font-size: 11px; color: #00E0FF; margin: 15px 0 8px 0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 3px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .full { grid-column: span 2; }
+        .field { background: #1c1c1e; padding: 8px; border-radius: 6px; border-left: 3px solid #333; }
         .field.ok { border-left-color: #32d74b; background: #1a261a; }
-        .lbl { font-size: 9px; color: #888; display: block; margin-bottom: 3px; font-weight: 700; text-transform: uppercase; }
-        .val { font-size: 14px; font-weight: 600; min-height: 18px; color: #fff; }
+        .lbl { font-size: 9px; color: #888; display: block; margin-bottom: 2px; }
+        .val { font-size: 13px; font-weight: 600; min-height: 15px; }
         canvas { display: none; }
     </style>
 </head>
@@ -34,32 +27,32 @@
 
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
-        <div class="guide-res"><span class="label-guide" style="background:#FFD60A; color:#000; top:-16px;">Indirizzo di Residenza</span></div>
-        <div class="guide-mrz"><span class="label-guide" style="background:#00E0FF; color:#000; bottom:-16px;">Zona Codici (MRZ)</span></div>
+        <div class="guide-res"></div>
+        <div class="guide-mrz"></div>
     </div>
 
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">Cattura Dati Retro</button>
+        <button id="snap" class="btn-scan">SCANSIONE COMPLETA</button>
 
-        <div class="section-title">Anagrafica</div>
+        <div class="section-title">Anagrafica & Codice Fiscale</div>
         <div class="grid">
-            <div class="field two-cols"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
+            <div class="field"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
             <div class="field"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
-            <div class="field full"><span class="lbl">Data di Nascita</span><div class="val" id="v-dob">---</div></div>
+            <div class="field full"><span class="lbl">Codice Fiscale</span><div class="val" id="v-cf">---</div></div>
         </div>
 
         <div class="section-title">Residenza</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">Via / Piazza / Corso</span><div class="val" id="v-via">---</div></div>
-            <div class="field two-cols"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
-            <div class="field"><span class="lbl">Prov.</span><div class="val" id="v-pro">---</div></div>
-            <div class="field full"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
+            <div class="field full"><span class="lbl">Via / Piazza</span><div class="val" id="v-via">---</div></div>
+            <div class="field"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
+            <div class="field"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
         </div>
 
-        <div class="section-title">Identificativi</div>
+        <div class="section-title">Dati Fronte (Gira la carta)</div>
         <div class="grid">
-            <div class="field two-cols"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
+            <div class="field"><span class="lbl">Luogo Nascita</span><div class="val" id="v-luogo">---</div></div>
+            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+            <div class="field full"><span class="lbl">Ente Rilascio</span><div class="val" id="v-ente">---</div></div>
         </div>
     </div>
 
@@ -79,62 +72,47 @@
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             ctx.filter = 'grayscale(100%) contrast(300%)';
             ctx.drawImage(video, 0, 0);
-            
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
             parseV43(text);
-            btn.innerText = "Cattura Dati Retro";
+            btn.innerText = "SCANSIONE COMPLETA";
         });
-
-        function fixN(s) { return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2'); }
 
         function parseV43(raw) {
             const up = raw.toUpperCase();
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
             const clean = up.replace(/\s/g, '');
 
-            // 1. INDIRIZZO E PROVINCIA
-            let resLine = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO"));
+            // 1. CODICE FISCALE (16 caratteri alfanumerici)
+            let cfMatch = clean.match(/[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]/);
+            if(cfMatch) fill("v-cf", cfMatch[0]);
+
+            // 2. RESIDENZA (Dalla tua logica V42 che ha funzionato)
+            let resLine = lines.find(l => l.includes("VIA") || l.includes("PIAZZA"));
             if (resLine) {
-                let via = resLine.match(/(VIA|PIAZZA|CORSO|VIALE)\s+[A-Z\s]+/);
+                let via = resLine.match(/(VIA|PIAZZA|CORSO)\s+[A-Z\s]+/);
                 if(via) fill("v-via", via[0].trim());
-                
-                let civico = resLine.match(/N\.\s*(\d+[A-Z]?)/) || resLine.match(/,\s*(\d+[A-Z]?)/);
-                if(civico) fill("v-civ", civico[1]);
-
-                // Provincia staccata (cerca la sigla tra parentesi es. (PA))
-                let prov = resLine.match(/\(([A-Z]{2})\)/);
-                if(prov) fill("v-pro", prov[1]);
-
-                // Comune (testo prima della provincia)
-                let comune = resLine.match(/([A-Z\s]+)\s\(/);
-                if(comune) fill("v-com", comune[1].trim());
+                let civ = resLine.match(/N\.\s*(\d+)/);
+                if(civ) fill("v-civ", civ[1]);
+                let com = resLine.match(/[A-Z\s]+\s\([A-Z]{2}\)/);
+                if(com) fill("v-com", com[0]);
             }
 
-            // 2. MRZ (Cognome, Nome, Doc, Nascita, Sesso)
+            // 3. FRONTE (Keywords)
+            if(up.includes("MINISTERO")) fill("v-ente", "MINISTERO DELL'INTERNO");
+            let nato = lines.find(l => l.includes("NATO A") || l.includes("LUOGO DI"));
+            if(nato) fill("v-luogo", nato.replace("NATO A", "").trim());
+            let scad = up.match(/(\d{2}[\/\.]\d{2}[\/\.]\d{4})/);
+            if(scad) fill("v-scad", scad[0]);
+
+            // 4. ANAGRAFICA MRZ
             let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nameMatch) {
-                fill("v-cog", nameMatch[1]);
-                fill("v-nom", nameMatch[2]);
-            }
-            
-            let docMatch = clean.match(/ITA([A-Z0-9]{9})/);
-            if(docMatch) fill("v-doc", docMatch[1]);
-
-            // Data di Nascita e Sesso (Riga 2 MRZ)
-            let mrz2 = lines.find(l => l.match(/^\d/) && (l.includes('M') || l.includes('F')));
-            if(mrz2) {
-                let d = fixN(mrz2.substring(0,6));
-                fill("v-dob", d.substr(4,2)+"/"+d.substr(2,2)+"/"+(parseInt(d.substr(0,2))>40?'19':'20')+d.substr(0,2));
-                fill("v-sex", mrz2.includes('M') ? 'M' : 'F');
-            }
+            if(nameMatch) { fill("v-cog", nameMatch[1]); fill("v-nom", nameMatch[2]); }
         }
 
         function fill(id, txt) {
             const el = document.getElementById(id);
-            if(txt && txt.length > 0) {
-                el.innerText = txt;
-                el.parentElement.classList.add('ok');
-            }
+            el.innerText = txt;
+            el.parentElement.classList.add('ok');
         }
     </script>
 </body>
