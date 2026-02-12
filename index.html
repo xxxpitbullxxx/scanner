@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V101 - Fixed Engine</title>
+    <title>Scanner V102 - Deep Bio Fix</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
@@ -34,13 +34,13 @@
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
         <img id="preview-img">
-        <div class="guide-res"><span class="label-guide" style="color:#FFD60A">AREA INDIRIZZO</span></div>
+        <div class="guide-res"><span class="label-guide" style="color:#FFD60A">INDIRIZZO</span></div>
         <div class="guide-mrz"><span class="label-guide" style="color:#00E0FF">ZONA MRZ</span></div>
     </div>
 
     <div class="scroll-box">
         <button id="snap" class="btn-scan">SCANSIONA</button>
-        <label for="file-upload" class="btn-file">📁 CARICA FOTO</label>
+        <label for="file-upload" class="btn-file">CARICA FOTO</label>
         <input type="file" id="file-upload" accept="image/*">
         
         <div class="sec-t" style="color:#00E0FF">Anagrafica</div>
@@ -60,6 +60,8 @@
             <div style="grid-column: span 2;" class="field"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
             <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
             <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+            <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
         </div>
     </div>
     <canvas id="hidden-cvs"></canvas>
@@ -71,71 +73,79 @@
         const btnSnap = document.getElementById('snap');
         const fileUpload = document.getElementById('file-upload');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } })
-            .then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } }).then(s => video.srcObject = s);
+
+        function fix(s, type) {
+            if(!s) return "";
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
+            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+            return s;
+        }
 
         async function runOCR(source) {
             btnSnap.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
-            
-            // NORMALIZZAZIONE: Forza il canvas a una risoluzione gestibile (es. 1280px)
-            const scale = 1280 / (source.videoWidth || source.width);
             canvas.width = 1280;
+            const scale = 1280 / (source.videoWidth || source.width);
             canvas.height = (source.videoHeight || source.height) * scale;
-            
-            ctx.filter = 'grayscale(100%) contrast(300%)';
+            ctx.filter = 'grayscale(100%) contrast(300%) brightness(110%)';
             ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
             
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                parseV101(text);
+                parseV102(text);
                 btnSnap.innerText = "SCANSIONA";
-            } catch (e) { 
-                btnSnap.innerText = "ERRORE"; 
-                console.error(e);
-            }
+            } catch (e) { btnSnap.innerText = "ERRORE"; }
         }
 
-        btnSnap.addEventListener('click', () => {
-            // Se l'immagine caricata è visibile, elabora quella, altrimenti il video
-            const activeSource = previewImg.style.display === "block" ? previewImg : video;
-            runOCR(activeSource);
-        });
+        btnSnap.addEventListener('click', () => runOCR(previewImg.style.display === "block" ? previewImg : video));
 
         fileUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (event) => {
-                previewImg.onload = () => {
-                    video.style.display = "none";
-                    previewImg.style.display = "block";
-                    runOCR(previewImg); // Avvia automaticamente l'analisi al caricamento
-                };
-                previewImg.src = event.target.result;
+            reader.onload = (ev) => {
+                previewImg.onload = () => { video.style.display = "none"; previewImg.style.display = "block"; runOCR(previewImg); };
+                previewImg.src = ev.target.result;
             };
             reader.readAsDataURL(file);
         });
 
-        function parseV101(raw) {
+        function parseV102(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
+            // 1. DOC & NOMI
+            let dc = clean.match(/ITA([A-Z0-9]{9})/); if(dc) fill("v-doc", dc[1]);
             let nm = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if(nm) { fill("v-cog", nm[1]); fill("v-nom", nm[2].replace(/</g, ' ')); }
 
-            let dc = clean.match(/ITA([A-Z0-9]{9})/);
-            if(dc) fill("v-doc", dc[1]);
+            // 2. BIO (Data Nascita, Scadenza, Sesso, Nazionalità)
+            // Cerchiamo la riga biometrica con tolleranza
+            let bioRow = clean.match(/([0-9OIZSB]{6,7})([MF])([0-9OIZSB]{6,7})([A-Z0-9]{3})/);
+            if(bioRow) {
+                fill("v-dob", formatDate(fix(bioRow[1].substr(0,6), 'N')));
+                fill("v-sex", bioRow[2]);
+                fill("v-scad", formatDate(fix(bioRow[3].substr(0,6), 'N')));
+                fill("v-nat", fix(bioRow[4], 'L'));
+            }
 
+            // 3. RESIDENZA
             lines.forEach(l => {
-                if(l.includes("VIA") || l.includes("PIAZZA") || l.match(/\(([A-Z]{2})\)/)) {
+                if(l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.match(/\(([A-Z]{2})\)/)) {
                     let prov = l.match(/\(([A-Z]{2})\)/); if(prov) fill("v-prov", prov[1]);
                     let civ = l.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || l.match(/\s(\d+[A-Z]?)$/); if(civ) fill("v-civ", civ[1]);
                     let via = l.match(/(VIA|PIAZZA|CORSO|LARGO|VIALE)\s+[A-Z\s\.]+/); if(via) fill("v-via", via[0].trim());
                     let com = l.match(/([A-Z\s']+)\s+\(/); if(com) fill("v-com", com[1].trim());
                 }
             });
+        }
+
+        function formatDate(d) { 
+            if(!d || d.length<6) return "---"; 
+            let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6);
+            return day + "/" + m + "/" + (parseInt(y) > 40 ? "19" : "20") + y; 
         }
 
         function fill(id, t) { 
