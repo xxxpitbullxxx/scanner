@@ -2,34 +2,22 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Scanner V66 - Smart</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanner V68 - Force</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* RESET & FULLSCREEN */
-        * { box-sizing: border-box; }
-        html, body { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #000; overflow: hidden; font-family: Arial, sans-serif;
+        /* STRUTTURA BASE */
+        body { 
+            margin: 0; padding: 0; background: #000; 
+            height: 100dvh; /* Si adatta alla barra indirizzi */
+            width: 100vw; overflow: hidden; font-family: Arial, sans-serif;
         }
 
-        /* 1. LAUNCHER (Fullscreen Trigger) */
-        #launcher {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9000;
-            background: #111; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center;
-        }
-        .btn-big {
-            background: #007AFF; color: #fff; border: none; padding: 20px 40px;
-            font-size: 20px; font-weight: bold; border-radius: 50px; 
-            box-shadow: 0 0 30px rgba(0,122,255,0.5); margin: 10px; cursor: pointer;
-        }
-
-        /* 2. AREA LAVORO */
-        #workspace {
-            position: relative; width: 100%; height: 100%; display: none;
+        /* CONTENITORE PRINCIPALE RUOTABILE */
+        #app-container {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.3s ease, width 0.3s, height 0.3s;
+            transform-origin: center center;
         }
 
         /* VIDEO */
@@ -37,275 +25,262 @@
             width: 100%; height: 100%; object-fit: cover; 
         }
 
-        /* SAGOMA GUIDA (Solo visiva) */
-        .card-outline {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80vw; aspect-ratio: 1.58; 
-            border: 3px solid rgba(255,255,255,0.8); border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.85); pointer-events: none; z-index: 10;
-        }
-        .guide-lbl {
-            position: absolute; top: -40px; width: 100%; text-align: center;
-            color: #fff; font-weight: bold; text-shadow: 0 2px 4px #000;
+        /* GRIGLIA RETTANGOLI (Reference V49 che funzionava) */
+        .overlay-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
         }
 
-        /* BARRA COMANDI LATERALE */
-        .sidebar {
-            position: absolute; right: 0; top: 0; width: 120px; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 50;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+        /* Rettangolo VERDE (Alto sx - Ente/Comune) */
+        .box-green {
+            position: absolute; top: 10%; left: 5%; width: 45%; height: 15%;
+            border: 3px solid #32d74b; background: rgba(50, 215, 75, 0.1);
+            border-radius: 8px;
+        }
+        .tag-green { background: #32d74b; color: #000; padding: 2px 5px; font-size: 10px; font-weight: bold; position: absolute; top: -15px; left: 0; }
+
+        /* Rettangolo GIALLO (Centro - Dati) */
+        .box-yellow {
+            position: absolute; top: 30%; left: 5%; width: 90%; height: 25%;
+            border: 3px solid #FFD60A; background: rgba(255, 214, 10, 0.1);
+            border-radius: 8px;
+        }
+        .tag-yellow { background: #FFD60A; color: #000; padding: 2px 5px; font-size: 10px; font-weight: bold; position: absolute; top: -15px; left: 0; }
+
+        /* Rettangolo BLU (Basso - MRZ) */
+        .box-blue {
+            position: absolute; bottom: 5%; left: 5%; width: 90%; height: 30%;
+            border: 3px solid #00E0FF; background: rgba(0, 224, 255, 0.1);
+            border-radius: 8px;
+        }
+        .tag-blue { background: #00E0FF; color: #000; padding: 2px 5px; font-size: 10px; font-weight: bold; position: absolute; top: -15px; left: 0; }
+
+        /* CONTROLLI */
+        .controls {
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 20px; z-index: 50;
         }
 
-        /* Tasti */
-        .btn-circle {
-            width: 70px; height: 70px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;
-            border: 3px solid #fff;
+        .btn {
+            width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; cursor: pointer; color: #fff; text-align: center; font-size: 10px;
+            box-shadow: 0 0 10px #000;
         }
-        .btn-snap { background: rgba(255,255,255,0.2); }
-        .btn-snap:active { background: #fff; }
-        
-        .btn-upload { background: #FF9500; color: #000; border-color: #FF9500; text-align: center; font-size: 10px; }
+        .btn-shot { background: rgba(255,0,0,0.5); font-size: 12px; }
+        .btn-upload { background: rgba(0,122,255,0.5); }
+        .btn-rotate { 
+            position: absolute; top: 20px; right: 20px; z-index: 100;
+            width: 50px; height: 50px; background: #333; font-size: 24px;
+        }
 
         /* LOADING */
         #loader {
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.95); color: #00E0FF; padding: 20px; 
-            border-radius: 12px; font-size: 18px; font-weight: bold; z-index: 100; text-align: center;
+            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 20px; z-index: 100;
+            border-radius: 10px; font-weight: bold; text-align: center;
         }
 
         /* RISULTATI */
         #results {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #151515; z-index: 200; display: none; 
-            flex-direction: column; padding: 10px; overflow-y: auto;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
+            background: #111; z-index: 200; display: none; overflow-y: auto;
+            flex-direction: column; padding: 15px;
         }
-        .res-section { color: #32d74b; border-bottom: 1px solid #444; margin-top: 15px; font-weight: bold; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .full { grid-column: span 2; }
-        .field { background: #222; padding: 8px; border-radius: 6px; border-left: 4px solid #00E0FF; }
+        .field { background: #222; padding: 10px; border-left: 4px solid #00E0FF; border-radius: 5px; }
         .lbl { color: #888; font-size: 9px; display: block; }
-        .val { color: #fff; font-size: 16px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .val { color: #fff; font-size: 14px; font-weight: bold; }
+        .btn-close { width: 100%; padding: 15px; margin-top: 20px; background: #444; color: #fff; border: none; font-size: 18px; }
 
-        .btn-close { margin-top: 20px; padding: 15px; background: #444; color: #fff; width: 100%; border: none; border-radius: 10px; font-size: 18px; }
-
-        /* Input file nascosto */
-        #file-input { display: none; }
         canvas { display: none; }
+        #file-input { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="launcher">
-        <button class="btn-big" onclick="startApp()">ENTRA (FULLSCREEN)</button>
-        <p style="color:#888; margin-top:20px;">Ruota il telefono in orizzontale.</p>
-    </div>
+    <button class="btn btn-rotate" onclick="rotateInterface()">↻</button>
 
-    <div id="workspace">
+    <div id="app-container">
         <video id="webcam" autoplay playsinline muted></video>
-        
-        <div class="card-outline">
-            <div class="guide-lbl">RETRO CARD</div>
+
+        <div class="overlay-layer">
+            <div class="box-green"><span class="tag-green">ENTE / COMUNE</span></div>
+            <div class="box-yellow"><span class="tag-yellow">INDIRIZZO / DATI</span></div>
+            <div class="box-blue"><span class="tag-blue">CODICI MRZ</span></div>
         </div>
 
-        <div class="sidebar">
-            <button class="btn-circle btn-snap" id="snap-btn"></button>
-            <label style="color:white; font-size:10px;">SCATTA</label>
-            
-            <button class="btn-circle btn-upload" onclick="document.getElementById('file-input').click()">CARICA<br>FILE</button>
-            <input type="file" id="file-input" accept="image/*">
+        <div class="controls">
+            <button class="btn btn-shot" id="snap-btn">SCATTA</button>
+            <button class="btn btn-upload" onclick="document.getElementById('file-input').click()">CARICA<br>FOTO</button>
         </div>
     </div>
 
-    <div id="loader">ANALISI AI...<br><span style="font-size:12px; color:#aaa;">(Sto dividendo l'immagine in zone)</span></div>
+    <input type="file" id="file-input" accept="image/*">
+    <canvas id="cvs"></canvas>
+
+    <div id="loader">ELABORAZIONE...<br><small>Non chiudere</small></div>
 
     <div id="results">
-        <div class="res-section">ANAGRAFICA (MRZ)</div>
+        <h3 style="color:#32d74b; text-align:center; margin:0;">DATI ESTRATTI</h3>
         <div class="grid">
-            <div class="field full"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
-            <div class="field full"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
-            <div class="field"><span class="lbl">NASCITA</span><div class="val" id="v-dob">---</div></div>
-            <div class="field"><span class="lbl">SESSO</span><div class="val" id="v-sex">---</div></div>
-            <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="v-cit">ITA</div></div>
-            <div class="field full"><span class="lbl">NUMERO DOC</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
+            <div class="field full"><span class="lbl">COGNOME</span><span class="val" id="v-cog">---</span></div>
+            <div class="field full"><span class="lbl">NOME</span><span class="val" id="v-nom">---</span></div>
+            <div class="field"><span class="lbl">NASCITA</span><span class="val" id="v-dob">---</span></div>
+            <div class="field"><span class="lbl">SESSO</span><span class="val" id="v-sex">---</span></div>
+            <div class="field full"><span class="lbl">NUMERO DOC</span><span class="val" id="v-doc">---</span></div>
+            <div class="field"><span class="lbl">SCADENZA</span><span class="val" id="v-scad">---</span></div>
+            <div class="field"><span class="lbl">CITTADINANZA</span><span class="val" id="v-cit">ITA</span></div>
+            
+            <div class="field full"><span class="lbl">VIA/PIAZZA</span><span class="val" id="addr-via">---</span></div>
+            <div class="field"><span class="lbl">CIVICO</span><span class="val" id="addr-civ">---</span></div>
+            <div class="field"><span class="lbl">PROVINCIA</span><span class="val" id="addr-prov">---</span></div>
+            <div class="field full"><span class="lbl">COMUNE</span><span class="val" id="addr-com">---</span></div>
         </div>
-
-        <div class="res-section">RESIDENZA (ZONA ALTA)</div>
-        <div class="grid">
-            <div class="field full"><span class="lbl">INDIRIZZO</span><div class="val" id="addr-via">---</div></div>
-            <div class="field"><span class="lbl">CIVICO</span><div class="val" id="addr-civ">---</div></div>
-            <div class="field"><span class="lbl">PROVINCIA</span><div class="val" id="addr-prov">---</div></div>
-            <div class="field full"><span class="lbl">COMUNE</span><div class="val" id="addr-com">---</div></div>
-        </div>
-
-        <button class="btn-close" onclick="location.reload()">NUOVA SCANSIONE</button>
+        <button class="btn-close" onclick="location.reload()">CHIUDI</button>
     </div>
 
-    <canvas id="cvs-full"></canvas> <canvas id="cvs-crop"></canvas> <script>
+    <script>
         const video = document.getElementById('webcam');
-        const launcher = document.getElementById('launcher');
-        const workspace = document.getElementById('workspace');
+        const canvas = document.getElementById('cvs');
+        const app = document.getElementById('app-container');
         const loader = document.getElementById('loader');
         const results = document.getElementById('results');
-        const fileInput = document.getElementById('file-input');
 
-        // AVVIO
-        async function startApp() {
-            // Fullscreen
-            try {
-                if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-                else if(document.documentElement.webkitRequestFullscreen) await document.documentElement.webkitRequestFullscreen();
-            } catch(e) {}
+        // 1. AVVIO CAMERA (Automatico e Silenzioso)
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+        }).then(stream => video.srcObject = stream)
+          .catch(e => alert("Errore fotocamera: " + e.message));
+
+        // 2. LOGICA ROTAZIONE INTERFACCIA
+        let rotation = 0;
+        function rotateInterface() {
+            rotation = (rotation + 90) % 360;
+            // Ruotiamo il contenitore
+            app.style.transform = `rotate(${rotation}deg)`;
             
-            launcher.style.display = 'none';
-            workspace.style.display = 'block';
-
-            // Camera Landscape
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
-                });
-                video.srcObject = stream;
-            } catch (err) { alert("Camera Error: " + err.message); }
+            // Adattiamo le dimensioni per non lasciare spazi neri
+            if(rotation === 90 || rotation === 270) {
+                app.style.width = "100vh";
+                app.style.height = "100vw";
+                // Centriamo
+                app.style.position = "absolute";
+                app.style.top = "50%";
+                app.style.left = "50%";
+                app.style.margin = "-50vw 0 0 -50vh"; // Offset metà larghezza/altezza scambiate
+            } else {
+                app.style.width = "100%";
+                app.style.height = "100%";
+                app.style.position = "relative";
+                app.style.top = "0";
+                app.style.left = "0";
+                app.style.margin = "0";
+            }
         }
 
-        // GESTIONE SCATTO LIVE
-        document.getElementById('snap-btn').addEventListener('click', () => {
-            processImageSource(video);
-        });
-
-        // GESTIONE CARICAMENTO FILE
-        fileInput.addEventListener('change', (e) => {
-            if(e.target.files && e.target.files[0]) {
+        // 3. GESTIONE SCATTO
+        document.getElementById('snap-btn').addEventListener('click', () => processSource(video));
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            if(e.target.files[0]) {
                 const img = new Image();
-                img.onload = () => processImageSource(img);
+                img.onload = () => processSource(img);
                 img.src = URL.createObjectURL(e.target.files[0]);
             }
         });
 
-        // MOTORE DI ELABORAZIONE (IL CUORE DEL SISTEMA)
-        async function processImageSource(source) {
+        async function processSource(source) {
             loader.style.display = 'block';
-
-            // 1. Disegna su Canvas
-            const cvs = document.getElementById('cvs-full');
-            const ctx = cvs.getContext('2d');
             
+            const ctx = canvas.getContext('2d');
             let w = source.videoWidth || source.width;
             let h = source.videoHeight || source.height;
-            cvs.width = w; cvs.height = h;
-            ctx.drawImage(source, 0, 0);
 
-            // 2. LOGICA ROTAZIONE AUTOMATICA
-            // Se l'immagine è verticale (h > w), la ruotiamo di -90 gradi
-            if (h > w) {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = h; tempCanvas.height = w;
-                const tCtx = tempCanvas.getContext('2d');
-                tCtx.translate(h/2, w/2);
-                tCtx.rotate(-90 * Math.PI / 180);
-                tCtx.drawImage(cvs, -w/2, -h/2);
-                
-                // Aggiorniamo le dimensioni per il taglio
-                w = h; h = source.width || source.videoWidth;
-                ctx.clearRect(0,0, cvs.width, cvs.height);
-                cvs.width = w; cvs.height = h;
-                ctx.drawImage(tempCanvas, 0, 0);
+            // Gestione rotazione canvas per OCR
+            if(rotation === 90 || rotation === 270) {
+                canvas.width = h; canvas.height = w;
+                ctx.translate(h/2, w/2);
+                ctx.rotate(rotation * Math.PI / 180);
+                ctx.drawImage(source, -w/2, -h/2);
+            } else {
+                canvas.width = w; canvas.height = h;
+                ctx.drawImage(source, 0, 0);
             }
 
-            // 3. TAGLIO INTELLIGENTE (SIMULA RETTANGOLI GIALLO/AZZURRO)
-            // Sappiamo che la carta ha l'indirizzo in alto e l'MRZ in basso.
-            // Invece di leggere tutto (che confonde Tesseract con il tavolo), ritagliamo le strisce.
+            // Filtro nitidezza
+            ctx.filter = 'grayscale(100%) contrast(150%)'; 
 
-            // Zona A: Indirizzo (Top 35% dell'immagine centrale)
-            const cropAddr = document.getElementById('cvs-crop');
-            const ctxCrop = cropAddr.getContext('2d');
-            
-            // Definiamo un margine di sicurezza (escludiamo il 10% dei bordi per togliere il tavolo)
-            let safeW = w * 0.8;
-            let safeX = w * 0.1;
+            try {
+                const worker = await Tesseract.createWorker();
+                await worker.loadLanguage('ita');
+                await worker.initialize('ita');
+                const { data: { text } } = await worker.recognize(canvas);
+                await worker.terminate();
 
-            // Crop Indirizzo
-            cropAddr.width = safeW;
-            cropAddr.height = h * 0.35; // Prendi il 35% superiore
-            ctxCrop.filter = 'grayscale(100%) contrast(150%)'; // Ottimizza per testo
-            ctxCrop.drawImage(cvs, safeX, h * 0.15, safeW, h * 0.35, 0, 0, safeW, h * 0.35); // Offset Y al 15% per saltare intestazione
-            
-            const addrData = await Tesseract.recognize(cropAddr, 'ita');
-
-            // Zona B: MRZ (Bottom 30% dell'immagine centrale)
-            cropAddr.height = h * 0.30;
-            ctxCrop.filter = 'grayscale(100%) contrast(200%)'; // Contrasto alto per MRZ
-            ctxCrop.drawImage(cvs, safeX, h * 0.65, safeW, h * 0.30, 0, 0, safeW, h * 0.30);
-            
-            const mrzData = await Tesseract.recognize(cropAddr, 'ita');
-
-            // 4. ESTRAZIONE DATI
-            extractAllData(addrData.data.text, mrzData.data.text);
-            
-            loader.style.display = 'none';
-            results.style.display = 'flex';
+                if(parseData(text)) {
+                    loader.style.display = 'none';
+                    results.style.display = 'flex';
+                } else {
+                    alert("Non ho trovato i dati. Prova a ruotare l'immagine con il tasto ↻ o carica un file.");
+                    loader.style.display = 'none';
+                }
+            } catch (e) {
+                alert("Errore analisi: " + e.message);
+                loader.style.display = 'none';
+            }
         }
 
-        function extractAllData(textAddr, textMrz) {
-            // --- PARSE INDIRIZZO (Dal testo in alto) ---
-            const cleanAddrBlock = textAddr.toUpperCase().replace(/\n/g, ' '); // Tutto su una riga
-            
-            // Regex potente per Via/Piazza
-            // Cerca: VIA/PIAZZA... poi un civico, poi un Comune, poi (XX)
-            // Esempio: VIA ROMA, 5 MILANO (MI)
-            let regexAddr = /(VIA|PIAZZA|CORSO|VIALE|LARGO|STRADA)\s+([A-Z0-9\s\.,]+)\s+\(([A-Z]{2})\)/;
-            let match = cleanAddr.match(regexAddr);
+        function parseData(raw) {
+            const clean = raw.toUpperCase().replace(/\s/g, '');
+            const lines = raw.toUpperCase().split('\n');
+            let found = false;
 
-            if(match) {
-                // Trovato pattern completo con Provincia (MI)
-                let fullString = match[0]; // Tutto l'indirizzo
-                document.getElementById('addr-prov').innerText = match[3]; // MI
-                
-                // Cerchiamo di separare civico e comune dalla parte centrale
-                let midPart = match[2]; // ROMA, 5 MILANO
-                
-                // Cerca numero civico (numero da solo o dopo virgola)
-                let civMatch = midPart.match(/(\d+[A-Z]?)\s+([A-Z\s]+)$/); // Numero + Comune alla fine
-                
-                if(civMatch) {
-                    document.getElementById('addr-via').innerText = match[1] + " " + midPart.replace(civMatch[0], "").replace(/,$/, "").trim();
-                    document.getElementById('addr-civ').innerText = civMatch[1];
-                    document.getElementById('addr-com').innerText = civMatch[2].trim();
-                } else {
-                    // Fallback semplice
-                    document.getElementById('addr-via').innerText = fullString;
-                }
-            } else {
-                // Fallback se non trova parentesi: Stampa tutto ciò che trova dopo VIA
-                let simpleVia = cleanAddr.match(/(VIA|PIAZZA|CORSO).{10,}/);
-                if(simpleVia) document.getElementById('addr-via').innerText = simpleVia[0];
-            }
+            // MRZ
+            let docM = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
+            if(!docM) docM = clean.match(/ITA([A-Z0-9]{9})/);
+            let bioM = clean.match(/(\d{6})\d([MF])(\d{6})/);
+            let nameM = clean.match(/([A-Z]+)<<([A-Z]+)/);
 
-            // --- PARSE MRZ (Dal testo in basso) ---
-            const cleanMrz = textMrz.toUpperCase().replace(/\s/g, '');
-            
-            let docMatch = cleanMrz.match(/[CI]<ITA([A-Z0-9]{9})/);
-            if(!docMatch) docMatch = cleanMrz.match(/ITA([A-Z0-9]{9})/);
-            
-            let bioMatch = cleanMrz.match(/(\d{6})\d([MF])(\d{6})/);
-            let nameMatch = cleanMrz.match(/([A-Z]+)<<([A-Z]+)/);
+            if(docM && bioM && nameM) {
+                document.getElementById('v-doc').innerText = docM[1];
+                document.getElementById('v-cog').innerText = nameM[1];
+                document.getElementById('v-nom').innerText = nameM[2].replace(/</g, ' ');
 
-            if(docMatch) document.getElementById('v-doc').innerText = docMatch[1];
-            if(nameMatch) {
-                document.getElementById('v-cog').innerText = nameMatch[1];
-                document.getElementById('v-nom').innerText = nameMatch[2].replace(/</g, ' ');
-            }
-            if(bioMatch) {
-                let d = bioMatch[1];
+                let d = bioM[1];
                 let y = (parseInt(d.substr(0,2))>40 ? '19':'20') + d.substr(0,2);
                 document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
-                document.getElementById('v-sex').innerText = bioMatch[2];
-                let e = bioMatch[3];
+                document.getElementById('v-sex').innerText = bioM[2];
+
+                let e = bioM[3];
                 let ey = '20'+e.substr(0,2);
                 document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
+                found = true;
             }
+
+            // INDIRIZZO
+            let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE)\s/));
+            if(addrLine) {
+                let txt = addrLine.replace(/[^A-Z0-9\s,\.\(\)]/g, '').trim();
+                
+                let provM = txt.match(/\(([A-Z]{2})\)/);
+                if(provM) {
+                    document.getElementById('addr-prov').innerText = provM[1];
+                    txt = txt.replace(provM[0], '');
+                }
+
+                let civM = txt.match(/,\s*(\d+[A-Z]?)/) || txt.match(/\s(\d+[A-Z]?)$/);
+                if(civM) {
+                    document.getElementById('addr-civ').innerText = civM[1];
+                    let parts = txt.split(civM[0]);
+                    document.getElementById('addr-via').innerText = parts[0].trim();
+                    if(parts[1]) document.getElementById('addr-com').innerText = parts[1].trim();
+                } else {
+                    document.getElementById('addr-via').innerText = txt;
+                }
+            }
+
+            return found;
         }
     </script>
 </body>
