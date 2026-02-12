@@ -3,88 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V59 - Universal</title>
+    <title>Scanner V60 - Cinema</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* LAYOUT BASE */
+        /* CSS RESET */
+        * { box-sizing: border-box; }
         body { 
             font-family: Arial, sans-serif; margin: 0; background: #000; 
             height: 100vh; width: 100vw; overflow: hidden; 
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* MESSAGGIO ROTAZIONE (Visibile se sei in verticale) */
-        #rotate-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
-            background: #000; color: #00E0FF; display: flex; flex-direction: column;
+        /* 1. LAUNCHER (Schermata Iniziale) */
+        #launcher {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #111; z-index: 5000; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; text-align: center;
         }
-        .rot-icon { font-size: 50px; margin-bottom: 20px; }
-        
-        /* Nascondi messaggio quando ruoti in orizzontale */
-        @media screen and (orientation: landscape) { #rotate-layer { display: none; } }
+        .btn-start {
+            background: #007AFF; color: #fff; border: none; padding: 25px 40px;
+            font-size: 20px; font-weight: 900; border-radius: 50px; 
+            box-shadow: 0 0 30px rgba(0, 122, 255, 0.6); cursor: pointer; text-transform: uppercase;
+        }
+        .info-txt { color: #888; margin-top: 20px; max-width: 80%; font-size: 14px; }
 
-        /* VIDEO */
+        /* 2. BLOCCO ROTAZIONE (Se sei in verticale) */
+        #orientation-lock {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; z-index: 4000; display: none; /* Gestito da CSS Media Query */
+            flex-direction: column; align-items: center; justify-content: center; text-align: center;
+        }
+        .rot-icon { font-size: 60px; color: #00E0FF; margin-bottom: 20px; }
+        .rot-msg { color: #fff; font-size: 22px; font-weight: bold; text-transform: uppercase; }
+
+        /* Regola: Se lo schermo è più alto che largo (Portrait), mostra il blocco */
+        @media (orientation: portrait) {
+            #orientation-lock { display: flex !important; }
+        }
+
+        /* 3. VIDEOCAMERA (Forzata a riempire tutto) */
         video { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: cover; z-index: 1; display: none; /* Nascosto finché non attivo */
+            object-fit: cover; /* Riempie lo schermo senza barre nere */
+            z-index: 1;
         }
 
-        /* SCHERMATA DI AVVIO (Per sbloccare la camera) */
-        #start-screen {
-            position: absolute; z-index: 2000; text-align: center; width: 100%;
-        }
-        .btn-init {
-            background: #32d74b; color: #000; border: none; padding: 20px 40px;
-            font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 0 20px rgba(50, 215, 75, 0.6); text-transform: uppercase;
-        }
-
-        /* SAGOMA CARTA (Grandezza Reale in Landscape) */
+        /* 4. SAGOMA CARTA (Dimensioni reali ID-1) */
         .card-frame {
             position: absolute;
             top: 50%; left: 50%; transform: translate(-50%, -50%);
-            /* In landscape, l'altezza è il lato corto. Usiamo l'85% */
-            height: 85vh; 
-            /* Larghezza calcolata sul rapporto esatto ID-1 (85.6 / 53.98 = 1.58) */
-            aspect-ratio: 1.58; 
+            /* In landscape, l'altezza è il limite. Usiamo l'80% */
+            height: 80vh; 
+            /* Larghezza calcolata matematicamente (85.6 / 54 = 1.58) */
+            aspect-ratio: 1.585;
             
             border: 3px solid rgba(255, 255, 255, 0.9);
-            border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.9); /* Scurisce tutto il resto */
-            z-index: 10; pointer-events: none; display: none; /* Nascosto all'inizio */
+            border-radius: 16px;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.9); /* Scurisce il resto */
+            z-index: 10; pointer-events: none;
         }
-        .card-frame.scanning { border-color: #00E0FF; }
-        .card-frame.success { border-color: #32d74b; box-shadow: 0 0 0 1000px rgba(0,0,0,0.95); }
-
         .guide-text {
             position: absolute; top: -40px; width: 100%; text-align: center;
-            color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 2px 4px #000;
+            color: #fff; font-size: 2vh; font-weight: bold; text-shadow: 0 2px 4px #000;
         }
 
-        /* PULSANTE SCATTO (Fisico) */
+        /* 5. TASTO SCATTO (A destra in landscape) */
         .controls {
-            position: absolute; right: 30px; top: 50%; transform: translateY(-50%); 
-            z-index: 50; display: none;
+            position: absolute; right: 30px; top: 50%; transform: translateY(-50%); z-index: 50;
         }
         .btn-shot {
             width: 80px; height: 80px; border-radius: 50%; 
             background: rgba(255,255,255,0.2); border: 5px solid #fff;
             cursor: pointer; transition: transform 0.1s;
         }
-        .btn-shot:active { background: #fff; transform: scale(0.9); }
+        .btn-shot:active { background: #fff; transform: scale(0.95); }
 
         /* LOADING */
         #loader {
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8); color: #00E0FF; padding: 20px 40px; 
-            border-radius: 12px; font-size: 18px; font-weight: bold; z-index: 100;
+            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 20px 40px; 
+            border-radius: 12px; font-size: 18px; font-weight: bold; z-index: 100; white-space: nowrap;
         }
 
-        /* PANNELLO RISULTATI */
+        /* 6. PANNELLO RISULTATI */
         .panel {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #121212; z-index: 200; display: none; 
+            background: #151515; z-index: 200; display: none; 
             flex-direction: column; padding: 20px; box-sizing: border-box;
             overflow-y: auto;
         }
@@ -92,11 +96,11 @@
 
         .panel-h { text-align: center; color: #32d74b; font-size: 22px; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 95%; margin: 0 auto; }
         .full { grid-column: span 2; }
         
-        .field { background: #222; padding: 10px; border-radius: 8px; border-left: 5px solid #007AFF; }
-        .lbl { color: #888; font-size: 10px; display: block; margin-bottom: 4px; text-transform: uppercase; }
+        .field { background: #222; padding: 12px; border-radius: 8px; border-left: 5px solid #007AFF; }
+        .lbl { color: #888; font-size: 11px; display: block; margin-bottom: 4px; text-transform: uppercase; }
         .val { color: #fff; font-size: 18px; font-weight: bold; font-family: monospace; }
 
         .btn-close { margin-top: 30px; padding: 15px; background: #444; color: #fff; border: none; font-size: 18px; border-radius: 10px; width: 100%; cursor: pointer; }
@@ -106,30 +110,30 @@
 </head>
 <body>
 
-    <div id="rotate-layer">
+    <div id="orientation-lock">
         <div class="rot-icon">↻</div>
-        <h1>RUOTA IL TELEFONO IN ORIZZONTALE</h1>
+        <div class="rot-msg">GIRA IL TELEFONO<br>IN ORIZZONTALE</div>
     </div>
 
-    <div id="start-screen">
-        <button class="btn-init" onclick="startCamera()">ATTIVA FOTOCAMERA</button>
-        <p style="color:#888; margin-top:10px;">Clicca per consentire l'accesso</p>
+    <div id="launcher">
+        <button class="btn-start" onclick="goFullscreen()">ENTRA IN MODALITÀ SCANNER</button>
+        <p class="info-txt">Questo attiverà lo schermo intero e la fotocamera ad alta risoluzione.</p>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
     
-    <div class="card-frame" id="frame">
+    <div class="card-frame">
         <div class="guide-text">INQUADRA IL RETRO (CODICI)</div>
     </div>
 
-    <div class="controls" id="ctrls">
+    <div class="controls">
         <button class="btn-shot" id="snap"></button>
     </div>
 
-    <div id="loader">LETTURA DATI...</div>
+    <div id="loader">ANALISI...</div>
 
     <div class="panel" id="result-panel">
-        <div class="panel-h">DATI CARTA (RETRO)</div>
+        <div class="panel-h">DATI CARTA</div>
         <div class="grid">
             <div class="field full"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
             <div class="field full"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
@@ -138,7 +142,7 @@
             <div class="field full"><span class="lbl">NUMERO DOC</span><div class="val" id="v-doc">---</div></div>
             <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
             <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="v-cit">ITA</div></div>
-            <div class="field full"><span class="lbl">RESIDENZA (Se presente)</span><div class="val" id="v-res">---</div></div>
+            <div class="field full"><span class="lbl">RESIDENZA (Se trovata)</span><div class="val" id="v-res">---</div></div>
         </div>
         <button class="btn-close" onclick="location.reload()">NUOVA SCANSIONE</button>
     </div>
@@ -148,111 +152,101 @@
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
-        const startScreen = document.getElementById('start-screen');
-        const frame = document.getElementById('frame');
-        const controls = document.getElementById('ctrls');
+        const launcher = document.getElementById('launcher');
         const snapBtn = document.getElementById('snap');
         const loader = document.getElementById('loader');
         const panel = document.getElementById('result-panel');
 
-        // FUNZIONE DI AVVIO SICURA (Attivata dal click)
-        async function startCamera() {
+        // 1. FUNZIONE "MAGICA" AL CLICK
+        async function goFullscreen() {
+            // A. Nascondi Launcher
+            launcher.style.display = 'none';
+
+            // B. Richiedi Schermo Intero (Nasconde barra indirizzi)
+            let elem = document.documentElement;
+            if (elem.requestFullscreen) { await elem.requestFullscreen(); } 
+            else if (elem.webkitRequestFullscreen) { await elem.webkitRequestFullscreen(); } // iOS Safari
+
+            // C. Avvia Fotocamera in LANDSCAPE (1920x1080)
+            // Questo "dice" al telefono che vogliamo un video largo, non alto.
             try {
-                // Richiediamo 1080p (Full HD) che è supportato da TUTTI, invece del 4K che rompeva tutto.
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "environment", 
+                        // Richiediamo esplicitamente una risoluzione panoramica
                         width: { ideal: 1920 }, 
                         height: { ideal: 1080 } 
                     },
                     audio: false 
                 });
-                
                 video.srcObject = stream;
-                video.style.display = 'block'; // Mostra video
-                
-                // UI Switch
-                startScreen.style.display = 'none';
-                frame.style.display = 'block';
-                controls.style.display = 'block';
-
             } catch (err) {
-                alert("IMPOSSIBILE AVVIARE LA FOTOCAMERA.\n\n1. Controlla di aver dato i permessi nel browser.\n2. Assicurati che il sito sia HTTPS (o localhost).\nErrore: " + err.message);
+                alert("Errore Camera: " + err.message + ". Ricarica la pagina e dai il consenso.");
+                launcher.style.display = 'flex'; // Riapri launcher se fallisce
             }
         }
 
-        // SCATTO FOTO
+        // 2. SCATTO E ANALISI
         snapBtn.addEventListener('click', async () => {
             loader.style.display = 'block';
             snapBtn.style.display = 'none';
 
             const ctx = canvas.getContext('2d');
+            // Impostiamo il canvas alla dimensione esatta del video
             canvas.width = video.videoWidth; 
             canvas.height = video.videoHeight;
             
-            // Filtro nitidezza per l'Anchor
+            // Filtro per migliorare il contrasto del retro
             ctx.filter = 'grayscale(100%) contrast(180%)'; 
             ctx.drawImage(video, 0, 0);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                const success = parseDataAnchor(text);
-                
-                loader.style.display = 'none';
-                if(success) {
-                    frame.classList.add('success');
+                if(parseData(text)) {
                     panel.classList.add('visible');
+                    loader.style.display = 'none';
                 } else {
-                    alert("Dati non leggibili. Assicurati che il retro sia a fuoco e ben illuminato.");
+                    alert("Dati illeggibili. Assicurati che il retro sia a fuoco e dritto.");
+                    loader.style.display = 'none';
                     snapBtn.style.display = 'block';
                 }
             } catch (e) {
+                alert("Errore OCR.");
                 loader.style.display = 'none';
                 snapBtn.style.display = 'block';
-                alert("Errore Analisi. Riprova.");
             }
         });
 
-        // LOGICA ANCHOR (Retro MRZ 3 Linee + Indirizzo)
-        function parseDataAnchor(raw) {
+        // 3. PARSER ANCHOR (Retro)
+        function parseData(raw) {
             const clean = raw.toUpperCase().replace(/\s/g, ''); 
             
-            // Regex MRZ (Standard CIE e Passaporti)
-            // 1. Cerca Num Documento (C<ITA o I<ITA)
+            // MRZ 3 Righe (Standard CIE)
             let docMatch = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
-            if(!docMatch) docMatch = clean.match(/ITA([A-Z0-9]{9})/);
+            if(!docMatch) docMatch = clean.match(/ITA([A-Z0-9]{9})/); // Fallback
             
-            // 2. Cerca Cognome<<Nome (tra i simboli <)
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            
-            // 3. Cerca Date (YYMMDD)
             let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})/);
+            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
 
             if(docMatch && bioMatch && nameMatch) {
-                // Estrazione sicura
                 document.getElementById('v-doc').innerText = docMatch[1];
                 document.getElementById('v-cog').innerText = nameMatch[1];
                 document.getElementById('v-nom').innerText = nameMatch[2].replace(/</g, ' ');
 
-                // Nascita
                 let d = bioMatch[1];
                 let y = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
                 document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
                 
-                // Sesso
                 document.getElementById('v-sex').innerText = bioMatch[2];
 
-                // Scadenza
                 let e = bioMatch[3];
                 let ey = '20'+e.substr(0,2);
                 document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
 
-                // Tentativo Residenza (Regex semplice)
+                // Tentativo Residenza
                 const lines = raw.toUpperCase().split('\n');
                 let addr = lines.find(l => l.match(/(VIA|PIAZZA|CORSO)\s/));
-                if(addr) {
-                    document.getElementById('v-res').innerText = addr.replace(/[^A-Z0-9\s,]/g,'').trim();
-                }
+                if(addr) document.getElementById('v-res').innerText = addr.replace(/[^A-Z0-9\s,]/g,'').trim();
 
                 return true;
             }
