@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V46 - Full Details</title>
+    <title>Scanner V76 - AutoFix</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
+        body { font-family: Arial, sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
         
         /* CAMERA AREA */
         .cam-box { position: relative; flex: 0 0 50%; overflow: hidden; border-bottom: 2px solid #333; }
@@ -14,37 +14,36 @@
         
         /* RETTANGOLI DI SCANSIONE */
         .guide-res { 
-            position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%);
-            width: 96%; height: 22%; border: 2px solid #FFD60A; 
+            position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
+            width: 96%; height: 25%; border: 2px solid #FFD60A; 
             border-radius: 5px; z-index: 10;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.6);
         }
         
         .guide-mrz { 
-            position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%);
+            position: absolute; top: 75%; left: 50%; transform: translate(-50%, -50%);
             width: 96%; height: 25%; border: 2px solid #00E0FF; 
             border-radius: 5px; z-index: 10;
         }
         
         .label-guide { 
             position: absolute; font-size: 10px; font-weight: bold; 
-            padding: 3px 6px; border-radius: 3px; text-transform: uppercase;
+            padding: 3px 6px; border-radius: 3px; text-transform: uppercase; background: rgba(0,0,0,0.7);
         }
 
         /* PANNELLO DATI */
-        .scroll-box { flex: 1; overflow-y: auto; padding: 10px; background: #121212; padding-bottom: 80px; }
-        .btn-scan { width: 100%; padding: 15px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 15px; cursor: pointer; font-size: 16px; }
+        .scroll-box { flex: 1; overflow-y: auto; padding: 15px; background: #121212; padding-bottom: 100px; }
+        .btn-scan { width: 100%; padding: 18px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 20px; cursor: pointer; font-size: 18px; }
         
         .section-title { font-size: 12px; color: #00E0FF; margin: 20px 0 5px 0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full { grid-column: span 2; }
         
-        /* Campi Dati */
-        .field { background: #1c1c1e; padding: 10px; border-radius: 8px; border-left: 4px solid #333; }
-        .field.ok { border-left-color: #32d74b; background: #1a261a; }
-        .lbl { font-size: 10px; color: #aaa; display: block; margin-bottom: 4px; }
-        .val { font-size: 14px; font-weight: 700; min-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+        .field { background: #1c1c1e; padding: 12px; border-radius: 8px; border-left: 4px solid #333; }
+        .field.ok { border-left-color: #32d74b; background: #1f2a1f; }
+        .lbl { font-size: 10px; color: #aaa; display: block; margin-bottom: 4px; text-transform: uppercase;}
+        .val { font-size: 16px; font-weight: 700; min-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
 
         canvas { display: none; }
     </style>
@@ -54,39 +53,35 @@
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
         <div class="guide-res">
-            <span class="label-guide" style="background:#FFD60A; color:#000; top:0; left:0;">Area Indirizzo</span>
+            <span class="label-guide" style="color:#FFD60A; top:0; left:0;">1. Indirizzo</span>
         </div>
         <div class="guide-mrz">
-            <span class="label-guide" style="background:#00E0FF; color:#000; top:0; left:0;">Area MRZ (Codici)</span>
+            <span class="label-guide" style="color:#00E0FF; top:0; left:0;">2. Codici MRZ</span>
         </div>
     </div>
 
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONE V46</button>
+        <button id="snap" class="btn-scan">SCANSIONA</button>
 
-        <div class="section-title">Dati Documento (MRZ)</div>
+        <div class="section-title">Dati MRZ (Riparati)</div>
         <div class="grid">
+            <div class="field full"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
             <div class="field"><span class="lbl">Tipo Doc.</span><div class="val" id="v-type">---</div></div>
-            <div class="field"><span class="lbl">Paese Emittente</span><div class="val" id="v-issue">---</div></div>
-            <div class="field full"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
+            <div class="field"><span class="lbl">Emittente</span><div class="val" id="v-issue">---</div></div>
+            <div class="field full"><span class="lbl">Numero Doc.</span><div class="val" id="v-doc">---</div></div>
             <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
-            <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
-        </div>
-
-        <div class="section-title">Dati Anagrafici (MRZ)</div>
-        <div class="grid">
+            <div class="field"><span class="lbl">Nascita</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
             <div class="field full"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
             <div class="field full"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
-            <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
-            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
         </div>
 
-        <div class="section-title">Residenza (da Testo)</div>
+        <div class="section-title">Residenza</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">Via / Piazza</span><div class="val" id="v-via">---</div></div>
+            <div class="field full"><span class="lbl">Via</span><div class="val" id="v-via">---</div></div>
             <div class="field"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
-            <div class="field"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
             <div class="field"><span class="lbl">Prov.</span><div class="val" id="v-prov">---</div></div>
+            <div class="field full"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
         </div>
     </div>
 
@@ -97,103 +92,106 @@
         const canvas = document.getElementById('cvs');
         const btn = document.getElementById('snap');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
-            .then(s => video.srcObject = s);
+        // Configurazione Camera Alta Qualità
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment", width: { ideal: 1920 } } 
+        }).then(s => video.srcObject = s);
 
         btn.addEventListener('click', async () => {
-            btn.innerText = "ELABORAZIONE...";
-            btn.style.background = "#555";
+            btn.innerText = "ANALISI...";
+            btn.style.backgroundColor = "#555";
             
             const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; 
+            canvas.height = video.videoHeight;
             
-            // Filtro contrasto
-            ctx.filter = 'grayscale(100%) contrast(200%)';
+            // Filtro aggressivo per distinguere numeri e lettere
+            ctx.filter = 'grayscale(100%) contrast(150%)';
             ctx.drawImage(video, 0, 0);
             
-            const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-            parseData(text);
-            
-            btn.innerText = "SCANSIONE V46";
-            btn.style.background = "#00E0FF";
+            try {
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
+                parseData(text);
+                btn.innerText = "SCANSIONA";
+                btn.style.backgroundColor = "#00E0FF";
+            } catch (e) {
+                alert("Errore OCR. Riprova.");
+                btn.innerText = "RIPROVA";
+            }
         });
 
+        // --- MOTORE DI RIPARAZIONE DATI ---
+        function fixNumber(str) {
+            // Trasforma lettere simili a numeri in numeri
+            return str.replace(/O/g, '0').replace(/I/g, '1').replace(/Z/g, '2').replace(/S/g, '5').replace(/B/g, '8').replace(/G/g, '6');
+        }
+
         function parseData(raw) {
-            const up = raw.toUpperCase();
-            const clean = up.replace(/\s/g, ''); 
-            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+            const clean = raw.toUpperCase().replace(/\s/g, ''); 
+            const lines = raw.toUpperCase().split('\n').filter(l => l.length > 2);
 
-            // --- 1. MRZ PARSER AVANZATO ---
-            
-            // Regex Riga 1: [Tipo 1 char]<[Paese 3 char][NumDoc 9 char]
-            // Esempio: C<ITACA00000AA...
-            // C = Carta d'Identità, I = Carta identità (variante), P = Passaporto
-            let line1Match = clean.match(/([A-Z])<([A-Z]{3})([A-Z0-9]{9})/);
-            
-            if (line1Match) {
-                // Tipo Documento
-                let typeCode = line1Match[1];
-                let typeFull = typeCode === 'C' || typeCode === 'I' ? "CARTA D'IDENTITÀ" : typeCode;
-                fill("v-type", typeFull);
-
-                // Paese Emittente
-                fill("v-issue", line1Match[2]); // Es. ITA
-
-                // Numero Documento
-                fill("v-doc", line1Match[3]);
+            // 1. ANALISI MRZ (Riga 1)
+            // Cerca C<ITA... oppure I<ITA...
+            let line1 = clean.match(/([A-Z])<([A-Z]{3})([A-Z0-9]{9})/);
+            if(line1) {
+                fill("v-type", line1[1] === 'C' ? 'CARTA ID' : line1[1]);
+                fill("v-issue", line1[2]); // ITA
+                fill("v-doc", line1[3]);   // Num Doc
             } else {
-                // Fallback se la regex stretta fallisce, cerca almeno ITA+NumDoc
-                let fallbackDoc = clean.match(/ITA([A-Z0-9]{9})/);
-                if(fallbackDoc) {
-                    fill("v-issue", "ITA");
-                    fill("v-doc", fallbackDoc[1]);
-                }
+                // Fallback
+                let fallback = clean.match(/ITA([A-Z0-9]{9})/);
+                if(fallback) { fill("v-issue", "ITA"); fill("v-doc", fallback[1]); }
             }
 
-            // Regex Nome e Cognome
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nameMatch) {
-                fill("v-cog", nameMatch[1]);
-                fill("v-nom", nameMatch[2].replace(/</g, ' '));
+            // Cognome e Nome
+            let names = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if(names) {
+                fill("v-cog", names[1]);
+                fill("v-nom", names[2].replace(/</g, ' '));
             }
 
-            // Regex Riga 2: [Nascita 6][Check][Sesso 1][Scadenza 6][Check][Nazionalità 3]
-            // Esempio: 800101 9 M 250101 5 ITA
-            let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})\d([A-Z]{3})/);
-            
+            // 2. ANALISI MRZ (Riga 2) - FUZZY LOGIC
+            // Invece di cercare \d (numeri), cerca [0-9OIZSB] (numeri sporchi)
+            // Pattern: [6 Nascita] [1 Check] [1 Sesso] [6 Scadenza] [1 Check] [3 Nazionalità]
+            let bioRegex = /([0-9OIZSB]{6}).([MF]).([0-9OIZSB]{6}).([A-Z]{3})/;
+            let bioMatch = clean.match(bioRegex);
+
             if(bioMatch) {
-                fill("v-dob", formatDate(bioMatch[1]));
+                // Ripara e formatta Data Nascita
+                let dobClean = fixNumber(bioMatch[1]);
+                fill("v-dob", formatDate(dobClean));
+
+                // Sesso
                 fill("v-sex", bioMatch[2]);
-                fill("v-scad", formatDate(bioMatch[3]));
-                fill("v-nat", bioMatch[4]); // Nazionalità (es. ITA, DEU, ecc.)
+
+                // Ripara e formatta Scadenza
+                let expClean = fixNumber(bioMatch[3]);
+                fill("v-scad", formatDate(expClean));
+
+                // Nazionalità (Gruppo 4)
+                fill("v-nat", bioMatch[4]);
             }
 
-            // --- 2. INDIRIZZO PARSER ---
-            let resLineIndex = lines.findIndex(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("VIALE"));
-            
-            if (resLineIndex !== -1) {
-                let resLine = lines[resLineIndex];
-                let fullAddrText = resLine;
-                if (lines[resLineIndex + 1] && !resLine.includes("(")) {
-                    fullAddrText += " " + lines[resLineIndex + 1];
-                }
-
+            // 3. ANALISI INDIRIZZO
+            let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|VICOLO)/));
+            if(addrLine) {
                 // Via
-                let via = fullAddrText.match(/(VIA|PIAZZA|CORSO|VIALE|VICOLO|LARGO)\s+[A-Z\s\.]+/);
-                if(via) fill("v-via", via[0].trim());
-                
-                // Civico
-                let civico = fullAddrText.match(/N\.\s*(\d+[A-Z]?)/) || fullAddrText.match(/,\s*(\d+[A-Z]?)/);
-                if(civico) fill("v-civ", civico[1]);
+                let viaM = addrLine.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|VICOLO)\s+[A-Z\s\.]+/);
+                if(viaM) fill("v-via", viaM[0].trim());
 
-                // Comune e Prov
-                let cityProvMatch = fullAddrText.match(/([A-Z\s']+)\s+\(([A-Z]{2})\)/);
-                if (cityProvMatch) {
-                    fill("v-com", cityProvMatch[1].trim());
-                    fill("v-prov", cityProvMatch[2]);
+                // Civico (N. 68 o , 68)
+                let civM = addrLine.match(/N\.\s*(\d+[A-Z]?)/) || addrLine.match(/,\s*(\d+[A-Z]?)/);
+                if(civM) fill("v-civ", civM[1]);
+
+                // Comune e Prov (XX)
+                let cityM = addrLine.match(/([A-Z\s']+)\s+\(([A-Z]{2})\)/);
+                if(cityM) {
+                    fill("v-com", cityM[1].trim());
+                    fill("v-prov", cityM[2]);
                 } else {
-                    let soloProv = fullAddrText.match(/\(([A-Z]{2})\)/);
-                    if(soloProv) fill("v-prov", soloProv[1]);
+                    // Fallback solo provincia
+                    let provOnly = addrLine.match(/\(([A-Z]{2})\)/);
+                    if(provOnly) fill("v-prov", provOnly[1]);
                 }
             }
         }
