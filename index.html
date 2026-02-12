@@ -2,24 +2,28 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
-    <title>Scanner V97 - Master Landscape</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanner V98 - Horizon Fix</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100vh; width: 100vw; overflow: hidden; color: white; display: flex; }
         
-        /* Layout Orizzontale: Camera a sinistra, Dati a destra */
+        /* Box Camera: Metà schermo sinistra */
         .cam-box { position: relative; width: 50%; height: 100%; background: #000; overflow: hidden; border-right: 2px solid #333; }
-        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Il video deve riempire tutto lo spazio correttamente */
+        video { 
+            width: 100%; height: 100%; 
+            object-fit: cover; /* Evita l'effetto schiacciato */
+        }
 
         .data-box { width: 50%; height: 100%; overflow-y: auto; background: #121212; padding: 15px; box-sizing: border-box; }
 
-        /* MIRINI ORIZZONTALI */
-        .guide-res { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 20%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
-        .guide-mrz { position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 35%; border: 2px solid #00E0FF; border-radius: 5px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); }
-        .label-g { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); border-radius: 3px; }
+        /* Mirini ottimizzati per Landscape */
+        .guide-res { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); width: 92%; height: 18%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
+        .guide-mrz { position: absolute; top: 72%; left: 50%; transform: translate(-50%, -50%); width: 92%; height: 32%; border: 2px solid #00E0FF; border-radius: 5px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.6); }
+        .label-g { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); }
 
-        /* UI ELEMENTS */
         .btn-scan { width: 100%; padding: 15px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 8px; margin-bottom: 20px; cursor: pointer; font-size: 16px; }
         .sec-t { font-size: 11px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 3px; font-weight: bold; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -27,16 +31,11 @@
         .field { background: #1c1c1e; padding: 8px; border-radius: 6px; border-left: 3px solid #333; }
         .field.ok { border-left-color: #32d74b; background: #1a2e1e; }
         .lbl { font-size: 9px; color: #aaa; display: block; margin-bottom: 2px; }
-        .val { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .val { font-size: 13px; font-weight: 700; color: #fff; }
 
-        /* MESSAGGIO ROTAZIONE (Solo se il telefono è verticale) */
-        @media (orientation: portrait) {
-            #rotate-overlay { display: flex !important; }
-        }
-        #rotate-overlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999;
-            display:none; flex-direction:column; justify-content:center; align-items:center; text-align:center;
-        }
+        /* Overlay di rotazione se in verticale */
+        @media (orientation: portrait) { #rotate-overlay { display: flex !important; } }
+        #rotate-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; display:none; flex-direction:column; justify-content:center; align-items:center; }
 
         canvas { display: none; }
     </style>
@@ -45,17 +44,17 @@
 
     <div id="rotate-overlay">
         <div style="font-size: 50px;">🔄</div>
-        <p>GIRA IL TELEFONO IN ORIZZONTALE<br><small>Per una scansione più precisa</small></p>
+        <p>GIRA IL TELEFONO IN ORIZZONTALE</p>
     </div>
 
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
         <div class="guide-res"><span class="label-g" style="color:#FFD60A">INDIRIZZO</span></div>
-        <div class="guide-mrz"><span class="label-g" style="color:#00E0FF">MRZ AREA</span></div>
+        <div class="guide-mrz"><span class="label-g" style="color:#00E0FF">CODICI MRZ</span></div>
     </div>
 
     <div class="data-box">
-        <button id="snap" class="btn-scan">AVVIA SCANSIONE</button>
+        <button id="snap" class="btn-scan">SCANSIONA DOCUMENTO</button>
         
         <div class="sec-t" style="color:#00E0FF">ANAGRAFICA</div>
         <div class="grid">
@@ -90,14 +89,9 @@
         const canvas = document.getElementById('hidden-cvs');
         const btn = document.getElementById('snap');
 
-        const isoMap = {
-            "ITA": { country: "ITALIA", citizen: "ITALIANA" },
-            "FRA": { country: "FRANCIA", citizen: "FRANCESE" },
-            "DEU": { country: "GERMANIA", citizen: "TEDESCA" },
-            "ESP": { country: "SPAGNA", citizen: "SPAGNOLA" }
-        };
+        const isoMap = { "ITA": { country: "ITALIA", citizen: "ITALIANA" }, "FRA": { country: "FRANCIA", citizen: "FRANCESE" }, "DEU": { country: "GERMANIA", citizen: "TEDESCA" }, "ESP": { country: "SPAGNA", citizen: "SPAGNOLA" } };
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } }).then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } }).then(s => video.srcObject = s);
 
         function fix(s, type) {
             if(!s) return "";
@@ -107,28 +101,33 @@
         }
 
         btn.addEventListener('click', async () => {
-            // Attiva Fullscreen su Android/iOS
-            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
-            
-            btn.innerText = "ELABORAZIONE...";
+            btn.innerText = "SCANSIONE...";
             const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            ctx.filter = 'grayscale(100%) contrast(400%)';
-            ctx.drawImage(video, 0, 0);
             
-            try {
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                parseV97(text);
-                btn.innerText = "AVVIA SCANSIONE";
-            } catch (e) { btn.innerText = "ERRORE"; }
+            // Gestione rotazione sensore: Se il video è più alto che largo (verticale)
+            if (video.videoHeight > video.videoWidth) {
+                canvas.width = video.videoHeight;
+                canvas.height = video.videoWidth;
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(90 * Math.PI / 180);
+                ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
+            } else {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0);
+            }
+
+            ctx.filter = 'grayscale(100%) contrast(400%)';
+            const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
+            parseV98(text);
+            btn.innerText = "SCANSIONA DOCUMENTO";
         });
 
-        function parseV97(raw) {
+        function parseV98(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
-            // LOGICA MASTER (Tua versione funzionante)
             let line1Match = clean.match(/([ACI0OP])<([A-Z0-9]{3})([A-Z0-9]{9})/);
             if(line1Match) {
                 let t = fix(line1Match[1], 'L');
@@ -167,18 +166,8 @@
             }
         }
 
-        function formatDate(d) { 
-            if(!d || d.length<6) return "---"; 
-            let y = d.substring(0,2);
-            let m = d.substring(2,4);
-            let day = d.substring(4,6);
-            return day + "/" + m + "/" + (parseInt(y) > 40 ? "19" : "20") + y; 
-        }
-
-        function fill(id, t) { 
-            const e = document.getElementById(id); 
-            if(t && t !== "---" && t.length > 0){ e.innerText = t; e.parentElement.classList.add('ok'); } 
-        }
+        function formatDate(d) { if(!d || d.length<6) return "---"; let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6); return day + "/" + m + "/" + (parseInt(y) > 40 ? "19" : "20") + y; }
+        function fill(id, t) { const e = document.getElementById(id); if(t && t !== "---"){ e.innerText = t; e.parentElement.classList.add('ok'); } }
     </script>
 </body>
 </html>
