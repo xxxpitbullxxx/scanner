@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V98 - Horizon Fix</title>
+    <title>Scanner V99 - Multi-Browser Fix</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100vh; width: 100vw; overflow: hidden; color: white; display: flex; }
         
-        /* Box Camera: Metà schermo sinistra */
         .cam-box { position: relative; width: 50%; height: 100%; background: #000; overflow: hidden; border-right: 2px solid #333; }
         
-        /* Il video deve riempire tutto lo spazio correttamente */
+        /* Fix per Firefox: Assicura che il video riempia il contenitore correttamente */
         video { 
             width: 100%; height: 100%; 
-            object-fit: cover; /* Evita l'effetto schiacciato */
+            object-fit: cover;
+            transform-origin: center;
         }
 
         .data-box { width: 50%; height: 100%; overflow-y: auto; background: #121212; padding: 15px; box-sizing: border-box; }
 
-        /* Mirini ottimizzati per Landscape */
         .guide-res { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); width: 92%; height: 18%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
         .guide-mrz { position: absolute; top: 72%; left: 50%; transform: translate(-50%, -50%); width: 92%; height: 32%; border: 2px solid #00E0FF; border-radius: 5px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.6); }
         .label-g { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); }
@@ -27,13 +26,11 @@
         .btn-scan { width: 100%; padding: 15px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 8px; margin-bottom: 20px; cursor: pointer; font-size: 16px; }
         .sec-t { font-size: 11px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 3px; font-weight: bold; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .full { grid-column: span 2; }
         .field { background: #1c1c1e; padding: 8px; border-radius: 6px; border-left: 3px solid #333; }
         .field.ok { border-left-color: #32d74b; background: #1a2e1e; }
         .lbl { font-size: 9px; color: #aaa; display: block; margin-bottom: 2px; }
         .val { font-size: 13px; font-weight: 700; color: #fff; }
 
-        /* Overlay di rotazione se in verticale */
         @media (orientation: portrait) { #rotate-overlay { display: flex !important; } }
         #rotate-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; display:none; flex-direction:column; justify-content:center; align-items:center; }
 
@@ -54,31 +51,30 @@
     </div>
 
     <div class="data-box">
-        <button id="snap" class="btn-scan">SCANSIONA DOCUMENTO</button>
+        <button id="snap" class="btn-scan">SCANSIONA V99</button>
         
         <div class="sec-t" style="color:#00E0FF">ANAGRAFICA</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
-            <div class="field full"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
             <div class="field"><span class="lbl">NATO IL</span><div class="val" id="v-dob">---</div></div>
             <div class="field"><span class="lbl">SESSO</span><div class="val" id="v-sex">---</div></div>
         </div>
 
         <div class="sec-t" style="color:#FFD60A">RESIDENZA</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">VIA / PIAZZA</span><div class="val" id="v-via">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">VIA / PIAZZA</span><div class="val" id="v-via">---</div></div>
             <div class="field"><span class="lbl">CIVICO</span><div class="val" id="v-civ">---</div></div>
             <div class="field"><span class="lbl">PROV.</span><div class="val" id="v-prov">---</div></div>
-            <div class="field full"><span class="lbl">COMUNE</span><div class="val" id="v-com">---</div></div>
         </div>
 
         <div class="sec-t" style="color:#00E0FF">DOCUMENTO</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">TIPO DOCUMENTO</span><div class="val" id="v-type">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">TIPO</span><div class="val" id="v-type">---</div></div>
             <div class="field"><span class="lbl">PAESE</span><div class="val" id="v-issue">---</div></div>
             <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="v-nat">---</div></div>
-            <div class="field full"><span class="lbl">NUMERO</span><div class="val" id="v-doc">---</div></div>
-            <div class="field full"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">NUMERO</span><div class="val" id="v-doc">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
         </div>
     </div>
 
@@ -91,7 +87,15 @@
 
         const isoMap = { "ITA": { country: "ITALIA", citizen: "ITALIANA" }, "FRA": { country: "FRANCIA", citizen: "FRANCESE" }, "DEU": { country: "GERMANIA", citizen: "TEDESCA" }, "ESP": { country: "SPAGNA", citizen: "SPAGNOLA" } };
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } }).then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } }).then(s => {
+            video.srcObject = s;
+            // Listener per Firefox: rileva se il video caricato è verticale
+            video.onloadedmetadata = () => {
+                if (video.videoHeight > video.videoWidth) {
+                    video.style.transform = "rotate(0deg)"; // Firefox a volte ha bisogno di reset
+                }
+            };
+        });
 
         function fix(s, type) {
             if(!s) return "";
@@ -104,13 +108,16 @@
             btn.innerText = "SCANSIONE...";
             const ctx = canvas.getContext('2d');
             
-            // Gestione rotazione sensore: Se il video è più alto che largo (verticale)
+            // LOGICA DI ROTAZIONE FORZATA PER FIREFOX
+            // Se l'altezza video è maggiore della larghezza, il sensore è in portrait
             if (video.videoHeight > video.videoWidth) {
                 canvas.width = video.videoHeight;
                 canvas.height = video.videoWidth;
+                ctx.save();
                 ctx.translate(canvas.width / 2, canvas.height / 2);
                 ctx.rotate(90 * Math.PI / 180);
                 ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
+                ctx.restore();
             } else {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
@@ -119,11 +126,11 @@
 
             ctx.filter = 'grayscale(100%) contrast(400%)';
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-            parseV98(text);
-            btn.innerText = "SCANSIONA DOCUMENTO";
+            parseV99(text);
+            btn.innerText = "SCANSIONA V99";
         });
 
-        function parseV98(raw) {
+        function parseV99(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
@@ -161,13 +168,7 @@
                 if(civ) fill("v-civ", civ[1]);
                 let via = addrLine.match(/(VIA|PIAZZA|CORSO)\s+[A-Z\s\.]+/);
                 if(via) fill("v-via", via[0].trim());
-                let com = addrLine.match(/([A-Z\s']+)\s+\(/);
-                if(com) fill("v-com", com[1].trim());
             }
         }
 
-        function formatDate(d) { if(!d || d.length<6) return "---"; let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6); return day + "/" + m + "/" + (parseInt(y) > 40 ? "19" : "20") + y; }
-        function fill(id, t) { const e = document.getElementById(id); if(t && t !== "---"){ e.innerText = t; e.parentElement.classList.add('ok'); } }
-    </script>
-</body>
-</html>
+        function formatDate(d) { if(!d || d.length<6) return "---"; let y = d.substring(0,2); let m = d.
