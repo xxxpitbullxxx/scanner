@@ -3,22 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V98 - Carica File & Logic V95</title>
+    <title>Scanner V97 - Precision</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
         .cam-box { position: relative; flex: 0 0 45%; overflow: hidden; border-bottom: 2px solid #333; }
-        video, #preview-img { width: 100%; height: 100%; object-fit: cover; }
-        #preview-img { display: none; position: absolute; top: 0; left: 0; z-index: 5; background: black; }
+        video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* RETTANGOLI OTTIMIZZATI - Giallo abbassato rispetto a V95 */
-        .guide-res { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); width: 98%; height: 15%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
-        .guide-mrz { position: absolute; top: 72%; left: 50%; transform: translate(-50%, -50%); width: 98%; height: 28%; border: 3px solid #00E0FF; border-radius: 6px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); }
-        .label-guide { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); }
+        /* POSIZIONAMENTO DI PRECISIONE V97 */
+        .guide-res { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 96%; height: 12%; border: 2px solid #FFD60A; border-radius: 4px; z-index: 10;
+        }
+        .guide-mrz { 
+            position: absolute; top: 82%; left: 50%; transform: translate(-50%, -50%);
+            width: 96%; height: 22%; border: 3px solid #00E0FF; border-radius: 4px; z-index: 10;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.8);
+        }
+        .label-guide { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); text-transform: uppercase; }
 
         .scroll-box { flex: 1; overflow-y: auto; padding: 12px; background: #121212; padding-bottom: 80px; }
-        .btn-scan { width: 100%; padding: 16px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 10px; cursor: pointer; font-size: 16px; }
-        .btn-file { width: 100%; padding: 12px; background: #333; color: #fff; border: 1px solid #555; border-radius: 10px; margin-bottom: 15px; cursor: pointer; font-size: 14px; }
+        .btn-scan { width: 100%; padding: 16px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 15px; cursor: pointer; font-size: 18px; }
         
         .sec-t { font-size: 11px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 3px; font-weight: bold; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -33,14 +38,11 @@
 <body>
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
-        <img id="preview-img" src="#" alt="anteprima">
-        <div class="guide-res"><span class="label-guide" style="color:#FFD60A">INDIRIZZO</span></div>
-        <div class="guide-mrz"><span class="label-guide" style="color:#00E0FF">MRZ AREA</span></div>
+        <div class="guide-res"><span class="label-guide" style="color:#FFD60A">Residenza (Sopra i codici)</span></div>
+        <div class="guide-mrz"><span class="label-guide" style="color:#00E0FF">Codici MRZ (Sotto il barcode)</span></div>
     </div>
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONA</button>
-        <input type="file" id="file-input" accept="image/*" style="display: none;">
-        <button id="btn-upload" class="btn-file">📁 CARICA FOTO DA GALLERIA</button>
+        <button id="snap" class="btn-scan">SCANSIONA V97</button>
         
         <div class="sec-t" style="color:#00E0FF">Anagrafica</div>
         <div class="grid">
@@ -58,11 +60,11 @@
         
         <div class="sec-t" style="color:#00E0FF">Documento</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">Tipo Documento</span><div class="val" id="v-type">---</div></div>
+            <div class="field"><span class="lbl">Tipo Documento</span><div class="val" id="v-type">---</div></div>
             <div class="field"><span class="lbl">Paese Emittente</span><div class="val" id="v-issue">---</div></div>
-            <div class="field"><span class="lbl">Cittadinanza</span><div class="val" id="v-nat">---</div></div>
             <div class="field full"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
-            <div class="field full"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+            <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
+            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
         </div>
         
         <div class="sec-t">Altri Dati</div>
@@ -77,31 +79,12 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('hidden-cvs');
         const btn = document.getElementById('snap');
-        const fileInput = document.getElementById('file-input');
-        const btnUpload = document.getElementById('btn-upload');
-        const previewImg = document.getElementById('preview-img');
-
-        const isoMap = { "ITA": { country: "ITALIA", citizen: "ITALIANA" }, "FRA": { country: "FRANCIA", citizen: "FRANCESE" }, "DEU": { country: "GERMANIA", citizen: "TEDESCA" } };
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } }).then(s => video.srcObject = s);
 
-        // Gestione Caricamento File
-        btnUpload.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    previewImg.src = event.target.result;
-                    previewImg.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
         function fix(s, type) {
             if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8').replace(/D/g,'0');
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8').replace(/D/g,'0').replace(/G/g,'6');
             if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/4/g,'A').replace(/8/g,'B');
             return s;
         }
@@ -109,67 +92,77 @@
         btn.addEventListener('click', async () => {
             btn.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
-            
-            // Sceglie se scansionare il video o l'immagine caricata
-            const source = (previewImg.style.display === 'block') ? previewImg : video;
-            const sw = (source === video) ? video.videoWidth : previewImg.naturalWidth;
-            const sh = (source === video) ? video.videoHeight : previewImg.naturalHeight;
-            
-            canvas.width = sw; canvas.height = sh;
-            ctx.filter = 'grayscale(100%) contrast(400%) brightness(100%)';
-            ctx.drawImage(source, 0, 0, sw, sh);
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            ctx.filter = 'grayscale(100%) contrast(350%) brightness(100%)';
+            ctx.drawImage(video, 0, 0);
             
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<,().',
                 });
-                parseV95(text);
-                btn.innerText = "SCANSIONA";
+                parseV97(text);
+                btn.innerText = "SCANSIONA V97";
             } catch (e) { btn.innerText = "ERRORE"; }
         });
 
-        function parseV95(raw) {
+        function parseV97(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
-            let line1Match = clean.match(/([ACI0OP])<([A-Z0-9]{3})([A-Z0-9]{9})/);
-            if(line1Match) {
-                let t = fix(line1Match[1], 'L');
+            // 1. RIGA 1 MRZ
+            let m1 = clean.match(/([ACI])<([A-Z0-9]{3})([A-Z0-9]{9})/);
+            if(m1) {
+                let t = m1[1];
                 fill("v-type", (t === 'C' || t === 'I') ? "CARTA D'IDENTITÀ" : (t === 'P' ? "PASSAPORTO" : t));
-                let countryCode = fix(line1Match[2], 'L');
-                fill("v-issue", isoMap[countryCode] ? isoMap[countryCode].country : countryCode); 
-                let rawCode = line1Match[3];
-                fill("v-doc", fix(rawCode.substr(0,2), 'L') + fix(rawCode.substr(2,5), 'N') + fix(rawCode.substr(7,2), 'L'));
+                fill("v-issue", fix(m1[2], 'L'));
+                let rc = m1[3];
+                fill("v-doc", fix(rc.substr(0,2), 'L') + fix(rc.substr(2,5), 'N') + fix(rc.substr(7,2), 'L'));
             }
 
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nameMatch) { fill("v-cog", nameMatch[1]); fill("v-nom", nameMatch[2].replace(/</g, ' ').trim()); }
-
-            let sexSearch = clean.match(/([0-9OIZSB]{7})([MF])([0-9OIZSB]{7})([A-Z0-9]{3})/);
-            if(sexSearch) {
-                fill("v-dob", formatDate(fix(sexSearch[1].substr(0,6), 'N')));
-                fill("v-sex", sexSearch[2]);
-                fill("v-scad", formatDate(fix(sexSearch[3].substr(0,6), 'N')));
-                let natCode = fix(sexSearch[4], 'L');
-                fill("v-nat", isoMap[natCode] ? isoMap[natCode].citizen : natCode);
+            // 2. NOMI (RIGA 3 MRZ)
+            let names = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if(names) {
+                fill("v-cog", names[1]);
+                fill("v-nom", names[2].replace(/</g, ' ').trim());
             }
 
-            let addrLine = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("LARGO"));
-            if (addrLine) {
-                let prov = addrLine.match(/\(([A-Z]{2})\)/);
+            // 3. BIOMETRICI (RIGA 2 MRZ)
+            let bio = clean.match(/([0-9OIZSB]{7})([MF])([0-9OIZSB]{7})([A-Z0-9]{3})/);
+            if(bio) {
+                fill("v-dob", formatDate(fix(bio[1].substr(0,6), 'N')));
+                fill("v-sex", bio[2]);
+                fill("v-scad", formatDate(fix(bio[3].substr(0,6), 'N')));
+                fill("v-nat", fix(bio[4], 'L'));
+            }
+
+            // 4. RESIDENZA
+            lines.forEach(l => {
+                let prov = l.match(/\(([A-Z]{2})\)/);
                 if(prov) fill("v-prov", prov[1]);
-                let civ = addrLine.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || addrLine.match(/\s(\d+[A-Z]?)$/);
+                let civ = l.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || l.match(/\s(\d+[A-Z]?)$/);
                 if(civ) fill("v-civ", civ[1]);
-                let via = addrLine.match(/(VIA|PIAZZA|CORSO|LARGO)\s+[A-Z\s\.]+/);
-                if(via) fill("v-via", via[0].trim());
-                let com = addrLine.match(/([A-Z\s']+)\s+\(/);
-                if(com) fill("v-com", com[1].trim());
-            }
+                if(l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("LARGO")) {
+                    let via = l.match(/(VIA|PIAZZA|CORSO|LARGO|VIALE)\s+[A-Z\s\.]+/);
+                    if(via) fill("v-via", via[0].trim());
+                    let com = l.match(/([A-Z\s']+)\s+\(/);
+                    if(com) fill("v-com", com[1].trim());
+                }
+            });
         }
 
-        function formatDate(d) { if(!d || d.length<6) return "---"; let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6); return day + "/" + m + "/" + (parseInt(y) > 40 ? "19" : "20") + y; }
-        function fill(id, t) { const e = document.getElementById(id); if(t && t !== "---" && t.length > 0){ e.innerText = t; e.parentElement.classList.add('ok'); } }
+        function formatDate(d) { 
+            if(!d || d.length<6) return "---"; 
+            let y = d.substring(0,2);
+            let m = d.substring(2,4);
+            let day = d.substring(4,6);
+            return day + "/" + m + "/" + (parseInt(y) > 40 ? "19" : "20") + y; 
+        }
+
+        function fill(id, t) { 
+            const e = document.getElementById(id); 
+            if(t && t !== "---"){ e.innerText = t; e.parentElement.classList.add('ok'); } 
+        }
     </script>
 </body>
 </html>
