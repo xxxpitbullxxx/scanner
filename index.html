@@ -189,4 +189,124 @@
             loader.style.display = 'block';
 
             // 1. Disegna su Canvas
-            const cvs = document.getElementById
+            const cvs = document.getElementById('cvs-full');
+            const ctx = cvs.getContext('2d');
+            
+            let w = source.videoWidth || source.width;
+            let h = source.videoHeight || source.height;
+            cvs.width = w; cvs.height = h;
+            ctx.drawImage(source, 0, 0);
+
+            // 2. LOGICA ROTAZIONE AUTOMATICA
+            // Se l'immagine è verticale (h > w), la ruotiamo di -90 gradi
+            if (h > w) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = h; tempCanvas.height = w;
+                const tCtx = tempCanvas.getContext('2d');
+                tCtx.translate(h/2, w/2);
+                tCtx.rotate(-90 * Math.PI / 180);
+                tCtx.drawImage(cvs, -w/2, -h/2);
+                
+                // Aggiorniamo le dimensioni per il taglio
+                w = h; h = source.width || source.videoWidth;
+                ctx.clearRect(0,0, cvs.width, cvs.height);
+                cvs.width = w; cvs.height = h;
+                ctx.drawImage(tempCanvas, 0, 0);
+            }
+
+            // 3. TAGLIO INTELLIGENTE (SIMULA RETTANGOLI GIALLO/AZZURRO)
+            // Sappiamo che la carta ha l'indirizzo in alto e l'MRZ in basso.
+            // Invece di leggere tutto (che confonde Tesseract con il tavolo), ritagliamo le strisce.
+
+            // Zona A: Indirizzo (Top 35% dell'immagine centrale)
+            const cropAddr = document.getElementById('cvs-crop');
+            const ctxCrop = cropAddr.getContext('2d');
+            
+            // Definiamo un margine di sicurezza (escludiamo il 10% dei bordi per togliere il tavolo)
+            let safeW = w * 0.8;
+            let safeX = w * 0.1;
+
+            // Crop Indirizzo
+            cropAddr.width = safeW;
+            cropAddr.height = h * 0.35; // Prendi il 35% superiore
+            ctxCrop.filter = 'grayscale(100%) contrast(150%)'; // Ottimizza per testo
+            ctxCrop.drawImage(cvs, safeX, h * 0.15, safeW, h * 0.35, 0, 0, safeW, h * 0.35); // Offset Y al 15% per saltare intestazione
+            
+            const addrData = await Tesseract.recognize(cropAddr, 'ita');
+
+            // Zona B: MRZ (Bottom 30% dell'immagine centrale)
+            cropAddr.height = h * 0.30;
+            ctxCrop.filter = 'grayscale(100%) contrast(200%)'; // Contrasto alto per MRZ
+            ctxCrop.drawImage(cvs, safeX, h * 0.65, safeW, h * 0.30, 0, 0, safeW, h * 0.30);
+            
+            const mrzData = await Tesseract.recognize(cropAddr, 'ita');
+
+            // 4. ESTRAZIONE DATI
+            extractAllData(addrData.data.text, mrzData.data.text);
+            
+            loader.style.display = 'none';
+            results.style.display = 'flex';
+        }
+
+        function extractAllData(textAddr, textMrz) {
+            // --- PARSE INDIRIZZO (Dal testo in alto) ---
+            const cleanAddrBlock = textAddr.toUpperCase().replace(/\n/g, ' '); // Tutto su una riga
+            
+            // Regex potente per Via/Piazza
+            // Cerca: VIA/PIAZZA... poi un civico, poi un Comune, poi (XX)
+            // Esempio: VIA ROMA, 5 MILANO (MI)
+            let regexAddr = /(VIA|PIAZZA|CORSO|VIALE|LARGO|STRADA)\s+([A-Z0-9\s\.,]+)\s+\(([A-Z]{2})\)/;
+            let match = cleanAddr.match(regexAddr);
+
+            if(match) {
+                // Trovato pattern completo con Provincia (MI)
+                let fullString = match[0]; // Tutto l'indirizzo
+                document.getElementById('addr-prov').innerText = match[3]; // MI
+                
+                // Cerchiamo di separare civico e comune dalla parte centrale
+                let midPart = match[2]; // ROMA, 5 MILANO
+                
+                // Cerca numero civico (numero da solo o dopo virgola)
+                let civMatch = midPart.match(/(\d+[A-Z]?)\s+([A-Z\s]+)$/); // Numero + Comune alla fine
+                
+                if(civMatch) {
+                    document.getElementById('addr-via').innerText = match[1] + " " + midPart.replace(civMatch[0], "").replace(/,$/, "").trim();
+                    document.getElementById('addr-civ').innerText = civMatch[1];
+                    document.getElementById('addr-com').innerText = civMatch[2].trim();
+                } else {
+                    // Fallback semplice
+                    document.getElementById('addr-via').innerText = fullString;
+                }
+            } else {
+                // Fallback se non trova parentesi: Stampa tutto ciò che trova dopo VIA
+                let simpleVia = cleanAddr.match(/(VIA|PIAZZA|CORSO).{10,}/);
+                if(simpleVia) document.getElementById('addr-via').innerText = simpleVia[0];
+            }
+
+            // --- PARSE MRZ (Dal testo in basso) ---
+            const cleanMrz = textMrz.toUpperCase().replace(/\s/g, '');
+            
+            let docMatch = cleanMrz.match(/[CI]<ITA([A-Z0-9]{9})/);
+            if(!docMatch) docMatch = cleanMrz.match(/ITA([A-Z0-9]{9})/);
+            
+            let bioMatch = cleanMrz.match(/(\d{6})\d([MF])(\d{6})/);
+            let nameMatch = cleanMrz.match(/([A-Z]+)<<([A-Z]+)/);
+
+            if(docMatch) document.getElementById('v-doc').innerText = docMatch[1];
+            if(nameMatch) {
+                document.getElementById('v-cog').innerText = nameMatch[1];
+                document.getElementById('v-nom').innerText = nameMatch[2].replace(/</g, ' ');
+            }
+            if(bioMatch) {
+                let d = bioMatch[1];
+                let y = (parseInt(d.substr(0,2))>40 ? '19':'20') + d.substr(0,2);
+                document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
+                document.getElementById('v-sex').innerText = bioMatch[2];
+                let e = bioMatch[3];
+                let ey = '20'+e.substr(0,2);
+                document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
+            }
+        }
+    </script>
+</body>
+</html>
