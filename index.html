@@ -3,118 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V54 - Real Scale</title>
+    <title>Scanner V55 - Landscape</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; margin: 0; background: #000; 
-            height: 100vh; overflow: hidden; display: flex; flex-direction: column; 
+            height: 100vh; width: 100vw; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center;
         }
 
-        /* VIDEOCAMERA */
+        /* MESSAGGIO DI ROTAZIONE (Se tieni il telefono verticale) */
+        #rotate-msg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;
+            background: #000; color: #00E0FF; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+        }
+        .icon-rotate { font-size: 50px; margin-bottom: 20px; }
+        
+        /* Nascondi messaggio quando è landscape */
+        @media screen and (orientation: landscape) {
+            #rotate-msg { display: none; }
+        }
+
+        /* CAMERA A TUTTO SCHERMO */
         .viewport { 
-            position: relative; flex: 1; display: flex; 
-            justify-content: center; align-items: center; overflow: hidden;
+            position: relative; width: 100%; height: 100%; 
+            display: flex; justify-content: center; align-items: center;
         }
         video { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
         }
 
-        /* SAGOMA ORIZZONTALE REALE (Ratio 1.58:1) */
+        /* SAGOMA CARTA GRANDEZZA REALE (Horizontal) */
         .card-frame {
             position: relative;
-            width: 90vw; /* Occupa quasi tutta la larghezza per simulare la grandezza reale */
-            aspect-ratio: 85.6 / 54; /* Proporzione esatta ID-1 */
-            border: 3px solid rgba(255, 255, 255, 0.9);
+            /* In landscape, l'altezza è il lato corto. Usiamo l'80% dell'altezza */
+            height: 75vh; 
+            /* Calcola la larghezza in base al rapporto esatto della CIE (1.585) */
+            aspect-ratio: 85.6 / 53.98;
+            
+            border: 3px solid rgba(255, 255, 255, 0.8);
             border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.9); /* Maschera nera attorno */
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.9); /* Maschera nera totale */
             z-index: 10;
-            transition: border-color 0.3s;
+            transition: border-color 0.2s;
         }
-        .card-frame.success { border-color: #32d74b; box-shadow: 0 0 20px #32d74b, 0 0 0 1000px rgba(0,0,0,0.9); }
+        .card-frame.success { border-color: #32d74b; box-shadow: 0 0 30px #32d74b, 0 0 0 1000px rgba(0,0,0,0.9); }
 
         .guide-text {
-            position: absolute; top: -50px; width: 100%; text-align: center;
-            color: #fff; font-weight: bold; font-size: 16px; text-transform: uppercase;
-            text-shadow: 0 2px 4px #000;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.3); font-size: 24px; font-weight: bold; text-transform: uppercase;
+            pointer-events: none; white-space: nowrap;
         }
 
-        /* LOGO ANCHOR */
-        .anchor-icon {
-            position: absolute; bottom: 10px; right: 10px; 
-            color: rgba(255,255,255,0.5); font-size: 12px; font-weight: bold;
-        }
-
-        /* TASTO SCANSIONE */
+        /* CONTROLLI (Sulla destra in landscape) */
         .controls {
-            position: absolute; bottom: 40px; width: 100%; text-align: center; z-index: 20;
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            z-index: 20; display: flex; flex-direction: column; gap: 20px;
         }
+
         .btn-scan {
-            background: #007AFF; color: #fff; border: none; padding: 20px 60px;
-            border-radius: 50px; font-size: 20px; font-weight: bold; 
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5); cursor: pointer;
+            width: 70px; height: 70px; border-radius: 50%; border: 4px solid #fff;
+            background: rgba(255,255,255,0.2); cursor: pointer;
+        }
+        .btn-scan:active { background: #fff; }
+
+        /* LOADING */
+        #loader { 
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            color: #00E0FF; font-weight: bold; font-size: 18px; z-index: 30; display: none;
+            background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px;
         }
 
         /* PANNELLO RISULTATI */
         .panel {
-            position: absolute; bottom: 0; left: 0; width: 100%; 
-            background: #1c1c1e; border-top: 3px solid #32d74b;
-            padding: 20px; box-sizing: border-box;
-            transform: translateY(110%); transition: transform 0.3s ease-out;
-            z-index: 30; max-height: 80vh; overflow-y: auto;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.98); z-index: 50;
+            display: none; flex-direction: column; padding: 20px; box-sizing: border-box;
+            overflow-y: auto;
         }
-        .panel.visible { transform: translateY(0); }
+        .panel.visible { display: flex; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .full { grid-column: span 2; }
-
-        .field { background: #2c2c2e; padding: 10px; border-radius: 8px; }
-        .lbl { color: #888; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 4px; }
-        .val { color: #fff; font-size: 16px; font-weight: bold; }
-
-        .btn-reset { width: 100%; padding: 15px; background: #333; color: white; border: none; border-radius: 10px; font-weight: bold; }
-
-        #loader { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: #00E0FF; padding: 20px; border-radius: 10px; z-index: 25; font-weight: bold; }
+        .panel-header { text-align: center; color: #32d74b; font-size: 20px; margin-bottom: 20px; font-weight: bold; }
         
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 80%; margin: 0 auto; }
+        .full { grid-column: span 2; }
+        
+        .field { background: #2c2c2e; padding: 10px; border-radius: 8px; border-left: 5px solid #007AFF; }
+        .lbl { color: #888; font-size: 10px; display: block; margin-bottom: 3px; }
+        .val { color: #fff; font-size: 18px; font-weight: bold; }
+
+        .btn-close {
+            margin-top: 30px; padding: 15px; background: #444; color: #fff; border: none;
+            font-size: 18px; border-radius: 10px; cursor: pointer; width: 50%; align-self: center;
+        }
+
         canvas { display: none; }
     </style>
 </head>
 <body>
 
+    <div id="rotate-msg">
+        <div class="icon-rotate">↻</div>
+        <div>RUOTA IL TELEFONO IN ORIZZONTALE<br>PER VEDERE LA CARD A GRANDEZZA REALE</div>
+    </div>
+
     <div class="viewport">
         <video id="webcam" autoplay playsinline></video>
         
         <div class="card-frame" id="frame">
-            <div class="guide-text">Inquadra il Retro (Orizzontale)</div>
-            <div class="anchor-icon">ANCHOR V3.0</div>
+            <div class="guide-text">INQUADRA IL RETRO</div>
         </div>
 
-        <div id="loader">Lettura MRZ in corso...</div>
+        <div id="loader">LETTURA MRZ...</div>
 
         <div class="controls">
-            <button class="btn-scan" id="btn-snap">SCANSIONA</button>
+            <button class="btn-scan" id="btn-snap"></button>
         </div>
     </div>
 
     <div class="panel" id="result-panel">
-        <div style="text-align:center; color:#32d74b; font-weight:bold; margin-bottom:15px;">DATI ACQUISITI CORRETTAMENTE</div>
-        
+        <div class="panel-header">DATI ALLOGGIATI WEB</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
-            <div class="field full"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
-            
-            <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
-            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
-            
-            <div class="field"><span class="lbl">N. Documento</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
-            
-            <div class="field full"><span class="lbl">Cittadinanza</span><div class="val" id="v-cit">---</div></div>
-            
-            <div class="field full"><span class="lbl">Residenza (Extra)</span><div class="val" id="v-res">---</div></div>
+            <div class="field full"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
+            <div class="field full"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
+            <div class="field"><span class="lbl">DATA NASCITA</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">SESSO</span><div class="val" id="v-sex">---</div></div>
+            <div class="field full"><span class="lbl">CITTADINANZA</span><div class="val" id="v-cit">ITA</div></div>
+            <div class="field"><span class="lbl">TIPO DOC</span><div class="val">CARTA D'IDENTITÀ</div></div>
+            <div class="field"><span class="lbl">NUMERO DOC</span><div class="val" id="v-doc">---</div></div>
+            <div class="field"><span class="lbl">RILASCIO (Luogo)</span><div class="val" id="v-luogo">---</div></div> <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
+            <div class="field full"><span class="lbl">RESIDENZA (Extra)</span><div class="val" id="v-res">---</div></div>
         </div>
-
-        <button class="btn-reset" onclick="resetScan()">Nuova Scansione</button>
+        <button class="btn-close" onclick="resetScan()">CHIUDI E SCANSIONA</button>
     </div>
 
     <canvas id="cvs"></canvas>
@@ -127,119 +148,79 @@
         const panel = document.getElementById('result-panel');
         const loader = document.getElementById('loader');
 
-        // Alta risoluzione per leggere i caratteri piccoli del MRZ
+        // Avvia camera alla massima risoluzione
         navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 3840 }, height: { ideal: 2160 } } 
+            video: { facingMode: "environment", width: { ideal: 4096 }, height: { ideal: 2160 } } 
         }).then(s => video.srcObject = s);
 
         btn.addEventListener('click', async () => {
-            btn.style.display = 'none';
             loader.style.display = 'block';
-
+            
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            
-            // Filtro Anchor: B/N e alto contrasto
-            ctx.filter = 'grayscale(100%) contrast(200%)';
+            // Filtro Anchor MRZ
+            ctx.filter = 'grayscale(100%) contrast(200%)'; 
             ctx.drawImage(video, 0, 0);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                const ok = parseMRZ(text);
+                const ok = processAnchor(text);
                 
                 loader.style.display = 'none';
                 if(ok) {
                     frame.classList.add('success');
-                    panel.classList.add('visible');
+                    setTimeout(() => panel.classList.add('visible'), 500);
                 } else {
-                    alert("MRZ non trovato. Assicurati che il codice a 3 righe sia ben visibile.");
-                    btn.style.display = 'inline-block';
+                    alert("Codici non leggibili. Avvicinati e metti a fuoco il retro.");
                 }
             } catch (e) {
                 loader.style.display = 'none';
-                btn.style.display = 'inline-block';
-                alert("Errore tecnico.");
+                alert("Errore OCR.");
             }
         });
 
-        // --- MOTORE ANCHOR 3-RIGHE (Specifico per la tua foto) ---
-        function parseMRZ(raw) {
-            // Pulisci tutto: niente spazi, tutto maiuscolo
+        // LOGICA ANCHOR SOLO RETRO (Dati Alloggiati)
+        function processAnchor(raw) {
             const clean = raw.toUpperCase().replace(/\s/g, ''); 
+            let found = false;
+
+            // 1. Cerca MRZ (Cognome, Nome, Doc, Date)
+            // Supporta formato 3 righe (CIE 3.0)
             
-            // Variabili dati
-            let docNum = null, dob = null, sex = null, expiry = null, surname = null, name = null, cit = "ITA";
-
-            // 1. CERCA RIGA 1: Inizia con C<ITA o I<ITA o A<ITA
-            // Esempio foto: C<ITACA07427WT1<<<<<<<<<<<<<<<
-            const line1Regex = /[ACI]<ITA([A-Z0-9]{9})/;
-            const match1 = clean.match(line1Regex);
+            // Riga 1: Documento (C<ITACA...)
+            let docM = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
+            if(!docM) docM = clean.match(/ITA([A-Z0-9]{9})/);
             
-            if (match1) {
-                docNum = match1[1];
-            } else {
-                // Fallback generico se non trova C<ITA
-                const docGeneric = clean.match(/ITA([A-Z0-9]{9})/);
-                if(docGeneric) docNum = docGeneric[1];
-            }
+            // Riga 2: Date (YYMMDD S YYMMDD)
+            let bioM = clean.match(/(\d{6})\d([MF])(\d{6})/);
+            
+            // Riga 3: Cognome<<Nome
+            let nameM = clean.match(/([A-Z]+)<<([A-Z]+)/);
 
-            // 2. CERCA RIGA 2: Numeri + Sesso
-            // Esempio foto: 7212158F3412156ITA<<<<<<<<<<<8
-            // Formato: [YYMMDD] [check] [Sex] [YYMMDD]
-            const line2Regex = /(\d{6})\d([MF])(\d{6})/;
-            const match2 = clean.match(line2Regex);
-
-            if (match2) {
-                // Data Nascita
-                let d = match2[1];
-                let year = (parseInt(d.substr(0,2)) > 40) ? '19' + d.substr(0,2) : '20' + d.substr(0,2);
-                dob = `${d.substr(4,2)}/${d.substr(2,2)}/${year}`;
+            if(docM && bioM && nameM) {
+                // Documento
+                document.getElementById('v-doc').innerText = docM[1];
                 
+                // Cognome Nome
+                document.getElementById('v-cog').innerText = nameM[1];
+                document.getElementById('v-nom').innerText = nameM[2].replace(/</g, ' ');
+
+                // Nascita
+                let d = bioM[1];
+                let y = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
+                document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
+
                 // Sesso
-                sex = match2[2];
+                document.getElementById('v-sex').innerText = bioM[2];
 
                 // Scadenza
-                let e = match2[3];
-                let eYear = '20' + e.substr(0,2);
-                expiry = `${e.substr(4,2)}/${e.substr(2,2)}/${eYear}`;
+                let e = bioM[3];
+                let ey = '20'+e.substr(0,2);
+                document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
+
+                found = true;
             }
 
-            // 3. CERCA RIGA 3: Cognome e Nome
-            // Esempio foto: BETTI<<GIULIA<<<<<<<<<<<<<<<<<
-            const line3Regex = /([A-Z]+)<<([A-Z]+)/;
-            const match3 = clean.match(line3Regex);
-
-            if (match3) {
-                surname = match3[1];
-                name = match3[2];
-            }
-
-            // 4. RESIDENZA (Extra, via Regex)
-            let resTxt = "---";
-            const rawLines = raw.toUpperCase().split('\n');
-            const addrLine = rawLines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE)\s/));
-            if(addrLine) resTxt = addrLine.replace(/[^A-Z0-9\s,\.]/g, '').trim();
-
-            // VERIFICA FINALE
-            if (docNum && dob && surname) {
-                document.getElementById('v-doc').innerText = docNum;
-                document.getElementById('v-dob').innerText = dob;
-                document.getElementById('v-sex').innerText = sex;
-                document.getElementById('v-scad').innerText = expiry;
-                document.getElementById('v-cog').innerText = surname;
-                document.getElementById('v-nom').innerText = name;
-                document.getElementById('v-cit').innerText = cit;
-                document.getElementById('v-res').innerText = resTxt;
-                return true;
-            }
-            return false;
-        }
-
-        function resetScan() {
-            panel.classList.remove('visible');
-            frame.classList.remove('success');
-            btn.style.display = 'inline-block';
-        }
-    </script>
-</body>
-</html>
+            // 2. Residenza (Opzionale)
+            const lines = raw.toUpperCase().split('\n');
+            let addr = lines.find(l => l.match(/(VIA|PIAZZA|
