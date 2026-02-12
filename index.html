@@ -3,28 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V105 - Vertical Master</title>
+    <title>Scanner V106 - Guest Master</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
+        body { font-family: sans-serif; margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; color: white; overflow: hidden; }
         
-        /* Area Camera: Semplice e Verticale */
-        .cam-box { position: relative; flex: 0 0 50%; overflow: hidden; border-bottom: 2px solid #333; }
+        /* Area Camera */
+        .cam-box { position: relative; flex: 0 0 55%; overflow: hidden; border-bottom: 2px solid #333; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Mirini Larghi (95% larghezza) per leggere MRZ in verticale */
-        .guide-res { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); width: 95%; height: 15%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
-        .guide-mrz { position: absolute; top: 68%; left: 50%; transform: translate(-50%, -50%); width: 95%; height: 25%; border: 3px solid #00E0FF; border-radius: 5px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); }
-        .lbl-g { position: absolute; font-size: 10px; font-weight: bold; top: -18px; left: 0; background: rgba(0,0,0,0.5); padding: 2px 5px; }
+        /* RETTANGOLO BIANCO LIMITE CARTA */
+        .card-limit {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 92%; height: 80%; border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 15px; pointer-events: none; z-index: 5;
+        }
 
-        .scroll-box { flex: 1; overflow-y: auto; padding: 12px; background: #121212; padding-bottom: 80px; }
-        .btn-scan { width: 100%; padding: 16px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 15px; cursor: pointer; font-size: 18px; }
+        /* Mirini Interni */
+        .guide-res { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); width: 85%; height: 15%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
+        .guide-mrz { position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%); width: 88%; height: 25%; border: 2px solid #00E0FF; border-radius: 5px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); }
+        .lbl-g { position: absolute; font-size: 9px; font-weight: bold; top: -16px; left: 0; background: rgba(0,0,0,0.6); padding: 2px 4px; border-radius: 3px; }
+
+        /* Area Dati Scorrevole */
+        .scroll-box { flex: 1; overflow-y: auto; padding: 15px; background: #121212; -webkit-overflow-scrolling: touch; }
+        .btn-scan { width: 100%; padding: 16px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 20px; cursor: pointer; font-size: 18px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .field { background: #1c1c1e; padding: 10px; border-radius: 6px; border-left: 3px solid #333; }
+        .sec-t { font-size: 11px; color: #888; margin: 15px 0 8px 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 4px; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+        .full { grid-column: span 2; }
+        .field { background: #1c1c1e; padding: 10px; border-radius: 8px; border-left: 3px solid #333; }
         .field.ok { border-left-color: #32d74b; background: #1a2e1e; }
-        .lbl { font-size: 9px; color: #aaa; display: block; margin-bottom: 2px; }
-        .val { font-size: 14px; font-weight: 700; color: #fff; }
+        .lbl { font-size: 9px; color: #aaa; display: block; margin-bottom: 3px; }
+        .val { font-size: 14px; font-weight: 700; color: #fff; min-height: 16px; }
         canvas { display: none; }
     </style>
 </head>
@@ -32,21 +42,39 @@
 
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
-        <div class="guide-res"><span class="lbl-g" style="color:#FFD60A">INDIRIZZO (Sopra)</span></div>
-        <div class="guide-mrz"><span class="lbl-g" style="color:#00E0FF">CODICI MRZ (Sotto)</span></div>
+        <div class="card-limit"></div>
+        <div class="guide-res"><span class="lbl-g" style="color:#FFD60A">INDIRIZZO</span></div>
+        <div class="guide-mrz"><span class="lbl-g" style="color:#00E0FF">CODICI MRZ</span></div>
     </div>
 
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONA ORA</button>
+        <button id="snap" class="btn-scan">SCANSIONA DOCUMENTO</button>
         
+        <div class="sec-t" style="color:#00E0FF">Anagrafica</div>
         <div class="grid">
-            <div style="grid-column: span 2;" class="field"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
-            <div style="grid-column: span 2;" class="field"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
-            <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="v-nat">---</div></div>
+            <div class="field full"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
+            <div class="field full"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
+            <div class="field"><span class="lbl">DATA DI NASCITA</span><div class="val" id="v-dob">---</div></div>
             <div class="field"><span class="lbl">SESSO</span><div class="val" id="v-sex">---</div></div>
-            <div style="grid-column: span 2;" class="field"><span class="lbl">NUMERO DOCUMENTO</span><div class="val" id="v-doc">---</div></div>
         </div>
-    </div>
+
+        <div class="sec-t" style="color:#FFD60A">Residenza</div>
+        <div class="grid">
+            <div class="field full"><span class="lbl">VIA / PIAZZA</span><div class="val" id="v-via">---</div></div>
+            <div class="field"><span class="lbl">CIVICO</span><div class="val" id="v-civ">---</div></div>
+            <div class="field"><span class="lbl">PROVINCIA</span><div class="val" id="v-prov">---</div></div>
+            <div class="field full"><span class="lbl">COMUNE</span><div class="val" id="v-com">---</div></div>
+        </div>
+
+        <div class="sec-t" style="color:#00E0FF">Documento</div>
+        <div class="grid">
+            <div class="field full"><span class="lbl">TIPO DOCUMENTO</span><div class="val" id="v-type">---</div></div>
+            <div class="field"><span class="lbl">PAESE EMITTENTE</span><div class="val" id="v-issue">---</div></div>
+            <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="v-nat">---</div></div>
+            <div class="field full"><span class="lbl">NUMERO DOCUMENTO</span><div class="val" id="v-doc">---</div></div>
+            <div class="field full"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
+        </div>
+        <div style="height: 50px;"></div> </div>
 
     <canvas id="hidden-cvs"></canvas>
 
@@ -55,10 +83,10 @@
         const canvas = document.getElementById('hidden-cvs');
         const btn = document.getElementById('snap');
 
-        // Avvio camera standard (quello che non tradisce mai)
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } })
-            .then(s => video.srcObject = s)
-            .catch(e => alert("Camera error: " + e));
+        const isoMap = { "ITA": { country: "ITALIA", citizen: "ITALIANA" }, "FRA": { country: "FRANCIA", citizen: "FRANCESE" }, "DEU": { country: "GERMANIA", citizen: "TEDESCA" }, "ESP": { country: "SPAGNA", citizen: "SPAGNOLA" } };
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
+            .then(s => video.srcObject = s);
 
         function fix(s, type) {
             if(!s) return "";
@@ -68,45 +96,58 @@
         }
 
         btn.addEventListener('click', async () => {
-            btn.innerText = "LETTURA IN CORSO...";
+            btn.innerText = "ANALISI...";
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
-            // Filtro Master V91
             ctx.filter = 'grayscale(100%) contrast(400%)';
             ctx.drawImage(video, 0, 0);
             
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                parseV105(text);
-                btn.innerText = "SCANSIONA ORA";
-            } catch (e) { btn.innerText = "ERRORE"; }
+                parse(text);
+                btn.innerText = "SCANSIONA DOCUMENTO";
+            } catch (e) { btn.innerText = "ERRORE OCR"; }
         });
 
-        function parseV105(raw) {
+        function parse(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
-            
-            // 1. NUMERO DOCUMENTO
-            let docMatch = clean.match(/(ITA|1TA|IT4)([A-Z0-9]{9})/);
-            if(docMatch) {
-                let rawCode = docMatch[2];
-                fill("v-doc", fix(rawCode.substr(0,2), 'L') + fix(rawCode.substr(2,5), 'N') + fix(rawCode.substr(7,2), 'L'));
+            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+
+            // 1. TIPO, PAESE E NUMERO DOC
+            let docM = clean.match(/([ACI0OP])<([A-Z0-9]{3})([A-Z0-9]{9})/);
+            if(docM) {
+                let t = fix(docM[1], 'L');
+                fill("v-type", (t === 'C' || t === 'I') ? "CARTA D'IDENTITÀ" : (t === 'P' ? "PASSAPORTO" : t));
+                let cCode = fix(docM[2], 'L');
+                fill("v-issue", isoMap[cCode] ? isoMap[cCode].country : cCode);
+                let rC = docM[3];
+                fill("v-doc", fix(rC.substr(0,2), 'L') + fix(rC.substr(2,5), 'N') + fix(rC.substr(7,2), 'L'));
             }
 
-            // 2. NOME E COGNOME
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nameMatch) {
-                fill("v-cog", nameMatch[1]);
-                fill("v-nom", nameMatch[2].replace(/</g, ' ').trim());
+            // 2. NOMI
+            let nMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if(nMatch) { fill("v-cog", nMatch[1]); fill("v-nom", nMatch[2].replace(/</g, ' ')); }
+
+            // 3. BIOMETRICI
+            let bMatch = clean.match(/([0-9OIZSB]{7})([MF])([0-9OIZSB]{7})([A-Z0-9]{3})/);
+            if(bMatch) {
+                let dob = fix(bMatch[1].substr(0,6), 'N');
+                fill("v-dob", dob.substr(4,2)+"/"+dob.substr(2,2)+"/"+(parseInt(dob.substr(0,2))>40?"19":"20")+dob.substr(0,2));
+                fill("v-sex", bMatch[2]);
+                let exp = fix(bMatch[3].substr(0,6), 'N');
+                fill("v-scad", exp.substr(4,2)+"/"+exp.substr(2,2)+"/"+(parseInt(exp.substr(0,2))>40?"19":"20")+exp.substr(0,2));
+                let nat = fix(bMatch[4], 'L');
+                fill("v-nat", isoMap[nat] ? isoMap[nat].citizen : nat);
             }
 
-            // 3. DATI BIOMETRICI
-            let sexSearch = clean.match(/([MF])([A-Z]{3})/);
-            if(sexSearch) {
-                fill("v-sex", sexSearch[1]);
-                fill("v-nat", sexSearch[2] === "ITA" ? "ITALIANA" : sexSearch[2]);
+            // 4. INDIRIZZO
+            let aLine = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO"));
+            if (aLine) {
+                let p = aLine.match(/\(([A-Z]{2})\)/); if(p) fill("v-prov", p[1]);
+                let c = aLine.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || aLine.match(/\s(\d+[A-Z]?)$/); if(c) fill("v-civ", c[1]);
+                let v = aLine.match(/(VIA|PIAZZA|CORSO)\s+[A-Z\s\.]+/); if(v) fill("v-via", v[0].trim());
             }
         }
 
