@@ -3,227 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V51 - Stealth Anchor</title>
+    <title>Scanner V52 - Stealth Anchor</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
-        
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #000; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
         /* AREA CAMERA */
-        .viewport { position: relative; flex: 1; background: #000; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* SAGOMA CARTA PULITA (Stealth Mode) */
-        .card-outline {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            /* Proporzioni esatte Carta d'Identità (85.6mm x 54mm) -> aspect ratio ~1.58 */
-            width: 85%; aspect-ratio: 85.6/54; 
-            border: 2px solid rgba(255, 255, 255, 0.6); 
-            border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.85); /* Scurisce tutto il resto */
-            pointer-events: none;
+        .camera-view { 
+            position: relative; flex: 1; overflow: hidden; display: flex; justify-content: center; align-items: center;
         }
-        
-        /* Istruzioni discrete */
-        .guide-text {
-            position: absolute; top: -40px; width: 100%; text-align: center;
-            font-size: 14px; font-weight: 600; letter-spacing: 1px; color: #fff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        video { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
         }
 
-        /* PANNELLO RISULTATI (Nascosto inizialmente) */
-        .results-modal {
-            position: absolute; bottom: 0; left: 0; width: 100%; 
-            background: #1c1c1e; border-top: 2px solid #333;
-            border-radius: 20px 20px 0 0;
-            padding: 20px; box-sizing: border-box;
-            transform: translateY(100%); transition: transform 0.3s ease-out;
-            z-index: 20; max-height: 80vh; overflow-y: auto;
+        /* SAGOMA ORIZZONTALE (Grandezza Carta) */
+        .card-frame {
+            position: relative;
+            width: 85vw; /* Larghezza quasi tutto lo schermo */
+            height: 53.5vw; /* Proporzione esatta ID-1 (85.60 × 53.98 mm) */
+            max-width: 500px; max-height: 315px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.85); /* Scurisce tutto attorno */
+            z-index: 10;
         }
-        .results-modal.visible { transform: translateY(0); }
+        
+        /* Linea di scansione animata (Solo estetica) */
+        .scan-line {
+            position: absolute; width: 100%; height: 2px; background: #00E0FF;
+            top: 0; animation: scanMove 3s infinite linear; opacity: 0.7; box-shadow: 0 0 4px #00E0FF;
+        }
+        @keyframes scanMove { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
 
-        .btn-scan { 
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 80%; padding: 18px; border: none; font-weight: 900; border-radius: 50px; 
-            background: #007AFF; color: white; font-size: 18px; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,122,255,0.4); z-index: 10;
+        .hint {
+            position: absolute; bottom: -40px; width: 100%; text-align: center;
+            color: #fff; font-weight: 600; font-size: 14px; text-shadow: 0 2px 4px #000;
             text-transform: uppercase; letter-spacing: 1px;
         }
-        .btn-scan:active { transform: translateX(-50%) scale(0.95); }
 
-        /* Griglia Dati */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .full { grid-column: span 2; }
-        
-        .field { background: #2c2c2e; padding: 12px; border-radius: 10px; border-left: 4px solid #444; }
-        .field.ok { border-left-color: #32d74b; background: #1a2e1e; }
-        
-        .lbl { font-size: 10px; color: #888; display: block; margin-bottom: 4px; text-transform: uppercase; font-weight: bold; }
-        .val { font-size: 16px; font-weight: 700; color: #fff; min-height: 19px; word-break: break-word; }
-
-        .btn-close {
-            width: 100%; padding: 15px; background: #333; color: #fff; border: none;
-            border-radius: 12px; font-weight: bold; margin-top: 10px;
+        /* TASTO SCANSIONE (Galleggiante) */
+        .controls {
+            position: absolute; bottom: 30px; width: 100%; z-index: 20; text-align: center;
         }
+        .btn-capture {
+            background: #007AFF; color: white; border: none; padding: 18px 40px;
+            border-radius: 50px; font-size: 18px; font-weight: bold; text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0,122,255,0.5); cursor: pointer; transition: transform 0.1s;
+        }
+        .btn-capture:active { transform: scale(0.95); }
+
+        /* MODALE RISULTATI (Nascosto finché non trova i dati) */
+        .result-sheet {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #121212; z-index: 30; display: none; flex-direction: column;
+            padding: 20px; box-sizing: border-box; overflow-y: auto;
+        }
+        .result-sheet.active { display: flex; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .sheet-header { color: #32d74b; font-weight: 800; font-size: 18px; margin-bottom: 20px; text-align: center; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 15px; }
+
+        /* GRIGLIA DATI ORDINATA */
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full-width { grid-column: span 2; }
+        
+        .data-box { background: #1c1c1e; padding: 10px; border-radius: 8px; border-left: 4px solid #444; }
+        .data-box.valid { border-left-color: #007AFF; } /* Blu per dati trovati */
+        
+        .d-label { font-size: 9px; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 3px; }
+        .d-value { font-size: 15px; color: #fff; font-weight: 700; min-height: 18px; word-break: break-word; }
+
+        .btn-reset { margin-top: 30px; background: #333; color: #fff; width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; }
+
+        /* LOADING SPINNER */
+        #loader { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #00E0FF; font-weight: bold; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; z-index: 25; }
 
         canvas { display: none; }
-        #loading { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px;
-            display: none; z-index: 30; font-weight: bold;
-        }
     </style>
 </head>
 <body>
 
-    <div class="viewport">
-        <video id="webcam" autoplay playsinline></video>
-        <div class="card-outline">
-            <div class="guide-text">INQUADRA IL RETRO</div>
-        </div>
-        <button id="snap" class="btn-scan">SCANSIONA</button>
-        <div id="loading">ELABORAZIONE...</div>
-    </div>
-
-    <div class="results-modal" id="res-panel">
-        <div style="text-align: center; margin-bottom: 15px; color: #32d74b; font-weight: bold;">SCANSIONE COMPLETATA</div>
+    <div class="camera-view">
+        <video id="video" autoplay playsinline></video>
         
-        <div class="grid">
-            <div class="field full"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
-            <div class="field full"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
-            <div class="field"><span class="lbl">N. Documento</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">Data Nascita</span><div class="val" id="v-dob">---</div></div>
-            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
-            <div class="field"><span class="lbl">Cittadinanza</span><div class="val" id="v-cit">ITA</div></div>
-
-            <div class="field full"><span class="lbl">Via / Piazza</span><div class="val" id="v-via">---</div></div>
-            <div class="field"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
-            <div class="field"><span class="lbl">Prov.</span><div class="val" id="v-prov">---</div></div>
-            <div class="field full"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
+        <div class="card-frame">
+            <div class="scan-line"></div>
+            <div class="hint">Inquadra il Retro (Orizzontale)</div>
         </div>
 
-        <button class="btn-close" onclick="resetScan()">NUOVA SCANSIONE</button>
+        <div class="controls">
+            <button class="btn-capture" id="btn-scan">SCANSIONA</button>
+        </div>
+        
+        <div id="loader">ANALISI ANCHOR IN CORSO...</div>
     </div>
 
-    <canvas id="cvs"></canvas>
+    <div class="result-sheet" id="results">
+        <div class="sheet-header">Dati Acquisiti</div>
+        
+        <div class="data-grid">
+            <div class="data-box full-width valid"><span class="d-label">Cognome</span><div class="d-value" id="res-cognome">---</div></div>
+            <div class="data-box full-width valid"><span class="d-label">Nome</span><div class="d-value" id="res-nome">---</div></div>
+            
+            <div class="data-box valid"><span class="d-label">Nascita</span><div class="d-value" id="res-dob">---</div></div>
+            <div class="data-box valid"><span class="d-label">Sesso</span><div class="d-value" id="res-sex">---</div></div>
+            
+            <div class="data-box full-width valid"><span class="d-label">Luogo Nascita</span><div class="d-value" id="res-luogo">---</div></div> <div class="data-box full-width valid"><span class="d-label">Indirizzo (Via)</span><div class="d-value" id="res-via">---</div></div>
+            <div class="data-box valid"><span class="d-label">Civico</span><div class="d-value" id="res-civ">---</div></div>
+            <div class="data-box valid"><span class="d-label">Provincia</span><div class="d-value" id="res-prov">---</div></div>
+            <div class="data-box full-width valid"><span class="d-label">Comune Residenza</span><div class="d-value" id="res-comune">---</div></div>
+
+            <div class="data-box full-width valid"><span class="d-label">Numero Documento</span><div class="d-value" id="res-doc">---</div></div>
+            <div class="data-box valid"><span class="d-label">Scadenza</span><div class="d-value" id="res-scad">---</div></div>
+            <div class="data-box valid"><span class="d-label">Cittadinanza</span><div class="d-value">ITALIANA</div></div>
+        </div>
+
+        <button class="btn-reset" onclick="reset()">Nuova Scansione</button>
+    </div>
+
+    <canvas id="hidden-canvas"></canvas>
 
     <script>
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('cvs');
-        const btn = document.getElementById('snap');
-        const panel = document.getElementById('res-panel');
-        const loader = document.getElementById('loading');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('hidden-canvas');
+        const btn = document.getElementById('btn-scan');
+        const loader = document.getElementById('loader');
+        const results = document.getElementById('results');
 
-        // Configurazione Camera (Alta Risoluzione)
+        // Camera alta risoluzione per leggere da lontano
         navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 2160 }, height: { ideal: 1080 } } 
-        }).then(s => video.srcObject = s);
+            video: { facingMode: "environment", width: { ideal: 2560 }, height: { ideal: 1440 } } 
+        }).then(stream => video.srcObject = stream);
 
         btn.addEventListener('click', async () => {
-            loader.style.display = 'block';
             btn.style.display = 'none';
+            loader.style.display = 'block';
 
             const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth; 
+            canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             
-            // Filtro Anchor: Alto Contrasto per leggere bene i caratteri piccoli
-            ctx.filter = 'grayscale(100%) contrast(200%) brightness(100%)';
+            // Filtro ANCHOR: Alto contrasto, luminosità controllata
+            ctx.filter = 'grayscale(100%) contrast(180%) brightness(100%)';
             ctx.drawImage(video, 0, 0);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                processAnchor(text);
-            } catch (e) {
-                alert("Errore OCR. Riprova.");
-                resetScan();
+                const success = processAnchorLogic(text);
+                
+                loader.style.display = 'none';
+                if (success) {
+                    results.classList.add('active');
+                } else {
+                    alert("Dati non trovati. Assicurati che l'immagine sia a fuoco e riprova.");
+                    btn.style.display = 'inline-block';
+                }
+            } catch (err) {
+                loader.style.display = 'none';
+                btn.style.display = 'inline-block';
+                alert("Errore tecnico. Riprova.");
             }
         });
 
-        function processAnchor(raw) {
-            const up = raw.toUpperCase();
-            const clean = up.replace(/\s/g, ''); // Versione senza spazi per MRZ
-            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 2); // Versione con spazi per Indirizzo
+        // LOGICA ANCHOR (Il motore affidabile V36 + Regex V50)
+        function processAnchorLogic(text) {
+            const clean = text.replace(/\s/g, '').toUpperCase(); // Per codici
+            const rawLines = text.toUpperCase().split('\n'); // Per indirizzi
 
-            let found = false;
+            let foundAny = false;
 
-            // 1. ANCHOR MRZ (Il più affidabile)
-            // Cerca cognome e nome tra i <<
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nameMatch) {
-                fill('v-cog', nameMatch[1]);
-                fill('v-nom', nameMatch[2]);
-                found = true;
+            // 1. ANCHOR MRZ (Cerca la sequenza <<<<)
+            let mrzName = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if (mrzName) {
+                fill('res-cognome', mrzName[1]);
+                fill('res-nome', mrzName[2]);
+                foundAny = true;
             }
 
-            // Cerca Numero Documento (inizia con C, I, o ITA)
+            // Cerca Documento (Inizia con C, I, ITA)
             let docMatch = clean.match(/ITA([A-Z0-9]{9})/);
-            if(!docMatch) docMatch = clean.match(/[CI]([A-Z0-9]{8})/); // Fallback
-            if(docMatch) {
-                fill('v-doc', docMatch[1]);
-                found = true;
+            if (!docMatch) docMatch = clean.match(/[CI][A-Z0-9]{8}/);
+            if (docMatch) {
+                let docNum = docMatch[1] || docMatch[0];
+                fill('res-doc', docNum.substr(0,9));
+                foundAny = true;
             }
 
             // Cerca Data Nascita e Sesso (Formato MRZ: YYMMDD S)
             let bioMatch = clean.match(/(\d{6})\d([MF])/);
-            if(bioMatch) {
+            if (bioMatch) {
                 let d = bioMatch[1];
-                let y = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
-                fill('v-dob', `${d.substr(4,2)}/${d.substr(2,2)}/${y}`);
-                fill('v-sex', bioMatch[2]);
+                let year = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
+                fill('res-dob', `${d.substr(4,2)}/${d.substr(2,2)}/${year}`);
+                fill('res-sex', bioMatch[2]);
+                
+                // Stima scadenza (spesso dopo il sesso)
+                let remaining = clean.split(bioMatch[0])[1];
+                if(remaining && remaining.length > 6) {
+                    let sd = remaining.substr(0,6); // La scadenza è spesso subito dopo
+                    if(!isNaN(sd)) fill('res-scad', `${sd.substr(4,2)}/${sd.substr(2,2)}/20${sd.substr(0,2)}`);
+                }
             }
 
-            // 2. ANCHOR INDIRIZZO (Regex Intelligente)
-            // Cerca la riga che contiene l'ancora "VIA", "PIAZZA", "CORSO"
-            let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|V\.|P\.)\s/));
-            
-            if(addrLine) {
-                // Estrarre Civico (N. o , o numero finale)
+            // 2. ANCHOR INDIRIZZO (Cerca VIA/PIAZZA)
+            let addrLine = rawLines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|V\.|P\.|C\.)\s+/));
+            if (addrLine) {
+                // Civico (N. o numero finale)
                 let civMatch = addrLine.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || addrLine.match(/\s(\d+)$/);
-                if(civMatch) fill('v-civ', civMatch[1]);
+                if (civMatch) fill('res-civ', civMatch[1]);
 
-                // Estrarre Via (tutto prima del civico/parentesi)
-                let viaText = addrLine.split(/N\.|,|\(/)[0].replace(/[0-9]/g, '').trim();
-                fill('v-via', viaText);
+                // Via (tutto prima del numero)
+                let viaText = addrLine.split(/N\.|,|\d+$/)[0].replace(/[0-9]/g, '').trim();
+                fill('res-via', viaText);
 
-                // Estrarre Comune e Provincia (Cerca le parentesi finali)
-                // Se non è in questa riga, controlla la successiva (spesso il comune va a capo)
-                let cityMatch = addrLine.match(/([A-Z\s']+)\s*\(?([A-Z]{2})\)?/);
-                if(!cityMatch) {
-                    let idx = lines.indexOf(addrLine);
-                    if(lines[idx+1]) cityMatch = lines[idx+1].match(/([A-Z\s']+)\s*\(?([A-Z]{2})\)?/);
+                // Comune e Provincia (Cerca parentesi (XX))
+                // Controlla la riga stessa o quella dopo
+                let cityRegex = /([A-Z\s']+)\s*\(?([A-Z]{2})\)?/;
+                let cityMatch = addrLine.match(cityRegex);
+                
+                if (!cityMatch) {
+                    let idx = rawLines.indexOf(addrLine);
+                    if (rawLines[idx + 1]) cityMatch = rawLines[idx + 1].match(cityRegex);
                 }
 
-                if(cityMatch) {
-                    fill('v-com', cityMatch[1].replace('(', '').trim());
-                    fill('v-prov', cityMatch[2]);
+                if (cityMatch) {
+                    fill('res-comune', cityMatch[1].replace('(', '').trim());
+                    fill('res-prov', cityMatch[2]);
                 }
-                found = true;
+                
+                // Fallback Luogo Nascita: Se abbiamo il codice fiscale (spesso sopra l'indirizzo), possiamo dedurre il luogo, ma qui ci limitiamo a ciò che è scritto.
+                // Spesso il luogo di nascita sul retro non c'è esplicitamente come testo chiaro, ma a volte l'OCR legge il fronte in trasparenza o righe vaganti.
+                // Per ora lasciamo "---" se non trovato, per evitare falsi positivi.
             }
 
-            loader.style.display = 'none';
-            if(found) {
-                panel.classList.add('visible');
-            } else {
-                alert("Nessun dato trovato. Assicurati che l'immagine sia a fuoco e riprova.");
-                resetScan();
-            }
+            return foundAny;
         }
 
         function fill(id, val) {
-            if(val) {
-                const el = document.getElementById(id);
-                el.innerText = val.replace(/</g, '').trim();
-                el.parentElement.classList.add('ok');
-            }
+            if (val) document.getElementById(id).innerText = val.replace(/</g, ' ').trim();
         }
 
-        function resetScan() {
-            panel.classList.remove('visible');
-            loader.style.display = 'none';
-            btn.style.display = 'block';
-            // Pulisci campi
-            document.querySelectorAll('.val').forEach(e => e.innerText = '---');
-            document.querySelectorAll('.field').forEach(e => e.classList.remove('ok'));
+        function reset() {
+            results.classList.remove('active');
+            btn.style.display = 'inline-block';
+            document.querySelectorAll('.d-value').forEach(el => {
+                if(el.innerText !== 'ITALIANA') el.innerText = '---';
+            });
         }
     </script>
 </body>
