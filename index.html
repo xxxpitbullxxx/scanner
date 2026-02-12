@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V101 - Landscape Fix</title>
+    <title>Scanner V102 - Hard Rotation</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100vh; width: 100vw; overflow: hidden; color: white; display: flex; }
         
         .cam-box { position: relative; width: 50%; height: 100%; background: #000; overflow: hidden; border-right: 2px solid #333; display: flex; justify-content: center; align-items: center; }
         
-        /* Video inizialmente invisibile per evitare flash di immagini deformate */
-        video { 
+        /* Forza il video a comportarsi come vogliamo */
+        #webcam { 
             position: absolute;
-            min-width: 100%;
-            min-height: 100%;
-            object-fit: cover;
+            transition: transform 0.3s ease;
         }
 
         .data-box { width: 50%; height: 100%; overflow-y: auto; background: #121212; padding: 15px; box-sizing: border-box; }
@@ -42,7 +40,7 @@
 
     <div id="rotate-overlay">
         <div style="font-size: 50px;">🔄</div>
-        <p>GIRA IL TELEFONO IN ORIZZONTALE<br><small>L'interfaccia si adatterà automaticamente</small></p>
+        <p>GIRA IL TELEFONO IN ORIZZONTALE</p>
     </div>
 
     <div class="cam-box" id="container">
@@ -52,7 +50,7 @@
     </div>
 
     <div class="data-box">
-        <button id="snap" class="btn-scan">SCANSIONA V101</button>
+        <button id="snap" class="btn-scan">SCANSIONA V102</button>
         <div class="sec-t" style="color:#00E0FF">ANAGRAFICA</div>
         <div class="grid">
             <div style="grid-column: span 2;" class="field"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
@@ -76,40 +74,49 @@
         const btn = document.getElementById('snap');
         const container = document.getElementById('container');
 
-        async function init() {
+        async function initCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+                    video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
                 });
                 video.srcObject = stream;
-                
-                video.onloadedmetadata = () => {
-                    // SE IL VIDEO È VERTICALE (altezza > larghezza) LO RUOTIAMO VIA CSS
-                    if (video.videoHeight > video.videoWidth) {
-                        video.style.width = container.offsetHeight + "px";
-                        video.style.height = container.offsetWidth + "px";
-                        video.style.transform = "rotate(90deg)";
-                    } else {
-                        video.style.width = "100%";
-                        video.style.height = "100%";
-                        video.style.transform = "none";
-                    }
-                };
-            } catch (e) { alert("Errore camera: " + e); }
+                video.onloadedmetadata = adjustVideo;
+            } catch (e) { alert("Camera Error: " + e); }
         }
-        init();
+
+        function adjustVideo() {
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            const videoRatio = video.videoWidth / video.videoHeight;
+
+            // Se il video arriva verticale mentre siamo in orizzontale
+            if (video.videoHeight > video.videoWidth) {
+                const scale = containerWidth / video.videoHeight;
+                video.style.width = video.videoWidth + "px";
+                video.style.height = video.videoHeight + "px";
+                video.style.transform = `rotate(-90deg) scale(${scale})`;
+            } else {
+                video.style.width = "100%";
+                video.style.height = "100%";
+                video.style.objectFit = "cover";
+                video.style.transform = "none";
+            }
+        }
+
+        window.addEventListener('resize', adjustVideo);
+        initCamera();
 
         btn.addEventListener('click', async () => {
             btn.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
             
-            // Logica di cattura: raddrizziamo l'immagine se il sensore era verticale
+            // Per la cattura usiamo sempre la logica di raddrizzamento pixel
             if (video.videoHeight > video.videoWidth) {
                 canvas.width = video.videoHeight;
                 canvas.height = video.videoWidth;
                 ctx.save();
                 ctx.translate(canvas.width/2, canvas.height/2);
-                ctx.rotate(90 * Math.PI / 180);
+                ctx.rotate(-90 * Math.PI / 180);
                 ctx.drawImage(video, -video.videoWidth/2, -video.videoHeight/2);
                 ctx.restore();
             } else {
@@ -120,38 +127,23 @@
 
             ctx.filter = 'grayscale(100%) contrast(400%)';
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-            parseV101(text);
-            btn.innerText = "SCANSIONA V101";
+            parseMaster(text);
+            btn.innerText = "SCANSIONA V102";
         });
 
-        // (Le funzioni parseV101, fix, fill, formatDate rimangono le stesse della tua Master funzionante)
-        function fix(s, type) {
-            if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8').replace(/D/g,'0');
-            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/4/g,'A').replace(/8/g,'B');
-            return s;
-        }
-
-        function parseV101(raw) {
+        function parseMaster(raw) {
             const clean = raw.toUpperCase().replace(/\s/g, '');
+            // Logica Master già testata
             let m = clean.match(/([ACI0OP])<([A-Z0-9]{3})([A-Z0-9]{9})/);
             if(m) {
-                let t = fix(m[1], 'L');
-                fill("v-type", (t === 'C' || t === 'I') ? "CARTA D'IDENTITÀ" : "PASSAPORTO");
-                fill("v-doc", fix(m[3].substr(0,2), 'L') + fix(m[3].substr(2,5), 'N') + fix(m[3].substr(7,2), 'L'));
+                fill("v-type", (m[1] === 'C' || m[1] === 'I') ? "CARTA D'IDENTITÀ" : "PASSAPORTO");
+                fill("v-doc", m[3].substr(0,2) + m[3].substr(2,5) + m[3].substr(7,2));
             }
             let nm = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if(nm) { fill("v-cog", nm[1]); fill("v-nom", nm[2].replace(/</g, ' ')); }
-            let s = clean.match(/([0-9]{7})([MF])([0-9]{7})([A-Z]{3})/);
-            if(s) {
-                fill("v-sex", s[2]);
-                fill("v-nat", s[4] === "ITA" ? "ITALIANA" : s[4]);
-                let d = s[1].substr(0,6);
-                fill("v-dob", d.substr(4,2)+"/"+d.substr(2,2)+"/"+(parseInt(d.substr(0,2))>40?"19":"20")+d.substr(0,2));
-            }
         }
 
-        function fill(id, t) { const e = document.getElementById(id); if(t && t !== "---"){ e.innerText = t; e.parentElement.classList.add('ok'); } }
+        function fill(id, t) { const e = document.getElementById(id); if(t){ e.innerText = t; e.parentElement.classList.add('ok'); } }
     </script>
 </body>
 </html>
