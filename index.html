@@ -33,14 +33,14 @@
             position: relative; z-index: 2;
         }
 
-        /* Header Logo - Ingrandito e perfettamente rotondo */
+        /* Header Logo - Ingrandito a 60px */
         .header-logo-circle { 
-            width: 50px; height: 50px; /* Aumentato da 42px */
+            width: 60px; height: 60px; /* Aumentato per migliore visibilità */
             border-radius: 50%; 
             overflow: hidden; 
-            border: 2px solid #d4af37; /* Bordo leggermente più evidente */
+            border: 2px solid #d4af37; 
             background: white; 
-            flex-shrink: 0; /* Impedisce che si schiacci */
+            flex-shrink: 0;
         }
         .header-logo-circle img { 
             width: 100%; height: 100%; 
@@ -48,14 +48,34 @@
             transform: scale(1.15); 
         }
 
-        /* Scanner OCR Styles */
+        /* Scanner OCR Styles - Orizzontale Card */
         .cam-box { 
-            position: relative; width: 100%; height: 280px; 
+            position: relative; width: 100%; height: 260px; /* Proporzione card */
             overflow: hidden; border-radius: 16px; background: #000; 
             border: 2px solid #333; margin-bottom: 10px;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         
+        /* Guide visive per l'utente - Orizzontale */
+        .guide-res { 
+            position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); 
+            width: 90%; height: 20%; border: 2px dashed #FFD60A; 
+            border-radius: 4px; z-index: 10; pointer-events: none; opacity: 0.7; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .guide-mrz { 
+            position: absolute; bottom: 10%; left: 50%; transform: translate(-50%, 0); 
+            width: 94%; height: 25%; border: 2px solid #00E0FF; 
+            border-radius: 4px; z-index: 10; pointer-events: none; opacity: 0.8; 
+            background: rgba(0, 224, 255, 0.1);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .label-guide { 
+            font-size: 9px; font-weight: 800; padding: 2px 6px; 
+            background: rgba(0,0,0,0.6); color: white; border-radius: 3px; 
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
         .input-field { 
             width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; 
             font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 8px; color: #1e293b;
@@ -80,7 +100,7 @@
         /* Stili upload ESPANSO */
         .upload-box {
             border: 2px dashed #cbd5e1; border-radius: 20px; 
-            height: 240px; 
+            height: 256px; 
             position: relative; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; background: #f8fafc;
             transition: 0.2s; cursor: pointer; overflow: hidden;
@@ -131,40 +151,48 @@
         const TRANSLATIONS = {
             it: { 
                 welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
-                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento in orizzontale. La parte con la foto o i codici.", photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA FOTO E PROCEDI", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
+                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento in orizzontale.", 
+                scan_help: "Inquadra la zona MRZ (codici <<< in basso) e l'indirizzo in alto. Ricorda: dovrai comunque caricare le foto del documento per procedere.",
+                photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA FOTO E PROCEDI", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
                 warning_save: "Carica le foto e compila tutti i campi obbligatori per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
                 tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
                 label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_prov: "Prov.", label_citizenship: "Cittadinanza", label_cit_ph: "Specifica Cittadinanza...", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_address: "Via / Piazza", label_civic: "Civico", label_issued: "Rilasciato da", label_issued_ph: "Es. Milano...", label_docnum: "N. Documento", label_expiry: "Scadenza",
                 thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
                 data_true_label: "Dichiaro che i dati inseriti sono reali", clear_sign: "CANCELLA FIRMA", sign_title: "Firma e Tassa",
-                ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO DOCUMENTO"
+                ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO"
             },
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
-                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document horizontally. Photo or code side.", photo_req: "PHOTO REQUIRED", confirm_btn: "CONFIRM & PROCEED", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
+                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document horizontally.", 
+                scan_help: "Frame the MRZ area (<<< codes at bottom) and address at top. Remember: you must upload document photos to proceed.",
+                photo_req: "PHOTO REQUIRED", confirm_btn: "CONFIRM & PROCEED", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
                 warning_save: "Upload photos and fill all fields to save", finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back",
                 tax_info: "In accordance with local regulations, if you booked via Booking.com, the tourist tax must be paid on-site upon arrival (cash), or via the secure credit/debit card link I will send you shortly. If you booked via Airbnb, the tax is already included.",
                 doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "Driving License",
                 label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_prov: "Prov.", label_citizenship: "Citizenship", label_cit_ph: "Specify Citizenship...", label_res_city: "Residence City", label_res_prov: "Prov.", label_address: "Address", label_civic: "No.", label_issued: "Issued by", label_issued_ph: "Ex. London...", label_docnum: "Doc Number", label_expiry: "Expiry Date",
                 thanks: "Thank you", success_msg: "Check-in successfully completed.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
                 data_true_label: "I declare that the data entered is true", clear_sign: "CLEAR SIGNATURE", sign_title: "Signature",
-                ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD DOC PHOTO"
+                ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD PHOTO"
             },
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Pour faciliter votre arrivée, je vous demande de remplir l'enregistrement en ligne.", 
-                login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOC", scan_info: "Scannez le document horizontalement.", photo_req: "PHOTO OBLIGATOIRE", confirm_btn: "CONFIRMER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER UN INVITÉ", save_guest: "ENREGISTRER",
+                login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOC", scan_info: "Scannez le document horizontalement.", 
+                scan_help: "Cadrez la zone MRZ (codes <<< en bas) et l'adresse. N'oubliez pas : vous devez télécharger les photos pour continuer.",
+                photo_req: "PHOTO OBLIGATOIRE", confirm_btn: "CONFIRMER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER UN INVITÉ", save_guest: "ENREGISTRER",
                 warning_save: "Téléchargez les photos et remplissez tous les champs pour enregistrer", finish_btn: "TERMINER", verify: "Vérifier les données", front: "Recto", back_doc: "Verso",
                 tax_info: "Conformément à la réglementation locale, si vous avez réservé via Booking.com, la taxe de séjour doit être payée sur place à l'arrivée (en espèces) ou via le lien sécurisé par carte de crédit/débit que je vous enverrai sous peu. Si vous avez réservé via Airbnb, la taxe est déjà incluse.",
                 doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis de Conduire",
                 label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Lieu de naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_cit_ph: "Préciser...", label_res_city: "Ville de résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_issued: "Délivré par", label_issued_ph: "Ex. Paris...", label_docnum: "N° Document", label_expiry: "Expiration",
                 thanks: "Merci", success_msg: "Enregistrement terminé avec succès.", exit: "Sortie", guest_list: "Invités", cloud_save: "Sauvegarde...",
                 data_true_label: "Je déclare que les données sont réelles", clear_sign: "EFFACER", sign_title: "Signature",
-                ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "📁 TÉLÉCHARGER PHOTO"
+                ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "📁 TÉLÉCHARGER"
             },
             es: { 
                 welcome: "¡Hola! Soy Giulia. Para facilitar su llegada, le pido que complete el registro en línea.", 
-                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee el documento horizontalmente.", photo_req: "FOTO OBLIGATORIA", confirm_btn: "CONFIRMAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
+                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee el documento horizontalmente.", 
+                scan_help: "Encuadre la zona MRZ (códigos <<< abajo) y la dirección. Recuerde: debe cargar las fotos para continuar.",
+                photo_req: "FOTO OBLIGATORIA", confirm_btn: "CONFIRMAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
                 warning_save: "Cargue las fotos y complete los campos para guardar", finish_btn: "TERMINAR", verify: "Verificar datos", front: "Frente", back_doc: "Dorso",
                 tax_info: "De acuerdo con las normativas locales, si reservó a través de Booking.com, la tasa turística debe pagarse en el lugar a la llegada (en efectivo) o mediante el enlace seguro de tarjeta de crédito/débito que le enviaré en breve. Si reservó a través de Airbnb, la tasa ya está incluida.",
                 doc_type: "Tipo de Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia de Conducir",
@@ -175,7 +203,9 @@
             },
             de: { 
                 welcome: "Hallo! Ich bin Giulia. Um Ihre Ankunft zu erleichtern, bitte ich Sie, den Online-Check-in abzuschließen.", 
-                login_ph: "CODE", start_btn: "STARTEN", scan_rear: "DOKUMENT SCANNEN", scan_info: "Dokument horizontal scannen.", photo_req: "FOTO", confirm_btn: "FOTOS BESTÄTIGEN", recover_btn: "TÜRCODE ANZEIGEN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
+                login_ph: "CODE", start_btn: "STARTEN", scan_rear: "DOKUMENT SCANNEN", scan_info: "Dokument horizontal scannen.", 
+                scan_help: "MRZ-Bereich (<<< Codes unten) und Adresse erfassen. Hinweis: Fotos müssen trotzdem hochgeladen werden.",
+                photo_req: "FOTO", confirm_btn: "FOTOS BESTÄTIGEN", recover_btn: "TÜRCODE ANZEIGEN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
                 warning_save: "Laden Sie Fotos hoch und füllen Sie die Felder aus", finish_btn: "ABSCHLIESSEN", verify: "Daten prüfen", front: "Vorderseite", back_doc: "Rückseite",
                 tax_info: "Gemäß den örtlichen Vorschriften muss die Kurtaxe bei Buchung über Booking.com vor Ort bei Ankunft (in bar) oder über den sicheren Kredit-/Debitkartenlink, den ich Ihnen in Kürze zusende, bezahlt werden. Bei Buchung über Airbnb ist die Steuer bereits enthalten.",
                 doc_type: "Dokumentart", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein",
@@ -340,6 +370,15 @@
                 const checkFB = setInterval(() => {
                     if (window.FirebaseSDK) {
                         clearInterval(checkFB);
+                        // CONFIGURAZIONE FIREBASE
+                        const config = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : {
+                            apiKey: "INSERISCI_API_KEY",
+                            authDomain: "tuo-progetto.firebaseapp.com",
+                            projectId: "tuo-progetto",
+                            storageBucket: "tuo-progetto.appspot.com",
+                            messagingSenderId: "123456",
+                            appId: "1:123456:web:abc"
+                        };
                         
                         try {
                              const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
@@ -647,36 +686,19 @@
 
             const startCamera = async () => {
                 setIsScanning(true);
-                // Use useEffect to trigger camera start when isScanning becomes true
-            };
-
-            // Trigger camera start when isScanning changes to true
-            useEffect(() => {
-                if (isScanning && videoRef.current) {
-                    (async () => {
-                        try {
-                            const stream = await navigator.mediaDevices.getUserMedia({ 
-                                video: { facingMode: "environment", width: { ideal: 1280 } } 
-                            });
-                            if (videoRef.current) {
-                                videoRef.current.srcObject = stream;
-                            }
-                        } catch (err) {
-                            console.error("Camera error:", err);
-                            alert("Impossibile accedere alla fotocamera. Assicurati di essere su HTTPS o usa il caricamento file.");
-                            setIsScanning(false);
-                        }
-                    })();
-                }
-                
-                // Cleanup function to stop tracks when scanning stops
-                return () => {
-                    if (videoRef.current && videoRef.current.srcObject) {
-                        const tracks = videoRef.current.srcObject.getTracks();
-                        tracks.forEach(track => track.stop());
+                setTimeout(async () => {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { facingMode: "environment", width: { ideal: 1280 } } 
+                        });
+                        if (videoRef.current) videoRef.current.srcObject = stream;
+                    } catch (err) {
+                        console.error("Camera error:", err);
+                        // Fallback or alert if camera fails (e.g. on http localhost without trust flags)
+                        // alert("Impossibile accedere alla fotocamera. Usa il caricamento file.");
                     }
-                };
-            }, [isScanning]);
+                }, 500);
+            };
 
             const startNewGuest = () => {
                 setFormData({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "", citizenship: "ITALIANA", citizenshipManual: "", residenceCity: "", residenceProvince: "", residenceAddress: "", houseNumber: "", issuedBy: "COMUNE DI", issuedManual: "", docNumber: "", expiryDate: "" });
@@ -845,11 +867,8 @@
                                                 <CopyField label="Nome" value={g.name} />
                                                 <CopyField label="Sesso" value={g.sex} />
                                                 <CopyField label="Data Nascita" value={formatDateIT(g.birthDate)} />
-                                                <CopyField label="Luogo Nascita" value={g.birthCity} />
-                                                <CopyField label="Prov. Nascita" value={g.birthProvince} />
-                                                
+                                                <div className="col-span-2"><CopyField label="Luogo Nascita" value={`${g.birthCity} ${g.birthProvince ? '('+g.birthProvince+')' : ''}`} /></div>
                                                 <div className="col-span-2"><CopyField label="Cittadinanza" value={g.citizenship === 'ALTRO' ? g.citizenshipManual : g.citizenship} /></div>
-                                                
                                                 <div className="col-span-2"><CopyField label="Indirizzo Residenza" value={g.residenceAddress} /></div>
                                                 <CopyField label="N. Civico" value={g.houseNumber} />
                                                 <CopyField label="CAP" value="" />
@@ -953,38 +972,35 @@
                     {/* Scanner solo per Elettronica e Passaporto */}
                     {docType !== 'paper' && docType !== 'license' && (
                         <>
-                        <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl text-xs text-blue-900 mb-6 leading-relaxed italic text-center text-center">{t.scan_info}</div>
+                        <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl text-xs text-blue-900 mb-6 leading-relaxed italic text-center text-center">
+                            {t.scan_info} <br/>
+                            <span className="font-bold text-[10px] mt-1 block opacity-80">{t.scan_help}</span>
+                        </div>
                         {isScanning ? (
                             <div className="flex-1 flex flex-col text-center text-center">
                                 <div className="scan-container"><video ref={videoRef} autoPlay playsInline muted></video><div className="scan-line"></div></div>
-                                <button onClick={() => { setIsScanning(false); }} className="btn bg-red-600 text-white mt-4 uppercase font-bold text-center text-center">Annulla</button>
-                                <button id="snap-btn" onClick={() => runOCR(videoRef.current)} className="btn btn-primary mt-2 uppercase font-bold shadow-lg">SCATTA E LEGGI</button>
+                                <div className="flex justify-center gap-4 mt-2">
+                                     <button onClick={() => { setIsScanning(false); }} className="btn bg-red-600 text-white w-1/3 text-center text-center text-xs">Annulla</button>
+                                     <button id="snap-btn" onClick={() => runOCR(videoRef.current)} className="btn btn-primary w-1/3 text-center text-center text-xs shadow-lg">SCATTA</button>
+                                </div>
                             </div>
                         ) : (
-                            <button onClick={startCamera} className="btn bg-teal-600 text-white w-2/3 mx-auto py-3 uppercase font-bold flex flex-row items-center justify-center shadow-lg mb-4 text-xs gap-2 rounded-full"><Icon name="scan" className="w-5 h-5" /> {t.ocr_btn}</button>
+                            <div className="flex flex-col gap-3 mt-4">
+                                <button onClick={startCamera} className="btn bg-teal-600 text-white w-full py-4 uppercase font-bold flex flex-row items-center justify-center shadow-lg text-sm gap-2 rounded-xl"><Icon name="scan" className="w-5 h-5" /> {t.ocr_btn}</button>
+                                <div className="relative">
+                                    <button onClick={() => fileInputRef.current.click()} className="btn btn-secondary w-full py-4 uppercase font-bold flex flex-row items-center justify-center shadow-md text-sm gap-2 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                                        {t.ocr_file_btn}
+                                    </button>
+                                    <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} style={{display: 'none'}} />
+                                    {ocrProcessing && <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl"><p className="text-xs text-blue-600 font-bold animate-pulse">{t.ocr_processing}</p></div>}
+                                </div>
+                            </div>
                         )}
                         </>
                     )}
-                    
-                    {/* Ocr File Button always available for electronic/passport too */}
-                    {docType !== 'paper' && docType !== 'license' && !isScanning && (
-                         <div className="mb-4">
-                            <button onClick={() => fileInputRef.current.click()} className="btn btn-secondary w-2/3 mx-auto py-3 uppercase font-bold flex flex-row items-center justify-center shadow-lg text-xs gap-2 rounded-full">
-                                {t.ocr_file_btn}
-                            </button>
-                            <input 
-                                type="file" 
-                                accept="image/*" 
-                                ref={fileInputRef} 
-                                onChange={handleFileUpload} 
-                                style={{display: 'none'}} 
-                            />
-                            {ocrProcessing && <p className="text-xs text-blue-600 font-bold mt-2 animate-pulse">{t.ocr_processing}</p>}
-                        </div>
-                    )}
 
                     {!isScanning && (
-                        <div className="space-y-4 flex-1 text-center text-center mt-4">
+                        <div className="space-y-4 flex-1 text-center text-center mt-6">
                             <div className={`upload-box ${images.front ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-front').click()}>
                                 {images.front ? <img src={images.front} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.front.toUpperCase()})</div>}
                                 <input id="file-front" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, front: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
