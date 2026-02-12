@@ -3,52 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V103 - Final Horizon</title>
+    <title>Scanner V104 - Virtual Landscape</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #000; height: 100vh; width: 100vw; overflow: hidden; color: white; display: flex; }
-        .cam-box { position: relative; width: 50%; height: 100%; background: #000; overflow: hidden; border-right: 2px solid #333; }
+        body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; overflow: hidden; color: white; }
         
-        /* Video nascosto, usiamo un canvas per visualizzare l'immagine raddrizzata */
-        video { display: none; }
-        #render-canvas { width: 100%; height: 100%; object-fit: cover; }
+        /* Camera fissa verticale (nativa) */
+        .cam-box { position: absolute; top:0; left:0; width: 100%; height: 60%; overflow: hidden; }
+        video { width: 100%; height: 100%; object-fit: cover; }
 
-        .data-box { width: 50%; height: 100%; overflow-y: auto; background: #121212; padding: 15px; box-sizing: border-box; }
-        .guide-res { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 18%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10; }
-        .guide-mrz { position: absolute; top: 72%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 32%; border: 2px solid #00E0FF; border-radius: 5px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.6); }
-        .btn-scan { width: 100%; padding: 15px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 8px; margin-bottom: 20px; cursor: pointer; font-size: 16px; }
-        .sec-t { font-size: 11px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 3px; font-weight: bold; }
+        /* INTERFACCIA RUOTATA DI 90° PER L'OSPITE */
+        .rotate-ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 60%;
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: none;
+        }
+        
+        /* I mirini sono disegnati "per lungo" */
+        .guide-mrz { 
+            width: 25vh; height: 85vw; /* Invertiti per simulare landscape */
+            border: 3px solid #00E0FF; border-radius: 8px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.6);
+            transform: rotate(90deg); /* Ruotiamo il mirino */
+        }
+
+        /* Pannello Dati in basso */
+        .data-panel { 
+            position: absolute; bottom: 0; width: 100%; height: 40%; 
+            background: #121212; padding: 15px; box-sizing: border-box; 
+            overflow-y: auto; border-top: 2px solid #333;
+        }
+
+        .btn-scan { width: 100%; padding: 15px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; cursor: pointer; margin-bottom: 15px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .field { background: #1c1c1e; padding: 8px; border-radius: 6px; border-left: 3px solid #333; }
-        .field.ok { border-left-color: #32d74b; background: #1a2e1e; }
-        .lbl { font-size: 9px; color: #aaa; display: block; margin-bottom: 2px; }
-        .val { font-size: 13px; font-weight: 700; color: #fff; }
-        canvas#hidden-cvs { display: none; }
+        .field.ok { border-left-color: #32d74b; }
+        .lbl { font-size: 9px; color: #aaa; }
+        .val { font-size: 13px; font-weight: 700; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
 
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
-        <canvas id="render-canvas"></canvas>
-        <div class="guide-res"></div>
-        <div class="guide-mrz"></div>
+        <div class="rotate-ui">
+            <div class="guide-mrz">
+                <div style="transform: rotate(-90deg); color:#00E0FF; font-size:10px; position:absolute; top:50%; left:-40px;">INQUADRA ORIZZONTALE</div>
+            </div>
+        </div>
     </div>
 
-    <div class="data-box">
-        <button id="snap" class="btn-scan">SCANSIONA V103</button>
-        <div class="sec-t">ANAGRAFICA</div>
+    <div class="data-panel">
+        <button id="snap" class="btn-scan">SCANSIONA (V104 MASTER)</button>
         <div class="grid">
             <div style="grid-column: span 2;" class="field"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
             <div style="grid-column: span 2;" class="field"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
             <div class="field"><span class="lbl">NATO IL</span><div class="val" id="v-dob">---</div></div>
-            <div class="field"><span class="lbl">SESSO</span><div class="val" id="v-sex">---</div></div>
-        </div>
-        <div class="sec-t">DOCUMENTO</div>
-        <div class="grid">
-            <div style="grid-column: span 2;" class="field"><span class="lbl">NUMERO</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">TIPO</span><div class="val" id="v-type">---</div></div>
             <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="v-nat">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">NUMERO</span><div class="val" id="v-doc">---</div></div>
         </div>
     </div>
 
@@ -56,64 +69,40 @@
 
     <script>
         const video = document.getElementById('webcam');
-        const renderCvs = document.getElementById('render-canvas');
-        const hiddenCvs = document.getElementById('hidden-cvs');
+        const canvas = document.getElementById('hidden-cvs');
         const btn = document.getElementById('snap');
 
-        async function start() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280, height: 720 } });
-            video.srcObject = stream;
-            drawFrame();
-        }
-
-        function drawFrame() {
-            const ctx = renderCvs.getContext('2d');
-            // Se il video è verticale lo raddrizziamo sul canvas di rendering
-            if (video.videoHeight > video.videoWidth) {
-                renderCvs.width = video.videoHeight;
-                renderCvs.height = video.videoWidth;
-                ctx.translate(renderCvs.width/2, renderCvs.height/2);
-                ctx.rotate(90 * Math.PI / 180);
-                ctx.drawImage(video, -video.videoWidth/2, -video.videoHeight/2);
-            } else {
-                renderCvs.width = video.videoWidth;
-                renderCvs.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0);
-            }
-            requestAnimationFrame(drawFrame);
-        }
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } }).then(s => video.srcObject = s);
 
         btn.addEventListener('click', async () => {
-            btn.innerText = "ELABORAZIONE...";
-            const ctx = hiddenCvs.getContext('2d');
-            hiddenCvs.width = renderCvs.width;
-            hiddenCvs.height = renderCvs.height;
-            ctx.filter = 'grayscale(100%) contrast(400%)';
-            ctx.drawImage(renderCvs, 0, 0);
+            btn.innerText = "SCANSIONE...";
+            const ctx = canvas.getContext('2d');
             
-            const { data: { text } } = await Tesseract.recognize(hiddenCvs, 'ita');
-            parse(text);
-            btn.innerText = "SCANSIONA V103";
+            // Dato che l'utente tiene il telefono in orizzontale ma il sensore è verticale,
+            // catturiamo l'immagine e la ruotiamo via software prima dell'OCR.
+            canvas.width = video.videoHeight;
+            canvas.height = video.videoWidth;
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.rotate(90 * Math.PI / 180);
+            ctx.drawImage(video, -video.videoWidth/2, -video.videoHeight/2);
+            ctx.restore();
+
+            ctx.filter = 'grayscale(100%) contrast(400%)';
+            const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
+            
+            // Logica MASTER V91 (Tua versione funzionante)
+            const clean = text.toUpperCase().replace(/\s/g, '');
+            let docM = clean.match(/(ITA|1TA|IT4)([A-Z0-9]{9})/);
+            if(docM) fill("v-doc", docM[2]);
+            
+            let nameM = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if(nameM) { fill("v-cog", nameM[1]); fill("v-nom", nameM[2].replace(/</g, ' ')); }
+            
+            btn.innerText = "SCANSIONA (V104 MASTER)";
         });
 
-        function parse(raw) {
-            const clean = raw.toUpperCase().replace(/\s/g, '');
-            // Estrazione base Numero Documento
-            let mDoc = clean.match(/[A-Z0-9]{2}[0-9]{5}[A-Z0-9]{2}/);
-            if(mDoc) fill("v-doc", mDoc[0]);
-            
-            // Estrazione Nome/Cognome
-            let mName = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(mName) { fill("v-cog", mName[1]); fill("v-nom", mName[2].replace(/</g, ' ')); }
-            
-            // Sesso e Cittadinanza
-            let mBio = clean.match(/([MF])([A-Z]{3})/);
-            if(mBio) { fill("v-sex", mBio[1]); fill("v-nat", mBio[2]); }
-        }
-
         function fill(id, t) { document.getElementById(id).innerText = t; document.getElementById(id).parentElement.classList.add('ok'); }
-        
-        start();
     </script>
 </body>
 </html>
