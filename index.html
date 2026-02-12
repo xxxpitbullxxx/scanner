@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V92 - Full MRZ</title>
+    <title>Scanner V93 - Tipo Doc Esteso</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
@@ -31,7 +31,7 @@
         <div class="guide-mrz"><span class="label-guide" style="color:#00E0FF">MRZ AREA</span></div>
     </div>
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONA V92</button>
+        <button id="snap" class="btn-scan">SCANSIONA V93</button>
         
         <div class="sec-t" style="color:#00E0FF">Anagrafica</div>
         <div class="grid">
@@ -49,7 +49,7 @@
         
         <div class="sec-t" style="color:#00E0FF">Documento</div>
         <div class="grid">
-            <div class="field"><span class="lbl">Tipo Doc</span><div class="val" id="v-type">---</div></div>
+            <div class="field full"><span class="lbl">Tipo Documento</span><div class="val" id="v-type">---</div></div>
             <div class="field"><span class="lbl">Paese Emittente</span><div class="val" id="v-issue">---</div></div>
             <div class="field full"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
             <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
@@ -89,27 +89,27 @@
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<,().',
                 });
-                parseV92(text);
-                btn.innerText = "SCANSIONA V92";
+                parseV93(text);
+                btn.innerText = "SCANSIONA V93";
             } catch (e) { btn.innerText = "ERRORE"; }
         });
 
-        function parseV92(raw) {
+        function parseV93(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
-            // 1. TIPO, PAESE E NUMERO DOC (Riga 1 MRZ: C<ITA...)
+            // 1. TIPO DOC (Decodifica C/I/P), PAESE E NUMERO DOC
             let line1Match = clean.match(/([ACI])<([A-Z0-9]{3})([A-Z0-9]{9})/);
             if(line1Match) {
-                fill("v-type", line1Match[1]); // A, C o I
-                fill("v-issue", fix(line1Match[2], 'L')); // Paese emittente (es. ITA)
+                let t = line1Match[1];
+                let tipoLabel = (t === 'C' || t === 'I') ? "CARTA D'IDENTITÀ" : (t === 'P' ? "PASSAPORTO" : t);
+                fill("v-type", tipoLabel);
+                
+                fill("v-issue", fix(line1Match[2], 'L')); 
                 
                 let rawCode = line1Match[3];
-                let p1 = fix(rawCode.substr(0,2), 'L');
-                let p2 = fix(rawCode.substr(2,5), 'N');
-                let p3 = fix(rawCode.substr(7,2), 'L');
-                fill("v-doc", p1 + p2 + p3);
+                fill("v-doc", fix(rawCode.substr(0,2), 'L') + fix(rawCode.substr(2,5), 'N') + fix(rawCode.substr(7,2), 'L'));
             }
 
             // 2. NOME E COGNOME
