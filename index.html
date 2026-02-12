@@ -3,82 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes"> <meta name="apple-mobile-web-app-capable" content="yes"> <title>Scanner V61 - Native</title>
+    <title>Scanner V62 - Total Control</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* RESET & FULLSCREEN */
+        /* RESET */
+        * { box-sizing: border-box; }
         html, body { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             background: #000; overflow: hidden; font-family: Arial, sans-serif;
         }
 
-        /* 1. PULSANTE AVVIO (LAUNCHER) */
+        /* 1. PULSANTE AVVIO (LAUNCHER) - Essenziale per Fullscreen */
         #launcher {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
             background: #000; display: flex; flex-direction: column; 
             align-items: center; justify-content: center;
         }
         .btn-start {
-            background: #00E0FF; color: #000; border: none; padding: 25px 50px;
+            background: #32d74b; color: #000; border: none; padding: 20px 40px;
             font-size: 22px; font-weight: 900; border-radius: 50px; 
-            box-shadow: 0 0 40px rgba(0, 224, 255, 0.6); cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 0 40px rgba(50, 215, 75, 0.6); cursor: pointer; text-transform: uppercase;
         }
-        
-        /* 2. VIDEO (Forzato Landscape) */
+        .hint-text { color: #888; margin-top: 20px; font-size: 14px; max-width: 80%; text-align: center; }
+
+        /* 2. VIDEO CONTAINER */
+        #video-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
         video { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: cover; /* Riempie tutto lo schermo */
-            transform: scaleX(1); /* ASSICURA CHE NON SIA SPECCHIATO */
+            /* Questo assicura che il video riempia sempre lo schermo */
+            width: 100%; height: 100%; object-fit: cover; 
         }
+        /* Classe per ruotare il video se il telefono lo manda verticale */
+        video.force-rotate { transform: rotate(-90deg); width: 100vh; height: 100vw; }
 
-        /* 3. SAGOMA CARTA (Gigante e Precisa) */
-        .card-mask {
+        /* 3. SAGOMA CARTA (Adattiva) */
+        .card-frame {
             position: absolute;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            /* Larghezza fissa all'85% dello schermo orizzontale */
-            width: 85vw; 
-            /* Altezza calcolata matematicamente: Larghezza / 1.585 (Ratio ID-1) */
-            height: calc(85vw / 1.585);
-            
-            border: 4px solid rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.9); /* Scurisce tutto attorno */
             z-index: 10; pointer-events: none;
+            border: 4px solid rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.85); /* Maschera scura */
+            
+            /* USARE 'vmin' GARANTISCE CHE LA CARD STIA NELLO SCHERMO SEMPRE */
+            width: 80vmax; /* 80% della larghezza */
+            height: 50vmax; /* Proporzione rettangolare */
+            max-width: 90vw; /* Non uscire dai bordi */
+            max-height: 90vh;
         }
-        .card-mask.success { border-color: #32d74b; }
+        .card-frame.success { border-color: #32d74b; box-shadow: 0 0 0 1000px rgba(0,0,0,0.9); }
 
-        .guide {
-            position: absolute; bottom: -50px; width: 100%; text-align: center;
-            color: #fff; font-size: 20px; font-weight: bold; text-transform: uppercase;
-            text-shadow: 0 2px 4px #000;
+        .guide-label {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.3); font-size: 20px; font-weight: bold; 
+            text-transform: uppercase; white-space: nowrap;
         }
 
-        /* 4. CONTROLLI */
+        /* 4. CONTROLLI LATERALI */
         .controls {
-            position: absolute; right: 30px; top: 50%; transform: translateY(-50%); z-index: 50;
-            display: flex; flex-direction: column; gap: 20px;
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%); z-index: 50;
+            display: flex; flex-direction: column; gap: 15px;
         }
         .btn-shot {
-            width: 90px; height: 90px; border-radius: 50%; 
-            background: rgba(255,255,255,0.2); border: 6px solid #fff; cursor: pointer;
+            width: 80px; height: 80px; border-radius: 50%; 
+            background: rgba(255,255,255,0.2); border: 5px solid #fff; cursor: pointer;
         }
         .btn-shot:active { background: #fff; }
-
-        /* TASTO EMERGENZA ROTAZIONE */
-        #btn-force-rotate {
-            position: absolute; top: 20px; right: 20px; z-index: 100;
-            background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #fff;
-            padding: 10px; font-size: 12px; cursor: pointer; border-radius: 8px;
+        
+        .btn-rotate-cam {
+            width: 50px; height: 50px; border-radius: 10px; background: #333; color: white;
+            border: 1px solid #555; font-size: 20px; cursor: pointer;
         }
 
-        /* LOADING */
-        #loader {
-            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 30px; 
-            border-radius: 15px; font-size: 24px; font-weight: bold; z-index: 100; white-space: nowrap;
-        }
-
-        /* RISULTATI */
+        /* 5. PANNELLO RISULTATI */
         #result-panel {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #111; z-index: 200; display: none; 
@@ -86,40 +84,43 @@
         }
         #result-panel.visible { display: flex; }
 
-        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; margin: 20px auto; }
+        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full { grid-column: span 2; }
-        .field { background: #222; padding: 15px; border-radius: 8px; border-left: 5px solid #00E0FF; }
-        .val { color: #fff; font-size: 22px; font-weight: bold; display: block; margin-top: 5px; }
-        .lbl { color: #888; font-size: 12px; text-transform: uppercase; }
+        .field { background: #222; padding: 10px; border-radius: 8px; border-left: 4px solid #00E0FF; }
+        .lbl { color: #888; font-size: 10px; text-transform: uppercase; display: block; }
+        .val { color: #fff; font-size: 16px; font-weight: bold; margin-top: 2px; }
 
-        .btn-close { padding: 20px; background: #333; color: white; border: none; font-size: 20px; font-weight: bold; width: 100%; margin-top: 20px; border-radius: 10px; }
+        #loader {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 20px; border-radius: 12px; font-weight: bold; z-index: 100;
+        }
 
-        canvas { display: none; }
+        .btn-close { margin-top: 20px; padding: 15px; background: #444; color: #fff; border: none; font-size: 18px; width: 100%; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div id="launcher">
-        <button class="btn-start" onclick="goNative()">APRI SCANNER</button>
-        <p style="color:#666; margin-top:20px; font-size:14px;">Ruota il telefono in orizzontale dopo il click</p>
+        <button class="btn-start" onclick="initSystem()">AVVIA SCANNER</button>
+        <p class="hint-text">Gira il telefono in orizzontale e premi il tasto.<br>Consentirà Fotocamera e Schermo Intero.</p>
     </div>
 
-    <button id="btn-force-rotate" onclick="forceRotate()">RUOTA VISTA</button>
-
-    <video id="webcam" autoplay playsinline muted></video>
+    <div id="video-container">
+        <video id="webcam" autoplay playsinline muted></video>
+    </div>
     
-    <div class="card-mask" id="mask">
-        <div class="guide">INQUADRA IL RETRO</div>
+    <div class="card-frame" id="frame">
+        <div class="guide-label">INQUADRA IL RETRO</div>
     </div>
 
     <div class="controls">
-        <button class="btn-shot" id="snap"></button>
+        <button class="btn-rotate-cam" onclick="toggleRotation()">↻</button> <button class="btn-shot" id="snap"></button>
     </div>
 
-    <div id="loader">LETTURA DATI...</div>
+    <div id="loader">ANALISI INDIRIZZO & DATI...</div>
 
     <div id="result-panel">
-        <h2 style="color:#00E0FF; text-align:center;">DATI ALLOGGIATI WEB</h2>
+        <h3 style="color:#00E0FF; text-align:center; margin: 5px 0 15px;">DATI ESTRATTI</h3>
         <div class="res-grid">
             <div class="field full"><span class="lbl">COGNOME</span><span class="val" id="v-cog">---</span></div>
             <div class="field full"><span class="lbl">NOME</span><span class="val" id="v-nom">---</span></div>
@@ -128,11 +129,16 @@
             <div class="field full"><span class="lbl">NUMERO DOC</span><span class="val" id="v-doc">---</span></div>
             <div class="field"><span class="lbl">SCADENZA</span><span class="val" id="v-scad">---</span></div>
             <div class="field"><span class="lbl">CITTADINANZA</span><span class="val" id="v-cit">ITA</span></div>
+            
+            <div class="field full"><span class="lbl">INDIRIZZO (VIA)</span><span class="val" id="v-via">---</span></div>
+            <div class="field"><span class="lbl">CIVICO</span><span class="val" id="v-civ">---</span></div>
+            <div class="field"><span class="lbl">PROVINCIA</span><span class="val" id="v-prov">---</span></div>
+            <div class="field full"><span class="lbl">COMUNE</span><span class="val" id="v-com">---</span></div>
         </div>
         <button class="btn-close" onclick="location.reload()">CHIUDI</button>
     </div>
 
-    <canvas id="cvs"></canvas>
+    <canvas id="cvs" style="display:none"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
@@ -141,117 +147,99 @@
         const snapBtn = document.getElementById('snap');
         const loader = document.getElementById('loader');
         const panel = document.getElementById('result-panel');
-        const mask = document.getElementById('mask');
+        const frame = document.getElementById('frame');
 
-        // 1. AVVIO NATIVO (FULLSCREEN + CAMERA LANDSCAPE)
-        async function goNative() {
-            // A. Fullscreen (Nasconde barra indirizzi)
+        // 1. INIZIALIZZAZIONE SISTEMA
+        async function initSystem() {
+            // A. Fullscreen (Tenta di nascondere barra indirizzi)
             try {
-                let elem = document.documentElement;
-                if (elem.requestFullscreen) await elem.requestFullscreen();
-                else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen(); // Safari
-            } catch (e) { console.log("Fullscreen non permesso"); }
+                let el = document.documentElement;
+                if (el.requestFullscreen) await el.requestFullscreen();
+                else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+            } catch(e) { console.log("Fullscreen bloccato"); }
 
-            launcher.style.display = 'none';
-
-            // B. Camera (Forza 16:9 Landscape)
+            // B. Avvio Camera (Preferenza Landscape)
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "environment",
-                        // Chiediamo esplicitamente risoluzione larga (HD/FullHD)
                         width: { ideal: 1920 }, 
                         height: { ideal: 1080 } 
                     },
                     audio: false 
                 });
                 video.srcObject = stream;
+                launcher.style.display = 'none';
             } catch (err) {
-                alert("Errore Camera: " + err.message);
+                alert("Errore Fotocamera: " + err.message);
             }
         }
 
-        // 2. FUNZIONE EMERGENZA "RUOTA VISTA"
-        let rotation = 0;
-        function forceRotate() {
-            rotation += 90;
-            if (rotation > 270) rotation = 0;
-            // Ruota il video ma mantieni le dimensioni 'cover'
-            video.style.transform = `scaleX(1) rotate(${rotation}deg)`; 
-            // Se ruotiamo a 90/270, dobbiamo aggiustare lo scale per riempire lo schermo
-            if (rotation === 90 || rotation === 270) {
-                video.style.width = "100vh";
-                video.style.height = "100vw";
-                video.style.top = "50%";
-                video.style.left = "50%";
-                video.style.marginLeft = "-50vh";
-                video.style.marginTop = "-50vw";
-            } else {
-                video.style.width = "100%";
-                video.style.height = "100%";
-                video.style.top = "0";
-                video.style.left = "0";
-                video.style.margin = "0";
-            }
+        // 2. EMERGENZA ROTAZIONE (Se la vedi storta)
+        let isRotated = false;
+        function toggleRotation() {
+            isRotated = !isRotated;
+            if(isRotated) video.classList.add('force-rotate');
+            else video.classList.remove('force-rotate');
         }
 
-        // 3. SCATTO E ANALISI ANCHOR
+        // 3. SCATTO E ANALISI
         snapBtn.addEventListener('click', async () => {
             loader.style.display = 'block';
             snapBtn.style.display = 'none';
 
             const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth; 
-            canvas.height = video.videoHeight;
             
-            ctx.filter = 'grayscale(100%) contrast(180%)'; 
-            
-            // Gestione rotazione canvas se l'utente ha ruotato il video
-            if (rotation === 90 || rotation === 270) {
+            // Se il video è ruotato via CSS, dobbiamo ruotare anche la cattura sul canvas
+            if(isRotated) {
                 canvas.width = video.videoHeight;
                 canvas.height = video.videoWidth;
                 ctx.translate(canvas.width/2, canvas.height/2);
-                ctx.rotate(rotation * Math.PI / 180);
+                ctx.rotate(-90 * Math.PI / 180);
                 ctx.drawImage(video, -video.videoWidth/2, -video.videoHeight/2);
             } else {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
                 ctx.drawImage(video, 0, 0);
             }
+            
+            // Filtro contrasto per indirizzo
+            ctx.filter = 'grayscale(100%) contrast(150%)'; 
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                if(parseData(text)) {
-                    mask.classList.add('success');
-                    setTimeout(() => {
-                        loader.style.display = 'none';
-                        panel.classList.add('visible');
-                    }, 500);
+                if(parseFullData(text)) {
+                    panel.classList.add('visible');
+                    frame.classList.add('success');
+                    loader.style.display = 'none';
                 } else {
-                    alert("Non leggo i dati. Assicurati che il retro sia a fuoco.");
+                    alert("Dati non leggibili. Assicurati che l'indirizzo (in alto) e i codici (in basso) siano nitidi.");
                     loader.style.display = 'none';
                     snapBtn.style.display = 'block';
                 }
             } catch (e) {
-                alert("Errore OCR.");
+                alert("Errore OCR: " + e);
                 loader.style.display = 'none';
                 snapBtn.style.display = 'block';
             }
         });
 
-        // 4. PARSER DATI (Solo Retro - Anchor MRZ)
-        function parseData(raw) {
+        // 4. PARSER COMPLETO (MRZ + INDIRIZZO)
+        function parseFullData(raw) {
             const clean = raw.toUpperCase().replace(/\s/g, ''); 
-            
-            // Cerca Documento (C<ITA o I<ITA)
+            const lines = raw.toUpperCase().split('\n').filter(l => l.length > 3);
+
+            let hasMrz = false;
+            let hasAddr = false;
+
+            // --- A. ESTRAZIONE MRZ (Dati Sicuri) ---
             let docMatch = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
             if(!docMatch) docMatch = clean.match(/ITA([A-Z0-9]{9})/);
             
-            // Cerca Cognome<<Nome
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            
-            // Cerca Date (YYMMDD)
             let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})/);
+            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
 
-            if(docMatch && nameMatch && bioMatch) {
+            if(docMatch && bioMatch && nameMatch) {
                 document.getElementById('v-doc').innerText = docMatch[1];
                 document.getElementById('v-cog').innerText = nameMatch[1];
                 document.getElementById('v-nom').innerText = nameMatch[2].replace(/</g, ' ');
@@ -259,15 +247,44 @@
                 let d = bioMatch[1];
                 let y = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
                 document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
-                
                 document.getElementById('v-sex').innerText = bioMatch[2];
 
                 let e = bioMatch[3];
                 let ey = '20'+e.substr(0,2);
                 document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
-                return true;
+                hasMrz = true;
             }
-            return false;
+
+            // --- B. ESTRAZIONE INDIRIZZO (Regex su Testo) ---
+            // Cerca righe con VIA, PIAZZA, CORSO
+            let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|STRADA)\s/));
+            
+            if(addrLine) {
+                hasAddr = true;
+                
+                // 1. Estrai Civico (Cerca numero alla fine o dopo virgola)
+                let civMatch = addrLine.match(/,\s*(\d+[A-Z]?)/) || addrLine.match(/\s(\d+[A-Z]?)$/);
+                if(civMatch) document.getElementById('v-civ').innerText = civMatch[1];
+
+                // 2. Estrai Via (Togli civico e parole inutili)
+                let viaText = addrLine.split(/,|\d+$/)[0].trim();
+                document.getElementById('v-via').innerText = viaText;
+
+                // 3. Estrai Comune e Prov (Cerca parentesi (XX))
+                // Spesso il comune è sulla riga DOPO la via
+                let cityMatch = addrLine.match(/([A-Z\s']+)\s*\(?([A-Z]{2})\)?/);
+                if(!cityMatch || cityMatch[0].length < 5) {
+                    let idx = lines.indexOf(addrLine);
+                    if(lines[idx+1]) cityMatch = lines[idx+1].match(/([A-Z\s']+)\s*\(?([A-Z]{2})\)?/);
+                }
+
+                if(cityMatch) {
+                    document.getElementById('v-com').innerText = cityMatch[1].replace('(', '').trim();
+                    document.getElementById('v-prov').innerText = cityMatch[2];
+                }
+            }
+
+            return hasMrz; // Ritorna true se almeno l'MRZ è valido (l'indirizzo è bonus)
         }
     </script>
 </body>
