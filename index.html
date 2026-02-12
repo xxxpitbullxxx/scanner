@@ -3,175 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V99 - Final Stable</title>
+    <title>Scanner V100 - Full Mapping</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
-        .cam-box { position: relative; flex: 0 0 45%; overflow: hidden; border-bottom: 2px solid #333; background: #000; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        #preview-img { width: 100%; height: 100%; object-fit: contain; display: none; }
         
-        /* RETTANGOLI DI PRECISIONE - ABBASSATI PER EVITARE BARCODE */
-        .guide-res { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); width: 96%; height: 12%; border: 2px solid #FFD60A; border-radius: 4px; z-index: 10; }
-        .guide-mrz { position: absolute; top: 84%; left: 50%; transform: translate(-50%, -50%); width: 96%; height: 20%; border: 3px solid #00E0FF; border-radius: 4px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); }
+        /* Area Visualizzazione Identica per Cam e File */
+        .cam-box { position: relative; flex: 0 0 45%; overflow: hidden; border-bottom: 2px solid #333; background: #111; }
+        video, #preview-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        #preview-img { display: none; }
+
+        /* Rettangoli di Guida Universali */
+        .guide-res { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); width: 94%; height: 14%; border: 2px solid #FFD60A; border-radius: 4px; z-index: 10; pointer-events: none; }
+        .guide-mrz { position: absolute; top: 82%; left: 50%; transform: translate(-50%, -50%); width: 94%; height: 22%; border: 3px solid #00E0FF; border-radius: 4px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); pointer-events: none; }
         .label-guide { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); }
 
         .scroll-box { flex: 1; overflow-y: auto; padding: 12px; background: #121212; padding-bottom: 80px; }
         .btn-scan { width: 100%; padding: 16px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 10px; cursor: pointer; font-size: 18px; }
-        .btn-file { display: block; width: 100%; padding: 12px; background: #333; color: #fff; border: 1px solid #555; font-weight: 600; border-radius: 10px; margin-bottom: 20px; cursor: pointer; font-size: 14px; text-align: center; box-sizing: border-box; }
+        .btn-file { display: block; width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #444; font-weight: 600; border-radius: 10px; margin-bottom: 20px; cursor: pointer; font-size: 14px; text-align: center; }
         
         .sec-t { font-size: 11px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 3px; font-weight: bold; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .full { grid-column: span 2; }
         .field { background: #1c1c1e; padding: 10px; border-radius: 6px; border-left: 3px solid #333; }
         .field.ok { border-left-color: #32d74b; background: #1a2e1e; }
         .lbl { font-size: 9px; color: #aaa; display: block; margin-bottom: 2px; }
-        .val { font-size: 14px; font-weight: 700; min-height: 16px; color: #fff; }
+        .val { font-size: 14px; font-weight: 700; color: #fff; }
         
         input[type="file"] { display: none; }
         canvas { display: none; }
     </style>
 </head>
 <body>
-    <div class="cam-box">
+    <div class="cam-box" id="display-area">
         <video id="webcam" autoplay playsinline></video>
-        <img id="preview-img" alt="Anteprima">
-        <div id="g-res" class="guide-res"><span class="label-guide" style="color:#FFD60A">AREA INDIRIZZO</span></div>
-        <div id="g-mrz" class="guide-mrz"><span class="label-guide" style="color:#00E0FF">ZONA MRZ (SOTTO IL CODICE A BARRE)</span></div>
+        <img id="preview-img">
+        <div class="guide-res"><span class="label-guide" style="color:#FFD60A">AREA INDIRIZZO</span></div>
+        <div class="guide-mrz"><span class="label-guide" style="color:#00E0FF">ZONA MRZ (SOTTO IL BARCODE)</span></div>
     </div>
 
     <div class="scroll-box">
         <button id="snap" class="btn-scan">SCANSIONA CAMERA</button>
-        <label for="file-upload" class="btn-file">📁 CARICA FILE O FOTO</label>
+        <label for="file-upload" class="btn-file">📁 CARICA E ADATTA FOTO</label>
         <input type="file" id="file-upload" accept="image/*">
         
         <div class="sec-t" style="color:#00E0FF">Anagrafica</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
-            <div class="field full"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
         </div>
         <div class="sec-t" style="color:#FFD60A">Residenza</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">Via / Piazza</span><div class="val" id="v-via">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">Via / Piazza</span><div class="val" id="v-via">---</div></div>
             <div class="field"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
             <div class="field"><span class="lbl">Provincia</span><div class="val" id="v-prov">---</div></div>
-            <div class="field full"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
         </div>
         <div class="sec-t" style="color:#00E0FF">Documento</div>
         <div class="grid">
-            <div class="field full"><span class="lbl">Tipo Documento</span><div class="val" id="v-type">---</div></div>
-            <div class="field"><span class="lbl">Paese Emittente</span><div class="val" id="v-issue">---</div></div>
-            <div class="field full"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
+            <div style="grid-column: span 2;" class="field"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
             <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
             <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
-        </div>
-        <div class="sec-t">Altri Dati</div>
-        <div class="grid">
-            <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
-            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
         </div>
     </div>
     <canvas id="hidden-cvs"></canvas>
 
     <script>
         const video = document.getElementById('webcam');
+        const previewImg = document.getElementById('preview-img');
         const canvas = document.getElementById('hidden-cvs');
         const btnSnap = document.getElementById('snap');
         const fileUpload = document.getElementById('file-upload');
-        const previewImg = document.getElementById('preview-img');
-        let stream = null;
 
-        async function startCam() {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } });
-            video.srcObject = stream;
-            video.style.display = "block";
-            previewImg.style.display = "none";
-        }
-        startCam();
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
+            .then(s => video.srcObject = s);
 
-        function fix(s, type) {
-            if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8');
-            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/4/g,'A').replace(/8/g,'B');
-            return s;
-        }
-
-        btnSnap.addEventListener('click', async () => {
-            btnSnap.innerText = "ANALISI...";
+        // LOGICA DI SCANSIONE UNIFICATA
+        async function runOCR(source) {
             const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            // Sincronizza il canvas con la visualizzazione reale
+            canvas.width = source.videoWidth || source.width;
+            canvas.height = source.videoHeight || source.height;
             ctx.filter = 'grayscale(100%) contrast(300%)';
-            ctx.drawImage(video, 0, 0);
-            processImage();
+            ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+            
+            try {
+                const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
+                parseV100(text);
+                btnSnap.innerText = "SCANSIONA CAMERA";
+            } catch (e) { btnSnap.innerText = "ERRORE ANALISI"; }
+        }
+
+        btnSnap.addEventListener('click', () => {
+            btnSnap.innerText = "ANALISI...";
+            runOCR(video);
         });
 
         fileUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            // Stop camera per risparmiare RAM
-            if(stream) { stream.getTracks().forEach(track => track.stop()); }
-            
             const reader = new FileReader();
             reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
+                previewImg.onload = () => {
                     video.style.display = "none";
-                    previewImg.src = img.src;
                     previewImg.style.display = "block";
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = img.width; canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    processImage();
+                    runOCR(previewImg);
                 };
-                img.src = event.target.result;
+                previewImg.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
 
-        async function processImage() {
-            try {
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                parseV99(text);
-                btnSnap.innerText = "SCANSIONA CAMERA";
-            } catch (e) { btnSnap.innerText = "ERRORE"; }
-        }
-
-        function parseV99(raw) {
+        function parseV100(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
-            let m1 = clean.match(/([ACI])<([A-Z0-9]{3})([A-Z0-9]{9})/);
-            if(m1) {
-                fill("v-type", m1[1] === 'C' ? "CARTA D'IDENTITÀ" : m1[1]);
-                fill("v-issue", fix(m1[2], 'L'));
-                let rc = m1[3];
-                fill("v-doc", fix(rc.substr(0,2), 'L') + fix(rc.substr(2,5), 'N') + fix(rc.substr(7,2), 'L'));
-            }
-            let names = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(names) { fill("v-cog", names[1]); fill("v-nom", names[2].replace(/</g, ' ')); }
-            
-            let bio = clean.match(/([0-9OIZSB]{7})([MF])([0-9OIZSB]{7})([A-Z0-9]{3})/);
-            if(bio) {
-                fill("v-dob", formatDate(fix(bio[1].substr(0,6), 'N')));
-                fill("v-sex", bio[2]);
-                fill("v-scad", formatDate(fix(bio[3].substr(0,6), 'N')));
-                fill("v-nat", fix(bio[4], 'L'));
-            }
+            // Estrazione Nome/Cognome
+            let nm = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if(nm) { fill("v-cog", nm[1]); fill("v-nom", nm[2].replace(/</g, ' ')); }
+
+            // Estrazione Documento
+            let dc = clean.match(/ITA([A-Z0-9]{9})/);
+            if(dc) fill("v-doc", dc[1]);
+
+            // Estrazione Residenza
             lines.forEach(l => {
                 if(l.includes("VIA") || l.includes("PIAZZA") || l.match(/\(([A-Z]{2})\)/)) {
                     let prov = l.match(/\(([A-Z]{2})\)/); if(prov) fill("v-prov", prov[1]);
                     let civ = l.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || l.match(/\s(\d+[A-Z]?)$/); if(civ) fill("v-civ", civ[1]);
-                    let via = l.match(/(VIA|PIAZZA|CORSO|LARGO|VIALE)\s+[A-Z\s\.]+/); if(via) fill("v-via", via[0].trim());
+                    let via = l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO)\s+[A-Z\s\.]+/); if(via) fill("v-via", via[0].trim());
                     let com = l.match(/([A-Z\s']+)\s+\(/); if(com) fill("v-com", com[1].trim());
                 }
             });
-        }
-
-        function formatDate(d) { 
-            if(!d || d.length<6) return "---"; 
-            let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6);
-            return day + "/" + m + "/" + (parseInt(y) > 40 ? "19" : "20") + y; 
         }
 
         function fill(id, t) { 
