@@ -3,40 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V44 - Split Provincia</title>
+    <title>Scanner V45 - Wide & Tall</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
         
         /* CAMERA AREA */
-        .cam-box { position: relative; flex: 0 0 45%; overflow: hidden; border-bottom: 2px solid #333; }
+        .cam-box { position: relative; flex: 0 0 50%; overflow: hidden; border-bottom: 2px solid #333; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* GUIDE VISIVE */
+        /* RETTANGOLI DI SCANSIONE (MODIFICATI) */
         .guide-res { 
-            position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
-            width: 85%; height: 15%; border: 2px solid #FFD60A; border-radius: 5px; z-index: 10;
+            position: absolute; 
+            top: 38%; /* Leggermente più basso per centrare meglio */
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            width: 96%; /* ALLARGATO QUASI AL BORDO */
+            height: 22%; /* ALLUNGATO VERSO IL BASSO */
+            border: 2px solid #FFD60A; 
+            border-radius: 5px; 
+            z-index: 10;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); /* Scurisce l'esterno per focus */
         }
+        
         .guide-mrz { 
-            position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; height: 25%; border: 2px solid #00E0FF; border-radius: 5px; z-index: 10;
+            position: absolute; 
+            top: 70%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            width: 96%; /* ALLARGATO QUASI AL BORDO */
+            height: 25%; 
+            border: 2px solid #00E0FF; 
+            border-radius: 5px; 
+            z-index: 10;
         }
-        .label-guide { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 3px; }
+        
+        .label-guide { 
+            position: absolute; font-size: 10px; font-weight: bold; 
+            padding: 3px 6px; border-radius: 3px; text-transform: uppercase;
+        }
 
         /* PANNELLO DATI */
         .scroll-box { flex: 1; overflow-y: auto; padding: 10px; background: #121212; padding-bottom: 80px; }
-        .btn-scan { width: 100%; padding: 15px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 15px; cursor: pointer; }
+        .btn-scan { width: 100%; padding: 15px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 15px; cursor: pointer; font-size: 16px; }
         
-        .section-title { font-size: 11px; color: #00E0FF; margin: 15px 0 8px 0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 3px; }
+        .section-title { font-size: 12px; color: #00E0FF; margin: 20px 0 5px 0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full { grid-column: span 2; }
         
-        /* Stile Campi */
-        .field { background: #1c1c1e; padding: 8px; border-radius: 6px; border-left: 3px solid #333; }
+        /* Campi Dati */
+        .field { background: #1c1c1e; padding: 10px; border-radius: 8px; border-left: 4px solid #333; }
         .field.ok { border-left-color: #32d74b; background: #1a261a; }
-        .lbl { font-size: 9px; color: #888; display: block; margin-bottom: 2px; }
-        .val { font-size: 13px; font-weight: 600; min-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lbl { font-size: 10px; color: #aaa; display: block; margin-bottom: 4px; }
+        .val { font-size: 14px; font-weight: 700; min-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
 
         canvas { display: none; }
     </style>
@@ -45,17 +65,21 @@
 
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
-        <div class="guide-res"><span class="label-guide" style="background:#FFD60A; color:#000; top:-18px;">INDIRIZZO</span></div>
-        <div class="guide-mrz"><span class="label-guide" style="background:#00E0FF; color:#000; bottom:-18px;">CODICI MRZ</span></div>
+        <div class="guide-res">
+            <span class="label-guide" style="background:#FFD60A; color:#000; top:0; left:0;">Area Indirizzo (Estesa)</span>
+        </div>
+        <div class="guide-mrz">
+            <span class="label-guide" style="background:#00E0FF; color:#000; top:0; left:0;">Area Codici</span>
+        </div>
     </div>
 
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONE V44</button>
+        <button id="snap" class="btn-scan">SCANSIONE V45</button>
 
-        <div class="section-title">Anagrafica (da MRZ)</div>
+        <div class="section-title">Dati Anagrafici (da MRZ)</div>
         <div class="grid">
-            <div class="field"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
-            <div class="field"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
+            <div class="field full"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
+            <div class="field full"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
             <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
             <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
         </div>
@@ -69,12 +93,9 @@
         <div class="section-title">Residenza (da Testo)</div>
         <div class="grid">
             <div class="field full"><span class="lbl">Via / Piazza</span><div class="val" id="v-via">---</div></div>
-            
-            <div style="display: grid; grid-template-columns: 0.5fr 1.5fr 0.5fr; gap: 8px; grid-column: span 2;">
-                <div class="field"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
-                <div class="field"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
-                <div class="field"><span class="lbl">Prov.</span><div class="val" id="v-prov">---</div></div>
-            </div>
+            <div class="field"><span class="lbl">Civico</span><div class="val" id="v-civ">---</div></div>
+            <div class="field"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
+            <div class="field"><span class="lbl">Prov.</span><div class="val" id="v-prov">---</div></div>
         </div>
     </div>
 
@@ -85,28 +106,33 @@
         const canvas = document.getElementById('cvs');
         const btn = document.getElementById('snap');
 
-        // Avvia fotocamera posteriore
+        // Fotocamera alta risoluzione
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
             .then(s => video.srcObject = s);
 
         btn.addEventListener('click', async () => {
             btn.innerText = "ELABORAZIONE...";
+            btn.style.background = "#555";
+            
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // Filtro contrasto per aiutare OCR su scritte piccole
+            // Filtro contrasto aumentato per testi piccoli
             ctx.filter = 'grayscale(100%) contrast(200%)';
             ctx.drawImage(video, 0, 0);
             
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
             parseData(text);
-            btn.innerText = "SCANSIONE V44";
+            
+            btn.innerText = "SCANSIONE V45";
+            btn.style.background = "#00E0FF";
         });
 
         function parseData(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, ''); 
-            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+            // Filtro righe troppo corte (meno di 2 caratteri) per non perdere "SI", "RM" etc.
+            const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 1);
 
             // --- 1. MRZ PARSER ---
             let docMatch = clean.match(/ITA([A-Z0-9]{9})/);
@@ -125,37 +151,43 @@
                 fill("v-scad", formatDate(bioMatch[3]));
             }
 
-            // --- 2. INDIRIZZO PARSER (SPLIT PROVINCIA) ---
-            let resLine = lines.find(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("VICOLO"));
+            // --- 2. INDIRIZZO PARSER ---
+            // Cerca la riga principale dell'indirizzo
+            let resLineIndex = lines.findIndex(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("VICOLO") || l.includes("LARGO"));
             
-            if (resLine) {
-                // Via
-                let via = resLine.match(/(VIA|PIAZZA|CORSO|VIALE|VICOLO)\s+[A-Z\s\.]+/);
+            if (resLineIndex !== -1) {
+                let resLine = lines[resLineIndex];
+
+                // A volte l'indirizzo continua nella riga sotto (es. Comune e Prov a capo)
+                // Se la riga attuale è corta o non ha la provincia, guardiamo anche la successiva
+                let fullAddrText = resLine;
+                if (lines[resLineIndex + 1] && !resLine.includes("(")) {
+                    fullAddrText += " " + lines[resLineIndex + 1];
+                }
+
+                // 1. VIA
+                let via = fullAddrText.match(/(VIA|PIAZZA|CORSO|VIALE|VICOLO|LARGO)\s+[A-Z\s\.]+/);
                 if(via) fill("v-via", via[0].trim());
                 
-                // Civico
-                let civico = resLine.match(/N\.\s*(\d+[A-Z]?)/) || resLine.match(/,\s*(\d+[A-Z]?)/);
+                // 2. CIVICO
+                let civico = fullAddrText.match(/N\.\s*(\d+[A-Z]?)/) || fullAddrText.match(/,\s*(\d+[A-Z]?)/);
                 if(civico) fill("v-civ", civico[1]);
 
-                // Comune e Provincia (Logica Split)
-                // Cerca pattern: NOME COMUNE (XX)
-                let cityProvMatch = resLine.match(/([A-Z\s']+)\s+\(([A-Z]{2})\)/);
+                // 3. COMUNE e PROVINCIA (Cerca pattern con parentesi)
+                let cityProvMatch = fullAddrText.match(/([A-Z\s']+)\s+\(([A-Z]{2})\)/);
                 
                 if (cityProvMatch) {
-                    // Gruppo 1: Comune (es. MONTERIGGIONI)
-                    fill("v-com", cityProvMatch[1].trim());
-                    // Gruppo 2: Provincia (es. SI) senza parentesi
-                    fill("v-prov", cityProvMatch[2]);
-                } else {
-                    // Fallback se non trova le parentesi (raro su CIE valide)
-                    // Cerca solo le parentesi per la provincia
-                    let soloProv = resLine.match(/\(([A-Z]{2})\)/);
+                    fill("v-com", cityProvMatch[1].trim()); // Comune
+                    fill("v-prov", cityProvMatch[2]); // Sigla Prov (senza parentesi)
+                } 
+                // Fallback: Se la provincia è su una riga da sola o in fondo
+                else {
+                    let soloProv = fullAddrText.match(/\(([A-Z]{2})\)/);
                     if(soloProv) fill("v-prov", soloProv[1]);
                 }
             }
         }
 
-        // Formatta data da YYMMDD a GG/MM/AAAA
         function formatDate(yymmdd) {
             if(!yymmdd || yymmdd.length !== 6) return yymmdd;
             let y = parseInt(yymmdd.substring(0, 2));
