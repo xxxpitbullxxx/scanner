@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V91 - Precision Fix</title>
+    <title>Scanner V94 - Tipo Documento</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
@@ -31,7 +31,7 @@
         <div class="guide-mrz"><span class="label-guide" style="color:#00E0FF">MRZ AREA</span></div>
     </div>
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONA V91</button>
+        <button id="snap" class="btn-scan">SCANSIONA V94</button>
         <div class="sec-t" style="color:#00E0FF">Anagrafica</div>
         <div class="grid">
             <div class="field full"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
@@ -46,6 +46,7 @@
         </div>
         <div class="sec-t" style="color:#00E0FF">Documento</div>
         <div class="grid">
+            <div class="field full"><span class="lbl">Tipo Documento</span><div class="val" id="v-type">---</div></div>
             <div class="field full"><span class="lbl">Numero Doc</span><div class="val" id="v-doc">---</div></div>
             <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
             <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
@@ -65,7 +66,6 @@
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } }).then(s => video.srcObject = s);
 
-        // Funzione di correzione intelligente basata sul tipo di campo
         function fix(s, type) {
             if(!s) return "";
             if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/A/g,'4').replace(/B/g,'8').replace(/D/g,'0');
@@ -84,21 +84,25 @@
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita', {
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<,().',
                 });
-                parseV91(text);
-                btn.innerText = "SCANSIONA V91";
+                parseV94(text);
+                btn.innerText = "SCANSIONA V94";
             } catch (e) { btn.innerText = "ERRORE"; }
         });
 
-        function parseV91(raw) {
+        function parseV94(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
-            // 1. NUMERO DOCUMENTO (Schema LL NNNNN LL)
-            let docM = clean.match(/(ITA|1TA|IT4)([A-Z0-9]{9})/);
+            // 1. TIPO DOC (C, I o P) E NUMERO DOCUMENTO
+            let docM = clean.match(/([ACI0OP])<([A-Z0-9]{3})([A-Z0-9]{9})/);
             if(docM) {
-                let rawCode = docM[2];
-                // Forza LL (Lettere) NNNNN (Numeri) LL (Lettere)
+                // Decodifica Tipo
+                let t = fix(docM[1], 'L');
+                let label = (t === 'C' || t === 'I') ? "CARTA D'IDENTITÀ" : (t === 'P' ? "PASSAPORTO" : t);
+                fill("v-type", label);
+
+                let rawCode = docM[3];
                 let p1 = fix(rawCode.substr(0,2), 'L');
                 let p2 = fix(rawCode.substr(2,5), 'N');
                 let p3 = fix(rawCode.substr(7,2), 'L');
