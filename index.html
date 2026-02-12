@@ -3,312 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#000000">
-    <title>Scanner V70 - Auto</title>
+    <title>Scanner V71 - Master</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* RESET & LAYOUT */
-        html, body { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        /* RESET */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: #000; height: 100vh; overflow: hidden; font-family: Arial, sans-serif; }
+
+        /* LAUNCHER (Per Fullscreen) */
+        #launcher {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
+            background: #111; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center;
+        }
+        .btn-start {
+            padding: 20px 40px; font-size: 22px; font-weight: bold; 
+            background: #007AFF; color: white; border: none; border-radius: 50px;
+            box-shadow: 0 0 30px rgba(0,122,255,0.5); cursor: pointer;
         }
 
-        /* VIDEO A TUTTO SCHERMO */
-        #cam-view {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-        }
-        video { 
-            width: 100%; height: 100%; object-fit: cover; 
-        }
-
-        /* SAGOMA GUIDA (Semplice) */
-        .guide-box {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 85vw; /* Occupa quasi tutta la larghezza */
-            aspect-ratio: 1.58; /* Proporzione ID-1 */
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            border-radius: 12px;
-            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.8); /* Maschera nera esterna */
-            z-index: 10; pointer-events: none;
-        }
-        .guide-text {
-            position: absolute; top: -30px; width: 100%; text-align: center;
-            color: #fff; font-weight: bold; font-size: 14px; text-transform: uppercase; text-shadow: 0 1px 3px #000;
+        /* CONTAINER ROTANTE (Video + Rettangoli) */
+        #rotator {
+            position: absolute; width: 100vw; height: 100vh; 
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.3s ease; transform-origin: center center;
         }
 
-        /* CONTROLLI (Sempre visibili) */
+        video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* OVERLAY RETTANGOLI */
+        #overlay {
+            position: absolute; width: 80vw; aspect-ratio: 1.58; /* CIE Ratio */
+            border-radius: 15px; pointer-events: none;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); /* Maschera nera */
+        }
+        
+        .box-addr {
+            position: absolute; top: 15%; left: 3%; width: 94%; height: 25%;
+            border: 2px solid #FFD60A; background: rgba(255, 214, 10, 0.1);
+        }
+        .box-mrz {
+            position: absolute; bottom: 5%; left: 3%; width: 94%; height: 35%;
+            border: 2px solid #00E0FF; background: rgba(0, 224, 255, 0.1);
+        }
+        .lbl { position: absolute; top: -15px; left: 0; background: inherit; color: #fff; font-size: 10px; padding: 2px; font-weight: bold; }
+
+        /* UI FISSA (Bottoni) */
+        #ui {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; pointer-events: none;
+        }
+        
+        /* Tasto Rotazione */
+        .btn-rotate {
+            position: absolute; top: 20px; right: 20px; pointer-events: auto;
+            width: 60px; height: 60px; border-radius: 10px; background: #333; 
+            border: 2px solid #fff; color: #fff; font-size: 30px; cursor: pointer;
+        }
+
+        /* Tasti Azione */
         .controls {
-            position: absolute; bottom: 30px; width: 100%; z-index: 50;
-            display: flex; justify-content: space-around; align-items: center;
+            position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 20px; pointer-events: auto;
         }
-
-        .btn-capture {
-            width: 80px; height: 80px; border-radius: 50%; background: #fff;
-            border: 4px solid #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        .btn-circle {
+            width: 80px; height: 80px; border-radius: 50%; border: 4px solid #fff;
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 12px; color: #fff; cursor: pointer; text-align: center;
         }
-        .btn-capture:active { transform: scale(0.95); background: #eee; }
-
-        .btn-upload {
-            background: #333; color: #fff; padding: 10px 20px; border-radius: 20px;
-            font-size: 12px; font-weight: bold; border: 1px solid #666; cursor: pointer;
-        }
-
-        /* LOADING */
-        #loader {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 100; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            color: #00E0FF; font-size: 18px; font-weight: bold; text-align: center;
-        }
+        .btn-shot { background: rgba(255,0,0,0.6); }
+        .btn-file { background: #007AFF; font-size: 10px; }
 
         /* RISULTATI */
         #results {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #121212; z-index: 200; display: none; overflow-y: auto; padding: 20px;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #121212; z-index: 200; display: none; overflow-y: auto; padding: 15px; pointer-events: auto;
         }
-        .res-title { color: #32d74b; margin-bottom: 20px; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .full { grid-column: span 2; }
-        .field { background: #1f1f1f; padding: 12px; border-radius: 8px; border-left: 4px solid #007AFF; }
-        .lbl { color: #888; font-size: 10px; display: block; margin-bottom: 4px; text-transform: uppercase; }
-        .val { color: #fff; font-size: 16px; font-weight: bold; word-break: break-word; }
+        .field { background: #222; padding: 10px; border-radius: 5px; border-left: 4px solid #32d74b; }
+        .field.addr { border-left-color: #FFD60A; }
+        .l { color: #888; font-size: 9px; display: block; text-transform: uppercase; }
+        .v { color: #fff; font-size: 16px; font-weight: bold; }
+        .btn-close { width: 100%; padding: 15px; margin-top: 20px; background: #444; color: #fff; border: none; font-size: 18px; border-radius: 10px; }
 
-        .btn-reset { width: 100%; padding: 15px; margin-top: 20px; background: #444; color: #fff; border: none; font-size: 18px; border-radius: 10px; }
-
-        #file-input { display: none; }
-        canvas { display: none; }
+        #loader {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 20px; border-radius: 10px; z-index: 150; font-weight: bold;
+        }
+        
+        #file-in { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="cam-view">
-        <video id="video" autoplay playsinline muted></video>
+    <div id="launcher">
+        <button class="btn-start" onclick="startApp()">AVVIA SCANNER</button>
+        <p style="color:#aaa; margin-top:15px;">Gira il telefono in orizzontale</p>
     </div>
 
-    <div class="guide-box">
-        <div class="guide-text">INQUADRA IL RETRO QUI</div>
+    <div id="rotator">
+        <video id="webcam" autoplay playsinline muted></video>
+        <div id="overlay">
+            <div class="box-addr"><span class="lbl" style="background:#FFD60A; color:black">INDIRIZZO</span></div>
+            <div class="box-mrz"><span class="lbl" style="background:#00E0FF; color:black">CODICI MRZ</span></div>
+        </div>
     </div>
 
-    <div class="controls">
-        <button class="btn-upload" onclick="document.getElementById('file-input').click()">CARICA<br>FILE</button>
-        <div class="btn-capture" id="snap-btn"></div>
-        <div style="width: 60px;"></div> </div>
-
-    <input type="file" id="file-input" accept="image/*">
-
-    <div id="loader">
-        <div>ANALISI INTELLIGENTE...</div>
-        <div style="font-size:12px; color:#888; margin-top:10px;" id="status-text">Sto cercando l'orientamento giusto</div>
+    <div id="ui">
+        <button class="btn-rotate" onclick="rotateCam()">↻</button>
+        <div class="controls">
+            <button class="btn-circle btn-shot" id="snap">SCATTA</button>
+            <button class="btn-circle btn-file" onclick="document.getElementById('file-in').click()">CARICA<br>FILE</button>
+        </div>
     </div>
+
+    <input type="file" id="file-in" accept="image/*">
+    <canvas id="cvs" style="display:none"></canvas>
+    <div id="loader">ELABORAZIONE...</div>
 
     <div id="results">
-        <h2 class="res-title">DATI ESTRATTI</h2>
-        <div class="grid">
-            <div class="field full"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
-            <div class="field full"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
-            <div class="field"><span class="lbl">NASCITA</span><div class="val" id="v-dob">---</div></div>
-            <div class="field"><span class="lbl">SESSO</span><div class="val" id="v-sex">---</div></div>
-            <div class="field full"><span class="lbl">DOCUMENTO</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
-            <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="v-cit">ITA</div></div>
-            
-            <div class="field full"><span class="lbl">INDIRIZZO</span><div class="val" id="v-via">---</div></div>
-            <div class="field"><span class="lbl">CIVICO</span><div class="val" id="v-civ">---</div></div>
-            <div class="field full"><span class="lbl">COMUNE</span><div class="val" id="v-com">---</div></div>
-            <div class="field"><span class="lbl">PROVINCIA</span><div class="val" id="v-prov">---</div></div>
+        <h3 style="color:#32d74b; text-align:center;">DATI ESTRATTI</h3>
+        
+        <div class="res-grid">
+            <div class="field full"><span class="l">COGNOME</span><span class="v" id="r-cog">---</span></div>
+            <div class="field full"><span class="l">NOME</span><span class="v" id="r-nom">---</span></div>
+            <div class="field"><span class="l">NASCITA</span><span class="v" id="r-dob">---</span></div>
+            <div class="field"><span class="l">SESSO</span><span class="v" id="r-sex">---</span></div>
+            <div class="field full"><span class="l">DOCUMENTO</span><span class="v" id="r-doc">---</span></div>
+            <div class="field"><span class="l">SCADENZA</span><span class="v" id="r-scad">---</span></div>
+            <div class="field"><span class="l">CITTADINANZA</span><span class="v" id="r-cit">ITA</span></div>
         </div>
-        <button class="btn-reset" onclick="location.reload()">NUOVA SCANSIONE</button>
+
+        <h4 style="color:#FFD60A; margin: 15px 0 5px;">RESIDENZA</h4>
+        <div class="res-grid" style="margin-top:0;">
+            <div class="field full addr"><span class="l">VIA</span><span class="v" id="r-via">---</span></div>
+            <div class="field addr"><span class="l">CIVICO</span><span class="v" id="r-civ">---</span></div>
+            <div class="field addr"><span class="l">PROVINCIA</span><span class="v" id="r-prov">---</span></div>
+            <div class="field full addr"><span class="l">COMUNE</span><span class="v" id="r-com">---</span></div>
+        </div>
+
+        <button class="btn-close" onclick="location.reload()">CHIUDI</button>
     </div>
 
-    <canvas id="cvs"></canvas>
-
     <script>
-        const video = document.getElementById('video');
+        const video = document.getElementById('webcam');
+        const rotator = document.getElementById('rotator');
         const canvas = document.getElementById('cvs');
         const loader = document.getElementById('loader');
-        const statusText = document.getElementById('status-text');
-        const results = document.getElementById('results');
+        
+        let rotationAngle = 0;
 
-        // 1. AVVIO CAMERA PIÙ ROBUSTO POSSIBILE
-        async function startCamera() {
+        // AVVIO
+        async function startApp() {
+            document.getElementById('launcher').style.display = 'none';
+            // Fullscreen
+            try { if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); } catch(e){}
+            
+            // Camera
             try {
-                // Chiediamo la massima risoluzione possibile
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 4096 },
-                        height: { ideal: 2160 }
-                    },
-                    audio: false
+                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
                 });
                 video.srcObject = stream;
-            } catch (err) {
-                alert("Errore fotocamera. Usa il tasto 'Carica File'.");
+            } catch(e) { alert("Errore camera: " + e.message); }
+        }
+
+        // ROTAZIONE MANUALE (La chiave per risolvere il tuo problema)
+        function rotateCam() {
+            rotationAngle = (rotationAngle + 90) % 360;
+            rotator.style.transform = `rotate(${rotationAngle}deg)`;
+            
+            // Adatta le dimensioni per riempire lo schermo quando ruotato
+            if(rotationAngle === 90 || rotationAngle === 270) {
+                rotator.style.width = "100vh"; rotator.style.height = "100vw";
+            } else {
+                rotator.style.width = "100vw"; rotator.style.height = "100vh";
             }
         }
-        startCamera();
 
-        // FULLSCREEN AL CLICK
-        document.body.addEventListener('click', () => {
-            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
-        }, {once: true});
-
-        // 2. GESTIONE INPUT (Scatto o File)
-        document.getElementById('snap-btn').addEventListener('click', () => processImage(video));
+        // SCATTO
+        document.getElementById('snap').addEventListener('click', () => processImage(video, true));
         
-        document.getElementById('file-input').addEventListener('change', (e) => {
+        // CARICA FILE
+        document.getElementById('file-in').addEventListener('change', (e) => {
             if(e.target.files[0]) {
                 const img = new Image();
-                img.onload = () => processImage(img);
+                img.onload = () => processImage(img, false);
                 img.src = URL.createObjectURL(e.target.files[0]);
             }
         });
 
-        // 3. MOTORE "BRUTE FORCE" (Prova a ruotare l'immagine finché non legge)
-        async function processImage(source) {
-            loader.style.display = 'flex';
-            
-            let w = source.videoWidth || source.width;
-            let h = source.videoHeight || source.height;
-            
-            canvas.width = w;
-            canvas.height = h;
+        async function processImage(source, isCamera) {
+            loader.style.display = 'block';
             const ctx = canvas.getContext('2d');
             
-            // Disegna immagine originale
-            ctx.drawImage(source, 0, 0);
+            let w = source.videoWidth || source.naturalWidth;
+            let h = source.videoHeight || source.naturalHeight;
 
-            // TENTATIVO 1: Immagine Originale
-            statusText.innerText = "Tentativo 1 (Originale)...";
-            if (await tryOCR(canvas)) return;
-
-            // TENTATIVO 2: Ruota 90° (Spesso i telefoni scattano così)
-            statusText.innerText = "Tentativo 2 (Ruoto 90°)...";
-            rotateCanvas(canvas, 90);
-            if (await tryOCR(canvas)) return;
-
-            // TENTATIVO 3: Ruota altri 90° (Totale 180°)
-            statusText.innerText = "Tentativo 3 (Ruoto 180°)...";
-            rotateCanvas(canvas, 90); // Ruota su se stesso
-            if (await tryOCR(canvas)) return;
-
-            // TENTATIVO 4: Ruota altri 90° (Totale 270°)
-            statusText.innerText = "Tentativo 4 (Ruoto 270°)...";
-            rotateCanvas(canvas, 90);
-            if (await tryOCR(canvas)) return;
-
-            alert("Impossibile leggere i dati. Assicurati che la foto sia a fuoco e che ci sia luce.");
-            loader.style.display = 'none';
-        }
-
-        // Funzione helper per ruotare il canvas fisicamente
-        function rotateCanvas(cvs, deg) {
-            const temp = document.createElement('canvas');
-            const tCtx = temp.getContext('2d');
-            
-            // Scambia dimensioni se 90/270
-            if (deg === 90 || deg === 270) {
-                temp.width = cvs.height;
-                temp.height = cvs.width;
+            // Se è la camera, dobbiamo rispettare la rotazione che hai impostato a schermo
+            if(isCamera && (rotationAngle === 90 || rotationAngle === 270)) {
+                canvas.width = h; canvas.height = w;
+                ctx.translate(h/2, w/2);
+                ctx.rotate(rotationAngle * Math.PI / 180);
+                ctx.drawImage(source, -w/2, -h/2);
             } else {
-                temp.width = cvs.width;
-                temp.height = cvs.height;
+                canvas.width = w; canvas.height = h;
+                ctx.drawImage(source, 0, 0);
             }
 
-            tCtx.translate(temp.width/2, temp.height/2);
-            tCtx.rotate(deg * Math.PI / 180);
-            tCtx.drawImage(cvs, -cvs.width/2, -cvs.height/2);
-            
-            // Copia indietro
-            cvs.width = temp.width;
-            cvs.height = temp.height;
-            cvs.getContext('2d').drawImage(temp, 0, 0);
-        }
+            // Filtro Ottimizzato per CIE
+            ctx.filter = 'grayscale(100%) contrast(160%)'; 
+            ctx.drawImage(canvas, 0, 0); // Applica filtro
 
-        // 4. ESECUZIONE OCR E PARSING
-        async function tryOCR(cvs) {
-            // Applica filtri temporanei per l'OCR
-            const ctx = cvs.getContext('2d');
-            const imgData = ctx.getImageData(0,0, cvs.width, cvs.height);
-            // (Qui potremmo manipolare i pixel, ma lasciamo fare a Tesseract su canvas pulito)
-            
             try {
-                const { data: { text } } = await Tesseract.recognize(cvs, 'ita');
-                const clean = text.toUpperCase().replace(/\s/g, ''); 
+                const worker = await Tesseract.createWorker();
+                await worker.loadLanguage('ita');
+                await worker.initialize('ita');
+                // Parametri per forzare lettura singola riga se serve
+                await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<,./() ' });
                 
-                // VERIFICA SE ABBIAMO TROVATO QUALCOSA (Anchor ITA)
-                // Se non troviamo "ITA" o "<", l'orientamento è sbagliato
-                if (!clean.includes('ITA') && !clean.includes('<')) return false;
+                const { data: { text } } = await worker.recognize(canvas);
+                await worker.terminate();
 
-                // Parsing
-                const lines = text.toUpperCase().split('\n');
-                let foundData = false;
-
-                // MRZ
-                let docMatch = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
-                if(!docMatch) docMatch = clean.match(/ITA([A-Z0-9]{9})/);
-                let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})/);
-                let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-
-                if(docMatch && bioMatch && nameMatch) {
-                    fillData(docMatch, nameMatch, bioMatch);
-                    foundData = true;
+                if(parseData(text)) {
+                    document.getElementById('results').style.display = 'flex';
+                    loader.style.display = 'none';
+                } else {
+                    alert("Dati non trovati. Se usi la fotocamera, assicurati di RUOTARE (tasto in alto) finché la carta non è dritta.");
+                    loader.style.display = 'none';
                 }
-
-                // INDIRIZZO
-                let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|V\.)\s/));
-                if(addrLine) {
-                    parseAddr(addrLine);
-                    // Se troviamo l'indirizzo, consideriamo il tentativo valido anche se l'MRZ fallisce parzialmente
-                    if(foundData) return true; 
-                }
-
-                return foundData;
-
-            } catch (e) {
-                return false;
+            } catch(e) {
+                alert("Errore: " + e.message); loader.style.display = 'none';
             }
         }
 
-        function fillData(doc, name, bio) {
-            document.getElementById('v-doc').innerText = doc[1];
-            document.getElementById('v-cog').innerText = name[1];
-            document.getElementById('v-nom').innerText = name[2].replace(/</g, ' ');
+        // PARSING CHIRURGICO (Anchor + Splitter)
+        function parseData(text) {
+            const clean = text.toUpperCase().replace(/\s/g, ''); // Per codici
+            const rawLines = text.toUpperCase().split('\n'); // Per indirizzo
+            let found = false;
 
-            let d = bio[1]; 
-            let y = (parseInt(d.substr(0,2))>40 ? '19':'20') + d.substr(0,2);
-            document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
-            document.getElementById('v-sex').innerText = bio[2];
+            // 1. MRZ (Codici)
+            let docM = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
+            if(!docM) docM = clean.match(/ITA([A-Z0-9]{9})/);
+            let bioM = clean.match(/(\d{6})\d([MF])(\d{6})/);
+            let nameM = clean.match(/([A-Z]+)<<([A-Z]+)/);
 
-            let e = bio[3];
-            let ey = '20'+e.substr(0,2);
-            document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
-            
-            loader.style.display = 'none';
-            results.style.display = 'block';
-        }
+            if(docM && bioM && nameM) {
+                document.getElementById('r-doc').innerText = docM[1];
+                document.getElementById('r-cog').innerText = nameM[1];
+                document.getElementById('r-nom').innerText = nameM[2].replace(/</g, ' ');
 
-        function parseAddr(line) {
-            let txt = line.replace(/[^A-Z0-9\s,\.\(\)]/g, '').trim();
-            
-            let provM = txt.match(/\(([A-Z]{2})\)/);
-            if(provM) {
-                document.getElementById('v-prov').innerText = provM[1];
-                txt = txt.replace(provM[0], '');
+                let d = bioM[1];
+                let y = (parseInt(d.substr(0,2))>40 ? '19':'20') + d.substr(0,2);
+                document.getElementById('r-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
+                document.getElementById('r-sex').innerText = bioM[2];
+
+                let e = bioM[3];
+                let ey = '20'+e.substr(0,2);
+                document.getElementById('r-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
+                found = true;
             }
 
-            let civM = txt.match(/,\s*(\d+[A-Z]?)/) || txt.match(/\s(\d+[A-Z]?)$/);
-            if(civM) {
-                document.getElementById('v-civ').innerText = civM[1];
-                let parts = txt.split(civM[0]);
-                document.getElementById('v-via').innerText = parts[0].trim();
-                if(parts[1]) document.getElementById('v-com').innerText = parts[1].trim();
-            } else {
-                document.getElementById('v-via').innerText = txt;
+            // 2. INDIRIZZO (Splitter V2)
+            // Cerchiamo la riga che contiene "VIA" o "PIAZZA" e numeri
+            let addrLine = rawLines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|STRADA)\s+[A-Z\s,]+[0-9]+/));
+            
+            if(addrLine) {
+                // Pulizia base caratteri strani OCR
+                let safeTxt = addrLine.replace(/[^A-Z0-9\s,\.\(\)]/g, '').trim(); 
+                
+                // A. PROVINCIA: Cerca (SI), (RM), ecc. alla fine
+                let provMatch = safeTxt.match(/\(([A-Z]{2})\)/);
+                if(provMatch) {
+                    document.getElementById('r-prov').innerText = provMatch[1];
+                    // Rimuovi la provincia dalla stringa per non confondere il comune
+                    safeTxt = safeTxt.replace(provMatch[0], '').trim();
+                }
+
+                // B. CIVICO: Cerca il numero civico (es. ", 68" o " N. 68" o " 68 ")
+                // Strategia: Cerca l'ultimo numero della stringa
+                let civMatch = safeTxt.match(/(\d+[A-Z]?)\s*$/) || safeTxt.match(/,\s*(\d+[A-Z]?)/) || safeTxt.match(/\s(\d+[A-Z]?)\s/);
+                
+                if(civMatch) {
+                    let civico = civMatch[1];
+                    document.getElementById('r-civ').innerText = civico;
+
+                    // Split su civico
+                    let parts = safeTxt.split(civico);
+                    
+                    // VIA: è la prima parte
+                    let viaRaw = parts[0].replace(/,\s*$/, '').replace(/N\.\s*$/, '').trim();
+                    document.getElementById('r-via').innerText = viaRaw;
+
+                    // COMUNE: è quello che resta dopo il civico (se c'è)
+                    if(parts[1] && parts[1].trim().length > 2) {
+                        document.getElementById('r-com').innerText = parts[1].trim();
+                    } else {
+                        // Se non c'è niente dopo il civico, il comune era prima del civico?
+                        // Proviamo a vedere se "VIA ROMA 10 MILANO" è stato parsato male.
+                        // Nel dubbio, se non trovi il comune, lascia ---
+                    }
+                } else {
+                    // Fallback: Tutto in Via
+                    document.getElementById('r-via').innerText = safeTxt;
+                }
             }
+
+            return found;
         }
     </script>
 </body>
