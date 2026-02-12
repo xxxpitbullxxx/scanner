@@ -3,128 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V63 - Side Control</title>
+    <title>Scanner V64 - Orientation</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* LAYOUT GENERALE */
-        body { 
-            margin: 0; padding: 0; background: #000; 
-            height: 100vh; width: 100vw; overflow: hidden; 
-            display: flex; flex-direction: row; /* Layout Orizzontale: Video a Sx, Tasti a Dx */
+        /* RESET */
+        * { box-sizing: border-box; }
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: #000; overflow: hidden; font-family: Arial, sans-serif;
         }
 
-        /* 1. AREA VIDEO (Sinistra, occupa tutto meno la barra) */
-        #viewport {
-            position: relative; flex: 1; height: 100%; 
-            display: flex; align-items: center; justify-content: center;
-            background: #000; overflow: hidden;
+        /* 1. LAUNCHER (Schermo Intero) */
+        #launcher {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
+            background: #000; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center;
         }
-        video {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
-        }
-
-        /* 2. BARRA CONTROLLI (Destra, Fissa) */
-        #sidebar {
-            width: 120px; height: 100%; background: rgba(0,0,0,0.8);
-            display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; gap: 30px;
-            z-index: 50; border-left: 1px solid #333;
-        }
-
-        /* TASTO SCATTO (Fuori dal video) */
-        .btn-shot {
-            width: 80px; height: 80px; border-radius: 50%;
-            background: #fff; border: 4px solid #ccc;
-            box-shadow: 0 0 10px rgba(255,255,255,0.5); cursor: pointer;
-        }
-        .btn-shot:active { background: #ccc; transform: scale(0.95); }
-
-        /* TASTO AVVIO (Verde) */
         .btn-start {
-            width: 80px; height: 80px; border-radius: 50%;
-            background: #32d74b; border: 4px solid #fff;
-            color: #000; font-weight: bold; font-size: 12px;
-            cursor: pointer; text-transform: uppercase;
+            background: #00E0FF; color: #000; border: none; padding: 25px 50px;
+            font-size: 22px; font-weight: 900; border-radius: 50px; 
+            box-shadow: 0 0 50px rgba(0, 224, 255, 0.6); cursor: pointer; text-transform: uppercase;
         }
 
-        /* 3. SAGOMA CARTA (Centrata nel viewport) */
+        /* 2. AREA VIDEO */
+        #viewport {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        
+        video {
+            position: absolute;
+            transition: transform 0.3s ease; /* Animazione rotazione fluida */
+            transform-origin: center center;
+            /* Di base riempie lo schermo */
+            min-width: 100%; min-height: 100%; object-fit: cover;
+        }
+
+        /* 3. GUI (Interfaccia sopra il video) */
+        #gui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none; /* Lascia passare i click */
+        }
+
+        /* Sagoma Carta */
         .card-frame {
-            position: relative; z-index: 10;
-            /* Dimensione calcolata per stare comoda a sinistra della barra */
-            width: 65vw; 
-            aspect-ratio: 85.6 / 54; /* Ratio ID-1 */
-            
-            border: 3px solid rgba(255, 255, 255, 0.9);
-            border-radius: 12px;
-            box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.85); /* Maschera Scura */
-            pointer-events: none;
-        }
-        .card-frame.success { border-color: #32d74b; }
-
-        .guide-text {
-            position: absolute; top: -40px; width: 100%; text-align: center;
-            color: #fff; font-family: Arial, sans-serif; font-weight: bold; text-shadow: 0 2px 4px #000;
-        }
-
-        /* LOADING & MESSAGGI */
-        #overlay-msg {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 20px; 
-            border-radius: 10px; font-family: Arial; font-weight: bold; display: none; z-index: 100;
-            text-align: center;
+            width: 70vw; /* Larghezza fissa */
+            aspect-ratio: 85.6 / 54; /* Ratio ID-1 */
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.85); /* Maschera */
+        }
+        .card-frame.success { border-color: #32d74b; box-shadow: 0 0 0 4000px rgba(0,0,0,0.95); }
+
+        .guide-txt {
+            position: absolute; top: -50px; width: 100%; text-align: center;
+            color: #fff; font-size: 18px; font-weight: bold; text-shadow: 0 2px 4px #000;
         }
 
-        /* PANNELLO RISULTATI */
+        /* 4. BARRA COMANDI (Laterale Destra) */
+        .sidebar {
+            position: absolute; right: 0; top: 0; width: 100px; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 50; pointer-events: auto;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Bottoni */
+        .btn-shot {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); border: 4px solid #fff; cursor: pointer;
+        }
+        .btn-shot:active { background: #fff; transform: scale(0.9); }
+
+        .btn-rotate {
+            width: 50px; height: 50px; border-radius: 10px;
+            background: #333; border: 1px solid #fff; color: #fff; font-size: 24px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-rotate:active { background: #555; }
+        .lbl-rot { font-size: 10px; color: #fff; margin-top: -25px; text-align: center; }
+
+        /* LOADING */
+        #loader {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 20px; 
+            border-radius: 12px; font-weight: bold; font-size: 20px; z-index: 100;
+        }
+
+        /* RISULTATI */
         #results {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #121212; z-index: 200; display: none;
-            flex-direction: column; padding: 20px; overflow-y: auto; font-family: Arial;
+            background: #111; z-index: 200; display: none;
+            flex-direction: column; padding: 20px; overflow-y: auto;
         }
-        .res-row { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .lbl { color: #888; font-size: 10px; text-transform: uppercase; }
-        .val { color: #fff; font-size: 18px; font-weight: bold; }
-        .btn-close { padding: 15px; background: #444; color: #fff; border: none; width: 100%; border-radius: 8px; font-size: 18px; }
-
-        /* Rotazione forzata visiva */
-        #rotate-warning {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; color: #fff; z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; text-align: center;
-        }
-        @media screen and (orientation: landscape) { #rotate-warning { display: none; } }
+        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .full { grid-column: span 2; }
+        .field { background: #222; padding: 10px; border-radius: 8px; border-left: 5px solid #00E0FF; }
+        .lbl { color: #888; font-size: 10px; display: block; margin-bottom: 2px; }
+        .val { color: #fff; font-size: 16px; font-weight: bold; font-family: monospace; }
+        .btn-close { margin-top: 20px; padding: 15px; background: #444; color: #fff; border: none; font-size: 18px; width: 100%; border-radius: 10px; }
 
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="rotate-warning">GIRA IL TELEFONO ↻</div>
+    <div id="launcher">
+        <button class="btn-start" onclick="startSystem()">AVVIA SCANNER</button>
+        <p style="color:#aaa; margin-top:15px;">Gira il telefono in orizzontale prima di cliccare</p>
+    </div>
 
     <div id="viewport">
         <video id="webcam" autoplay playsinline muted></video>
-        <div class="card-frame" id="frame">
-            <div class="guide-text">INQUADRA IL RETRO</div>
-        </div>
-        <div id="overlay-msg"></div>
     </div>
 
-    <div id="sidebar">
-        <button class="btn-start" id="btn-init" onclick="initCam()">AVVIA</button>
-        <button class="btn-shot" id="btn-snap" style="display:none;" onclick="snap()"></button>
+    <div id="gui-layer">
+        <div class="card-frame" id="frame">
+            <div class="guide-txt">RETRO</div>
+        </div>
     </div>
+
+    <div class="sidebar">
+        <button class="btn-rotate" onclick="rotateVideo()">↻</button>
+        <span class="lbl-rot">RUOTA</span>
+
+        <button class="btn-shot" id="snap"></button>
+    </div>
+
+    <div id="loader">LETTURA ANCHOR...</div>
 
     <div id="results">
-        <h2 style="color:#32d74b; text-align:center;">DATI ESTRATTI</h2>
-        <div class="res-row"><span class="lbl">Cognome</span><div class="val" id="r-cog">---</div></div>
-        <div class="res-row"><span class="lbl">Nome</span><div class="val" id="r-nom">---</div></div>
-        <div class="res-row"><span class="lbl">Data Nascita</span><div class="val" id="r-dob">---</div></div>
-        <div class="res-row"><span class="lbl">Sesso</span><div class="val" id="r-sex">---</div></div>
-        <div class="res-row"><span class="lbl">Cittadinanza</span><div class="val" id="r-cit">ITA</div></div>
-        <div class="res-row"><span class="lbl">Numero Doc</span><div class="val" id="r-doc">---</div></div>
-        <div class="res-row"><span class="lbl">Scadenza</span><div class="val" id="r-scad">---</div></div>
-        <div class="res-row"><span class="lbl">Indirizzo</span><div class="val" id="r-via">---</div></div>
-        <div class="res-row"><span class="lbl">Comune</span><div class="val" id="r-com">---</div></div>
+        <h2 style="color:#32d74b; text-align:center;">DATI RETRO</h2>
+        <div class="res-grid">
+            <div class="field full"><span class="lbl">COGNOME</span><span class="val" id="v-cog">---</span></div>
+            <div class="field full"><span class="lbl">NOME</span><span class="val" id="v-nom">---</span></div>
+            <div class="field"><span class="lbl">NASCITA</span><span class="val" id="v-dob">---</span></div>
+            <div class="field"><span class="lbl">SESSO</span><span class="val" id="v-sex">---</span></div>
+            <div class="field full"><span class="lbl">DOCUMENTO</span><span class="val" id="v-doc">---</span></div>
+            <div class="field"><span class="lbl">SCADENZA</span><span class="val" id="v-scad">---</span></div>
+            <div class="field"><span class="lbl">CITTADINANZA</span><span class="val" id="v-cit">ITA</span></div>
+            <div class="field full"><span class="lbl">INDIRIZZO (Se leggibile)</span><span class="val" id="v-res">---</span></div>
+        </div>
         <button class="btn-close" onclick="location.reload()">CHIUDI</button>
     </div>
 
@@ -133,110 +153,143 @@
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
-        const msg = document.getElementById('overlay-msg');
+        const launcher = document.getElementById('launcher');
+        const snapBtn = document.getElementById('snap');
+        const loader = document.getElementById('loader');
         const frame = document.getElementById('frame');
+        
+        // Variabile per gestire la rotazione manuale (0, 90, 180, 270)
+        let rotationAngle = 0;
 
-        // 1. AVVIO MANUALE (Per sbloccare permessi)
-        async function initCam() {
+        // 1. AVVIO
+        async function startSystem() {
+            // Fullscreen
             try {
-                // Richiedi fullscreen
-                if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
-                
+                if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+                else if (document.documentElement.webkitRequestFullscreen) await document.documentElement.webkitRequestFullscreen();
+            } catch(e) {}
+
+            launcher.style.display = 'none';
+
+            // Camera
+            try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
                 });
                 video.srcObject = stream;
-                
-                // Switch tasti
-                document.getElementById('btn-init').style.display = 'none';
-                document.getElementById('btn-snap').style.display = 'block';
-            } catch (e) {
-                alert("Errore: " + e.message);
+            } catch (err) {
+                alert("Errore Camera: " + err.message);
             }
         }
 
-        // 2. SCATTO E ANALISI
-        async function snap() {
-            msg.style.display = 'block';
-            msg.innerText = "ANALISI IN CORSO...";
+        // 2. FUNZIONE ROTAZIONE MANUALE
+        function rotateVideo() {
+            rotationAngle = (rotationAngle + 90) % 360;
+            video.style.transform = `rotate(${rotationAngle}deg)`;
             
+            // Adattamento dimensioni quando ruotato
+            if (rotationAngle === 90 || rotationAngle === 270) {
+                // Se verticale, ingrandisci per coprire lo schermo
+                video.style.minWidth = "100vh";
+                video.style.minHeight = "100vw";
+            } else {
+                video.style.minWidth = "100%";
+                video.style.minHeight = "100%";
+            }
+        }
+
+        // 3. SCATTO (CON GESTIONE ROTAZIONE CANVAS)
+        snapBtn.addEventListener('click', async () => {
+            loader.style.display = 'block';
+            snapBtn.style.display = 'none';
+
             const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            
-            // FILTRO V63: Contrasto estremo per leggere caratteri neri su sfondo CIE
-            ctx.filter = 'grayscale(100%) contrast(200%) brightness(110%)';
-            ctx.drawImage(video, 0, 0);
+
+            // Impostiamo il canvas in base a come è orientato visivamente il video
+            if (rotationAngle === 90 || rotationAngle === 270) {
+                canvas.width = video.videoHeight;
+                canvas.height = video.videoWidth;
+            } else {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            }
+
+            // Applichiamo la rotazione al contesto del canvas PRIMA di disegnare
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(rotationAngle * Math.PI / 180);
+            ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
+            ctx.restore();
+
+            // Filtro Anchor (Alto contrasto)
+            let imgData = ctx.getImageData(0,0,canvas.width, canvas.height);
+            // (Qui potremmo applicare filtri pixel per pixel, ma usiamo il filtro CSS simulato nel drawImage se necessario, 
+            // ma Tesseract preferisce immagini pulite. Per ora lasciamo raw e lasciamo fare a Tesseract).
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                if(parseData(text)) {
+                if(parseAnchor(text)) {
                     frame.classList.add('success');
-                    msg.style.display = 'none';
+                    loader.style.display = 'none';
                     document.getElementById('results').style.display = 'flex';
                 } else {
-                    msg.innerText = "DATI NON LEGGIBILI. AVVICINATI.";
-                    setTimeout(() => msg.style.display = 'none', 2000);
+                    alert("Errore OCR: Codici non trovati. Assicurati che l'immagine sia DRITTA (usa il tasto ruota) e a fuoco.");
+                    loader.style.display = 'none';
+                    snapBtn.style.display = 'block';
                 }
             } catch (e) {
-                msg.innerText = "ERRORE OCR";
+                alert("Errore Tecnico: " + e.message);
+                loader.style.display = 'none';
+                snapBtn.style.display = 'block';
             }
-        }
+        });
 
-        // 3. PARSER ANCHOR (Potenziato per Indirizzo)
-        function parseData(raw) {
+        // 4. LOGICA ANCHOR V3 (Solo Regex Solide)
+        function parseAnchor(raw) {
             const clean = raw.toUpperCase().replace(/\s/g, ''); 
             const lines = raw.toUpperCase().split('\n');
-
             let found = false;
 
-            // A. MRZ (Codici in basso)
-            // Cerca DocNum (C<ITA...)
-            let docM = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
-            if(!docM) docM = clean.match(/ITA([A-Z0-9]{9})/);
+            // MRZ PARSER
+            let docMatch = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
+            if(!docMatch) docMatch = clean.match(/ITA([A-Z0-9]{9})/);
             
-            // Cerca Cognome<<Nome
-            let nameM = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            
-            // Cerca Date
-            let bioM = clean.match(/(\d{6})\d([MF])(\d{6})/);
+            let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})/);
+            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
 
-            if(docM && nameM && bioM) {
-                document.getElementById('r-doc').innerText = docM[1];
-                document.getElementById('r-cog').innerText = nameM[1];
-                document.getElementById('r-nom').innerText = nameMatch[2].replace(/</g, ' '); // FIX: era nameMatch
+            if(docMatch && bioMatch && nameMatch) {
+                document.getElementById('v-doc').innerText = docMatch[1];
+                document.getElementById('v-cog').innerText = nameMatch[1];
+                document.getElementById('v-nom').innerText = nameMatch[2].replace(/</g, ' ');
 
-                // Date
-                let d = bioM[1]; 
-                let y = (parseInt(d.substr(0,2))>40 ? '19':'20') + d.substr(0,2);
-                document.getElementById('r-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
-                
-                document.getElementById('r-sex').innerText = bioM[2];
+                let d = bioMatch[1];
+                let y = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
+                document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
+                document.getElementById('v-sex').innerText = bioMatch[2];
 
-                let e = bioM[3];
+                let e = bioMatch[3];
                 let ey = '20'+e.substr(0,2);
-                document.getElementById('r-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
+                document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
                 found = true;
             }
 
-            // B. INDIRIZZO (Cerca nella parte alta)
-            let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|LOC)\s/));
-            if(addrLine) {
-                // Indirizzo grezzo
-                let fullAddr = addrLine.replace(/[^A-Z0-9\s,\.]/g, '').trim();
-                
-                // Prova a separare Comune (Se c'è parentesi finale)
-                let cityMatch = fullAddr.match(/([A-Z\s]+)\s*\(?([A-Z]{2})\)?$/);
-                
-                if(cityMatch) {
-                    // Se trova (SI), separa
-                    document.getElementById('r-com').innerText = cityMatch[1].trim() + " (" + cityMatch[2] + ")";
-                    // La via è tutto quello che c'era prima del comune
-                    let viaPart = fullAddr.replace(cityMatch[0], "").replace(/,\s*$/, "");
-                    document.getElementById('r-via').innerText = viaPart;
+            // INDIRIZZO (Opzionale)
+            let addr = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE)\s/));
+            if(addr) {
+                // Pulizia base
+                let txt = addr.replace(/[^A-Z0-9\s,\.]/g, '').trim();
+                // Se c'è (SI) o simili alla fine
+                let cityM = txt.match(/\(([A-Z]{2})\)$/);
+                if(cityM) {
+                    document.getElementById('v-res').innerText = txt;
                 } else {
-                    // Se non trova parentesi, mette tutto in via
-                    document.getElementById('r-via').innerText = fullAddr;
+                    // Cerca nelle righe successive se l'indirizzo continua
+                    let idx = lines.indexOf(addr);
+                    if(lines[idx+1] && lines[idx+1].includes('(')) {
+                         document.getElementById('v-res').innerText = txt + " " + lines[idx+1].trim();
+                    } else {
+                        document.getElementById('v-res').innerText = txt;
+                    }
                 }
             }
 
