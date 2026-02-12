@@ -36,13 +36,28 @@
         .header-logo-circle { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; border: 1px solid #d4af37; background: white; }
         .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 
-        /* Scanner OCR Styles */
-        .cam-box { position: relative; width: 100%; height: 300px; overflow: hidden; border-radius: 20px; background: #000; margin-bottom: 16px; border: 2px solid #333; }
+        /* Scanner OCR Styles - VERTICALE */
+        .cam-box { position: relative; width: 100%; height: 400px; overflow: hidden; border-radius: 20px; background: #000; margin-bottom: 16px; border: 2px solid #333; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        /* Guide visive per l'utente */
-        .guide-res { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 15%; border: 2px solid #FFD60A; border-radius: 4px; z-index: 10; pointer-events: none; opacity: 0.7; }
-        .guide-mrz { position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); width: 94%; height: 25%; border: 3px solid #00E0FF; border-radius: 4px; z-index: 10; pointer-events: none; opacity: 0.8; }
-        .label-guide { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; }
+        
+        /* Guide visive Verticali (MRZ a sinistra) */
+        .guide-res { position: absolute; top: 50%; left: 60%; transform: translate(-50%, -50%); width: 25%; height: 80%; border: 2px solid #FFD60A; border-radius: 4px; z-index: 10; pointer-events: none; opacity: 0.6; }
+        .guide-mrz { position: absolute; top: 50%; left: 20%; transform: translate(-50%, -50%); width: 20%; height: 94%; border: 3px solid #00E0FF; border-radius: 4px; z-index: 10; pointer-events: none; opacity: 0.8; }
+        
+        /* Etichette ruotate per lettura verticale */
+        .label-guide { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: 50%; left: -20px; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; transform: rotate(-90deg); white-space: nowrap; }
+
+        /* Pulsante Scatto Circolare */
+        .snap-btn-container {
+            position: absolute; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; z-index: 20;
+        }
+        .snap-btn {
+            width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.3);
+            border: 4px solid white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .snap-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.6); }
+        .snap-inner { width: 56px; height: 56px; border-radius: 50%; background: white; }
 
         .input-field { 
             width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; 
@@ -117,7 +132,7 @@
         const TRANSLATIONS = {
             it: { 
                 welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
-                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento per autocompilare o carica una foto.", photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA FOTO E PROCEDI", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
+                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Posiziona la carta in VERTICALE. MRZ a sinistra.", photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA FOTO E PROCEDI", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
                 warning_save: "Carica le foto e compila tutti i campi obbligatori per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
                 tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
@@ -128,7 +143,7 @@
             },
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
-                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document to autofill or upload a photo.", photo_req: "PHOTO REQUIRED", confirm_btn: "CONFIRM & PROCEED", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
+                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Place card VERTICALLY. MRZ on the left.", photo_req: "PHOTO REQUIRED", confirm_btn: "CONFIRM & PROCEED", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
                 warning_save: "Upload photos and fill all fields to save", finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back",
                 tax_info: "In accordance with local regulations, if you booked via Booking.com, the tourist tax must be paid on-site upon arrival (cash), or via the secure credit/debit card link I will send you shortly. If you booked via Airbnb, the tax is already included.",
                 doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "Driving License",
@@ -139,7 +154,7 @@
             },
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Pour faciliter votre arrivée, je vous demande de remplir l'enregistrement en ligne.", 
-                login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOC", scan_info: "Scannez le document.", photo_req: "PHOTO OBLIGATOIRE", confirm_btn: "CONFIRMER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER UN INVITÉ", save_guest: "ENREGISTRER",
+                login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOC", scan_info: "Placez la carte VERTICALEMENT.", photo_req: "PHOTO OBLIGATOIRE", confirm_btn: "CONFIRMER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER UN INVITÉ", save_guest: "ENREGISTRER",
                 warning_save: "Téléchargez les photos et remplissez tous les champs pour enregistrer", finish_btn: "TERMINER", verify: "Vérifier les données", front: "Recto", back_doc: "Verso",
                 tax_info: "Conformément à la réglementation locale, si vous avez réservé via Booking.com, la taxe de séjour doit être payée sur place à l'arrivée (en espèces) ou via le lien sécurisé par carte de crédit/débit que je vous enverrai sous peu. Si vous avez réservé via Airbnb, la taxe est déjà incluse.",
                 doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis de Conduire",
@@ -150,7 +165,7 @@
             },
             es: { 
                 welcome: "¡Hola! Soy Giulia. Para facilitar su llegada, le pido que complete el registro en línea.", 
-                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee il reverso per l'autocompilazione.", photo_req: "FOTO OBLIGATORIA", confirm_btn: "CONFIRMAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
+                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Coloque la tarjeta VERTICALMENTE.", photo_req: "FOTO OBLIGATORIA", confirm_btn: "CONFIRMAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
                 warning_save: "Cargue las fotos y complete los campos para guardar", finish_btn: "TERMINAR", verify: "Verificar datos", front: "Frente", back_doc: "Dorso",
                 tax_info: "De acuerdo con las normativas locales, si reservó a través de Booking.com, la tasa turística debe pagarse en el lugar a la llegada (en efectivo) o mediante el enlace seguro de tarjeta de crédito/débito que le enviaré en breve. Si reservó a través de Airbnb, la tasa ya está incluida.",
                 doc_type: "Tipo de Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia de Conducir",
@@ -161,7 +176,7 @@
             },
             de: { 
                 welcome: "Hallo! Ich bin Giulia. Um Ihre Ankunft zu erleichtern, bitte ich Sie, den Online-Check-in abzuschließen.", 
-                login_ph: "CODE", start_btn: "STARTEN", scan_rear: "DOKUMENT SCANNEN", scan_info: "Scannen Sie das Dokument.", photo_req: "FOTO", confirm_btn: "FOTOS BESTÄTIGEN", recover_btn: "TÜRCODE ANZEIGEN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
+                login_ph: "CODE", start_btn: "STARTEN", scan_rear: "DOKUMENT SCANNEN", scan_info: "Karte VERTIKAL halten.", photo_req: "FOTO", confirm_btn: "FOTOS BESTÄTIGEN", recover_btn: "TÜRCODE ANZEIGEN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
                 warning_save: "Laden Sie Fotos hoch und füllen Sie die Felder aus", finish_btn: "ABSCHLIESSEN", verify: "Daten prüfen", front: "Vorderseite", back_doc: "Rückseite",
                 tax_info: "Gemäß den örtlichen Vorschriften muss die Kurtaxe bei Buchung über Booking.com vor Ort bei Ankunft (in bar) oder über den sicheren Kredit-/Debitkartenlink, den ich Ihnen in Kürze zusende, bezahlt werden. Bei Buchung über Airbnb ist die Steuer bereits enthalten.",
                 doc_type: "Dokumentart", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein",
@@ -418,10 +433,10 @@
 
                     const payload = { 
                         guests: processed, 
-                        signature: signatureData, 
+                        signature: signatureData, // Save signature
                         booking: property?.id || "", 
                         timestamp: new Date().toISOString(), 
-                        checkinDate: new Date().toISOString().split('T')[0],
+                        checkinDate: new Date().toISOString().split('T')[0], // NEW: Explicit Check-in Date
                         guestName: bookingDetails.guestName, 
                         property: property?.name || "" 
                     };
@@ -435,10 +450,12 @@
                          } catch(e) {}
                     }
 
+                    // Always save locally (Backup)
                     const localData = JSON.parse(localStorage.getItem('local_checkins') || '[]');
                     localData.push({ id, ...payload, synced: savedToCloud });
                     localStorage.setItem('local_checkins', JSON.stringify(localData));
                     
+                    // Mark as completed in localStorage to allow re-entry
                     if(d) localStorage.setItem(`checkin_done_${d}`, 'true');
 
                 } catch(e) { console.log("Errore salvataggio generale", e); }
@@ -449,9 +466,11 @@
 
             const fetchCloud = async () => {
                 let list = [];
+                // 1. Get from LocalStorage
                 const localData = JSON.parse(localStorage.getItem('local_checkins') || '[]');
                 list = [...localData];
 
+                // 2. Get from Firebase
                 if (user && window.db) {
                     try {
                         const col = window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'checkins');
@@ -460,6 +479,7 @@
                     } catch (e) { console.error("Cloud fetch error", e); }
                 }
                 
+                // 3. Deduplicate by ID
                 const uniqueList = Array.from(new Map(list.map(item => [item.id, item])).values());
                 uniqueList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 setAdminData(uniqueList);
@@ -468,10 +488,12 @@
             const deleteSession = async (sessionId) => {
                 if(!confirm("Sicuro di voler cancellare questo check-in?")) return;
                 
+                // Delete from local
                 const localData = JSON.parse(localStorage.getItem('local_checkins') || '[]');
                 const newLocal = localData.filter(i => i.id !== sessionId);
                 localStorage.setItem('local_checkins', JSON.stringify(newLocal));
 
+                // Delete from cloud
                 if (user && window.db) {
                     try {
                         const docRef = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', sessionId);
@@ -589,8 +611,38 @@
                 const scale = 1280 / w;
                 canvas.height = h * scale;
                 
+                // --- ROTATION LOGIC FOR VERTICAL SCANNING ---
+                // Rotate -90 degrees (CCW) to make text horizontal
+                ctx.translate(0, canvas.height);
+                ctx.rotate(-Math.PI / 2);
+                
+                // Adjust drawing since canvas is rotated
+                // We need to draw the image into the rotated context
+                // When rotated -90, x becomes y, y becomes -x
+                // Actually, simplest is to draw image normally then rotate the canvas data? No.
+                // Let's use CSS rotation approach for Tesseract? No, Tesseract needs pixels.
+                // Standard approach: Draw image rotated.
+                // If source is 1280x720. 
+                // We want final image to be 720x1280 (portrait text). 
+                // Wait, if card is held vertically in portrait phone, card text is vertical. 
+                // We need to rotate it to be horizontal for Tesseract.
+                
+                // RESET CONTEXT
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                
+                // If we want to rotate -90 deg:
+                // New width = height, New height = width
+                canvas.width = h * scale; 
+                canvas.height = 1280; // w * scale
+                
                 ctx.filter = 'grayscale(100%) contrast(300%) brightness(110%)';
-                ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+                
+                // Move context to bottom-left
+                ctx.translate(0, canvas.height);
+                ctx.rotate(-Math.PI / 2);
+                
+                ctx.drawImage(source, 0, 0, 1280, h * scale); // Draw original image
+                // --------------------------------------------
                 
                 try {
                     const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
@@ -805,6 +857,7 @@
                                                 <div className="col-span-2"><CopyField label="Cittadinanza" value={g.citizenship === 'ALTRO' ? g.citizenshipManual : g.citizenship} /></div>
                                                 <div className="col-span-2"><CopyField label="Indirizzo Residenza" value={g.residenceAddress} /></div>
                                                 <CopyField label="N. Civico" value={g.houseNumber} />
+                                                <CopyField label="CAP" value="" />
                                                 <CopyField label="Comune Residenza" value={g.residenceCity} />
                                                 <CopyField label="Prov. Residenza" value={g.residenceProvince} />
                                                 
@@ -909,8 +962,12 @@
                         {isScanning ? (
                             <div className="flex-1 flex flex-col text-center text-center">
                                 <div className="scan-container"><video ref={videoRef} autoPlay playsInline muted></video><div className="scan-line"></div></div>
+                                <div className="snap-btn-container">
+                                    <div className="snap-btn" onClick={() => runOCR(videoRef.current)}>
+                                        <div className="snap-inner"></div>
+                                    </div>
+                                </div>
                                 <button onClick={() => { setIsScanning(false); }} className="btn bg-red-600 text-white mt-4 uppercase font-bold text-center text-center">Annulla</button>
-                                <button id="snap-btn" onClick={() => runOCR(videoRef.current)} className="btn btn-primary mt-2 uppercase font-bold shadow-lg">SCATTA E LEGGI</button>
                             </div>
                         ) : (
                             <button onClick={startCamera} className="btn bg-teal-600 text-white w-2/3 mx-auto py-3 uppercase font-bold flex flex-row items-center justify-center shadow-lg mb-4 text-xs gap-2 rounded-full"><Icon name="scan" className="w-5 h-5" /> {t.ocr_btn}</button>
