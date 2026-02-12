@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V103 - Full Data Fix</title>
+    <title>Scanner V103 - Complete Fix</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
@@ -16,8 +16,11 @@
         .label-guide { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); }
 
         .scroll-box { flex: 1; overflow-y: auto; padding: 12px; background: #121212; padding-bottom: 80px; }
-        .btn-scan { width: 100%; padding: 16px; background: #00E0FF; color: #000; border: none; font-weight: 900; border-radius: 10px; margin-bottom: 10px; cursor: pointer; font-size: 18px; }
-        .btn-file { display: block; width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #444; font-weight: 600; border-radius: 10px; margin-bottom: 20px; cursor: pointer; font-size: 14px; text-align: center; }
+        
+        /* BOTTONI IDENTICI */
+        .btn-main { width: 100%; padding: 16px; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 12px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; }
+        #snap { background: #00E0FF; color: #000; }
+        .btn-file-label { background: #333; color: #fff; border: 1px solid #555; }
         
         .sec-t { font-size: 11px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 3px; font-weight: bold; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -39,8 +42,9 @@
     </div>
 
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONA</button>
-        <label for="file-upload" class="btn-file">CARICA FOTO</label>
+        <button id="snap" class="btn-main">🔍 SCANSIONA DOCUMENTO</button>
+        
+        <label for="file-upload" class="btn-main btn-file-label">📁 CARICA FILE O FOTO</label>
         <input type="file" id="file-upload" accept="image/*">
         
         <div class="sec-t" style="color:#00E0FF">Anagrafica</div>
@@ -57,15 +61,13 @@
             <div style="grid-column: span 2;" class="field"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
         </div>
 
-        <div class="sec-t" style="color:#00E0FF">Documento Completo</div>
+        <div class="sec-t" style="color:#00E0FF">Dati Documento</div>
         <div class="grid">
-            <div class="field"><span class="lbl">Tipo Doc</span><div class="val" id="v-type">---</div></div>
-            <div class="field"><span class="lbl">Emissione</span><div class="val" id="v-issue">---</div></div>
             <div style="grid-column: span 2;" class="field"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
-            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
-            <div class="field"><span class="lbl">Data Nascita</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">Cittadinanza</span><div class="val" id="v-nat">---</div></div>
             <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+            <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
         </div>
     </div>
     <canvas id="hidden-cvs"></canvas>
@@ -81,24 +83,24 @@
 
         function fix(s, type) {
             if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/G/g,'6').replace(/D/g,'0');
-            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B').replace(/4/g,'A');
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/T/g,'7');
+            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
             return s;
         }
 
         async function runOCR(source) {
-            btnSnap.innerText = "ANALISI DATI...";
+            btnSnap.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
             canvas.width = 1280;
             const scale = 1280 / (source.videoWidth || source.width);
             canvas.height = (source.videoHeight || source.height) * scale;
-            ctx.filter = 'grayscale(100%) contrast(350%) brightness(110%)';
+            ctx.filter = 'grayscale(100%) contrast(300%) brightness(110%)';
             ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
             
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
                 parseV103(text);
-                btnSnap.innerText = "SCANSIONA";
+                btnSnap.innerText = "🔍 SCANSIONA DOCUMENTO";
             } catch (e) { btnSnap.innerText = "ERRORE"; }
         }
 
@@ -120,33 +122,25 @@
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
-            // 1. ANALISI RIGA 1 (TIPO, EMISSIONE, NUMERO DOC)
-            let m1 = clean.match(/([ACI])<([A-Z0-9]{3})([A-Z0-9]{9})/);
-            if(m1) {
-                fill("v-type", (m1[1] === 'C' || m1[1] === 'I') ? "CARTA D'IDENTITÀ" : m1[1]);
-                fill("v-issue", fix(m1[2], 'L'));
-                let rc = m1[3];
-                fill("v-doc", fix(rc.substr(0,2), 'L') + fix(rc.substr(2,5), 'N') + fix(rc.substr(7,2), 'L'));
+            // 1. DOC & NOMI
+            let dc = clean.match(/ITA([A-Z0-9]{9})/); if(dc) fill("v-doc", dc[1]);
+            let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
+            if(nm) { 
+                fill("v-cog", fix(nm[1], 'L')); 
+                fill("v-nom", fix(nm[2], 'L').replace(/</g, ' ')); 
             }
 
-            // 2. ANALISI NOMI
-            let names = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(names) {
-                fill("v-cog", names[1]);
-                fill("v-nom", names[2].replace(/</g, ' ').trim());
-            }
-
-            // 3. ANALISI BIOMETRICA (ESTESA)
-            // Cerca la riga che ha M o F con cifre intorno
+            // 2. BIO - Migliorato per Scadenza e Cittadinanza
+            // Pattern: 6 cifre (nascita) + 1 carattere (controllo) + Sesso + 6 cifre (scadenza) + 1 carattere + 3 lettere (Cittadinanza)
             let bioMatch = clean.match(/([0-9OIZSB]{6,7})([MF])([0-9OIZSB]{6,7})([A-Z0-9]{3})/);
             if(bioMatch) {
                 fill("v-dob", formatDate(fix(bioMatch[1].substr(0,6), 'N')));
                 fill("v-sex", bioMatch[2]);
                 fill("v-scad", formatDate(fix(bioMatch[3].substr(0,6), 'N')));
-                fill("v-nat", fix(bioMatch[4], 'L'));
+                fill("v-nat", fix(bioMatch[4].substr(0,3), 'L'));
             }
 
-            // 4. ANALISI RESIDENZA
+            // 3. RESIDENZA
             lines.forEach(l => {
                 if(l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.match(/\(([A-Z]{2})\)/)) {
                     let prov = l.match(/\(([A-Z]{2})\)/); if(prov) fill("v-prov", prov[1]);
