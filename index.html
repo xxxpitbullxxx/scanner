@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V45 - Wide & Tall</title>
+    <title>Scanner V46 - Full Details</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
@@ -12,30 +12,18 @@
         .cam-box { position: relative; flex: 0 0 50%; overflow: hidden; border-bottom: 2px solid #333; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* RETTANGOLI DI SCANSIONE (MODIFICATI) */
+        /* RETTANGOLI DI SCANSIONE */
         .guide-res { 
-            position: absolute; 
-            top: 38%; /* Leggermente più basso per centrare meglio */
-            left: 50%; 
-            transform: translate(-50%, -50%);
-            width: 96%; /* ALLARGATO QUASI AL BORDO */
-            height: 22%; /* ALLUNGATO VERSO IL BASSO */
-            border: 2px solid #FFD60A; 
-            border-radius: 5px; 
-            z-index: 10;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); /* Scurisce l'esterno per focus */
+            position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%);
+            width: 96%; height: 22%; border: 2px solid #FFD60A; 
+            border-radius: 5px; z-index: 10;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
         }
         
         .guide-mrz { 
-            position: absolute; 
-            top: 70%; 
-            left: 50%; 
-            transform: translate(-50%, -50%);
-            width: 96%; /* ALLARGATO QUASI AL BORDO */
-            height: 25%; 
-            border: 2px solid #00E0FF; 
-            border-radius: 5px; 
-            z-index: 10;
+            position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%);
+            width: 96%; height: 25%; border: 2px solid #00E0FF; 
+            border-radius: 5px; z-index: 10;
         }
         
         .label-guide { 
@@ -66,28 +54,31 @@
     <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
         <div class="guide-res">
-            <span class="label-guide" style="background:#FFD60A; color:#000; top:0; left:0;">Area Indirizzo (Estesa)</span>
+            <span class="label-guide" style="background:#FFD60A; color:#000; top:0; left:0;">Area Indirizzo</span>
         </div>
         <div class="guide-mrz">
-            <span class="label-guide" style="background:#00E0FF; color:#000; top:0; left:0;">Area Codici</span>
+            <span class="label-guide" style="background:#00E0FF; color:#000; top:0; left:0;">Area MRZ (Codici)</span>
         </div>
     </div>
 
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONE V45</button>
+        <button id="snap" class="btn-scan">SCANSIONE V46</button>
 
-        <div class="section-title">Dati Anagrafici (da MRZ)</div>
+        <div class="section-title">Dati Documento (MRZ)</div>
+        <div class="grid">
+            <div class="field"><span class="lbl">Tipo Doc.</span><div class="val" id="v-type">---</div></div>
+            <div class="field"><span class="lbl">Paese Emittente</span><div class="val" id="v-issue">---</div></div>
+            <div class="field full"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
+            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+            <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
+        </div>
+
+        <div class="section-title">Dati Anagrafici (MRZ)</div>
         <div class="grid">
             <div class="field full"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
             <div class="field full"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
             <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
             <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
-        </div>
-
-        <div class="section-title">Documento (da MRZ)</div>
-        <div class="grid">
-            <div class="field"><span class="lbl">Numero Doc</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
         </div>
 
         <div class="section-title">Residenza (da Testo)</div>
@@ -106,7 +97,6 @@
         const canvas = document.getElementById('cvs');
         const btn = document.getElementById('snap');
 
-        // Fotocamera alta risoluzione
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
             .then(s => video.srcObject = s);
 
@@ -117,71 +107,91 @@
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // Filtro contrasto aumentato per testi piccoli
+            // Filtro contrasto
             ctx.filter = 'grayscale(100%) contrast(200%)';
             ctx.drawImage(video, 0, 0);
             
             const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
             parseData(text);
             
-            btn.innerText = "SCANSIONE V45";
+            btn.innerText = "SCANSIONE V46";
             btn.style.background = "#00E0FF";
         });
 
         function parseData(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, ''); 
-            // Filtro righe troppo corte (meno di 2 caratteri) per non perdere "SI", "RM" etc.
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 1);
 
-            // --- 1. MRZ PARSER ---
-            let docMatch = clean.match(/ITA([A-Z0-9]{9})/);
-            if(docMatch) fill("v-doc", docMatch[1]);
+            // --- 1. MRZ PARSER AVANZATO ---
+            
+            // Regex Riga 1: [Tipo 1 char]<[Paese 3 char][NumDoc 9 char]
+            // Esempio: C<ITACA00000AA...
+            // C = Carta d'Identità, I = Carta identità (variante), P = Passaporto
+            let line1Match = clean.match(/([A-Z])<([A-Z]{3})([A-Z0-9]{9})/);
+            
+            if (line1Match) {
+                // Tipo Documento
+                let typeCode = line1Match[1];
+                let typeFull = typeCode === 'C' || typeCode === 'I' ? "CARTA D'IDENTITÀ" : typeCode;
+                fill("v-type", typeFull);
 
+                // Paese Emittente
+                fill("v-issue", line1Match[2]); // Es. ITA
+
+                // Numero Documento
+                fill("v-doc", line1Match[3]);
+            } else {
+                // Fallback se la regex stretta fallisce, cerca almeno ITA+NumDoc
+                let fallbackDoc = clean.match(/ITA([A-Z0-9]{9})/);
+                if(fallbackDoc) {
+                    fill("v-issue", "ITA");
+                    fill("v-doc", fallbackDoc[1]);
+                }
+            }
+
+            // Regex Nome e Cognome
             let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if(nameMatch) {
                 fill("v-cog", nameMatch[1]);
                 fill("v-nom", nameMatch[2].replace(/</g, ' '));
             }
 
-            let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})/);
+            // Regex Riga 2: [Nascita 6][Check][Sesso 1][Scadenza 6][Check][Nazionalità 3]
+            // Esempio: 800101 9 M 250101 5 ITA
+            let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})\d([A-Z]{3})/);
+            
             if(bioMatch) {
                 fill("v-dob", formatDate(bioMatch[1]));
                 fill("v-sex", bioMatch[2]);
                 fill("v-scad", formatDate(bioMatch[3]));
+                fill("v-nat", bioMatch[4]); // Nazionalità (es. ITA, DEU, ecc.)
             }
 
             // --- 2. INDIRIZZO PARSER ---
-            // Cerca la riga principale dell'indirizzo
-            let resLineIndex = lines.findIndex(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("VICOLO") || l.includes("LARGO"));
+            let resLineIndex = lines.findIndex(l => l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.includes("VIALE"));
             
             if (resLineIndex !== -1) {
                 let resLine = lines[resLineIndex];
-
-                // A volte l'indirizzo continua nella riga sotto (es. Comune e Prov a capo)
-                // Se la riga attuale è corta o non ha la provincia, guardiamo anche la successiva
                 let fullAddrText = resLine;
                 if (lines[resLineIndex + 1] && !resLine.includes("(")) {
                     fullAddrText += " " + lines[resLineIndex + 1];
                 }
 
-                // 1. VIA
+                // Via
                 let via = fullAddrText.match(/(VIA|PIAZZA|CORSO|VIALE|VICOLO|LARGO)\s+[A-Z\s\.]+/);
                 if(via) fill("v-via", via[0].trim());
                 
-                // 2. CIVICO
+                // Civico
                 let civico = fullAddrText.match(/N\.\s*(\d+[A-Z]?)/) || fullAddrText.match(/,\s*(\d+[A-Z]?)/);
                 if(civico) fill("v-civ", civico[1]);
 
-                // 3. COMUNE e PROVINCIA (Cerca pattern con parentesi)
+                // Comune e Prov
                 let cityProvMatch = fullAddrText.match(/([A-Z\s']+)\s+\(([A-Z]{2})\)/);
-                
                 if (cityProvMatch) {
-                    fill("v-com", cityProvMatch[1].trim()); // Comune
-                    fill("v-prov", cityProvMatch[2]); // Sigla Prov (senza parentesi)
-                } 
-                // Fallback: Se la provincia è su una riga da sola o in fondo
-                else {
+                    fill("v-com", cityProvMatch[1].trim());
+                    fill("v-prov", cityProvMatch[2]);
+                } else {
                     let soloProv = fullAddrText.match(/\(([A-Z]{2})\)/);
                     if(soloProv) fill("v-prov", soloProv[1]);
                 }
