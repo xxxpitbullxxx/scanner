@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V102 - Deep Bio Fix</title>
+    <title>Scanner V103 - Full Data Fix</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
@@ -48,6 +48,7 @@
             <div style="grid-column: span 2;" class="field"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
             <div style="grid-column: span 2;" class="field"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
         </div>
+
         <div class="sec-t" style="color:#FFD60A">Residenza</div>
         <div class="grid">
             <div style="grid-column: span 2;" class="field"><span class="lbl">Via / Piazza</span><div class="val" id="v-via">---</div></div>
@@ -55,13 +56,16 @@
             <div class="field"><span class="lbl">Provincia</span><div class="val" id="v-prov">---</div></div>
             <div style="grid-column: span 2;" class="field"><span class="lbl">Comune</span><div class="val" id="v-com">---</div></div>
         </div>
-        <div class="sec-t" style="color:#00E0FF">Documento</div>
+
+        <div class="sec-t" style="color:#00E0FF">Documento Completo</div>
         <div class="grid">
+            <div class="field"><span class="lbl">Tipo Doc</span><div class="val" id="v-type">---</div></div>
+            <div class="field"><span class="lbl">Emissione</span><div class="val" id="v-issue">---</div></div>
             <div style="grid-column: span 2;" class="field"><span class="lbl">Numero Documento</span><div class="val" id="v-doc">---</div></div>
             <div class="field"><span class="lbl">Nazionalità</span><div class="val" id="v-nat">---</div></div>
-            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
-            <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
             <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
+            <div class="field"><span class="lbl">Data Nascita</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
         </div>
     </div>
     <canvas id="hidden-cvs"></canvas>
@@ -77,23 +81,23 @@
 
         function fix(s, type) {
             if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
-            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/G/g,'6').replace(/D/g,'0');
+            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B').replace(/4/g,'A');
             return s;
         }
 
         async function runOCR(source) {
-            btnSnap.innerText = "ELABORAZIONE...";
+            btnSnap.innerText = "ANALISI DATI...";
             const ctx = canvas.getContext('2d');
             canvas.width = 1280;
             const scale = 1280 / (source.videoWidth || source.width);
             canvas.height = (source.videoHeight || source.height) * scale;
-            ctx.filter = 'grayscale(100%) contrast(300%) brightness(110%)';
+            ctx.filter = 'grayscale(100%) contrast(350%) brightness(110%)';
             ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
             
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                parseV102(text);
+                parseV103(text);
                 btnSnap.innerText = "SCANSIONA";
             } catch (e) { btnSnap.innerText = "ERRORE"; }
         }
@@ -111,27 +115,38 @@
             reader.readAsDataURL(file);
         });
 
-        function parseV102(raw) {
+        function parseV103(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
-            // 1. DOC & NOMI
-            let dc = clean.match(/ITA([A-Z0-9]{9})/); if(dc) fill("v-doc", dc[1]);
-            let nm = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if(nm) { fill("v-cog", nm[1]); fill("v-nom", nm[2].replace(/</g, ' ')); }
-
-            // 2. BIO (Data Nascita, Scadenza, Sesso, Nazionalità)
-            // Cerchiamo la riga biometrica con tolleranza
-            let bioRow = clean.match(/([0-9OIZSB]{6,7})([MF])([0-9OIZSB]{6,7})([A-Z0-9]{3})/);
-            if(bioRow) {
-                fill("v-dob", formatDate(fix(bioRow[1].substr(0,6), 'N')));
-                fill("v-sex", bioRow[2]);
-                fill("v-scad", formatDate(fix(bioRow[3].substr(0,6), 'N')));
-                fill("v-nat", fix(bioRow[4], 'L'));
+            // 1. ANALISI RIGA 1 (TIPO, EMISSIONE, NUMERO DOC)
+            let m1 = clean.match(/([ACI])<([A-Z0-9]{3})([A-Z0-9]{9})/);
+            if(m1) {
+                fill("v-type", (m1[1] === 'C' || m1[1] === 'I') ? "CARTA D'IDENTITÀ" : m1[1]);
+                fill("v-issue", fix(m1[2], 'L'));
+                let rc = m1[3];
+                fill("v-doc", fix(rc.substr(0,2), 'L') + fix(rc.substr(2,5), 'N') + fix(rc.substr(7,2), 'L'));
             }
 
-            // 3. RESIDENZA
+            // 2. ANALISI NOMI
+            let names = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if(names) {
+                fill("v-cog", names[1]);
+                fill("v-nom", names[2].replace(/</g, ' ').trim());
+            }
+
+            // 3. ANALISI BIOMETRICA (ESTESA)
+            // Cerca la riga che ha M o F con cifre intorno
+            let bioMatch = clean.match(/([0-9OIZSB]{6,7})([MF])([0-9OIZSB]{6,7})([A-Z0-9]{3})/);
+            if(bioMatch) {
+                fill("v-dob", formatDate(fix(bioMatch[1].substr(0,6), 'N')));
+                fill("v-sex", bioMatch[2]);
+                fill("v-scad", formatDate(fix(bioMatch[3].substr(0,6), 'N')));
+                fill("v-nat", fix(bioMatch[4], 'L'));
+            }
+
+            // 4. ANALISI RESIDENZA
             lines.forEach(l => {
                 if(l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.match(/\(([A-Z]{2})\)/)) {
                     let prov = l.match(/\(([A-Z]{2})\)/); if(prov) fill("v-prov", prov[1]);
