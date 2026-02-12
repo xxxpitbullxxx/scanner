@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V103 - Complete Fix</title>
+    <title>Scanner V104 - Clean Text</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
@@ -17,8 +17,7 @@
 
         .scroll-box { flex: 1; overflow-y: auto; padding: 12px; background: #121212; padding-bottom: 80px; }
         
-        /* BOTTONI IDENTICI */
-        .btn-main { width: 100%; padding: 16px; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 12px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; }
+        .btn-main { width: 100%; padding: 16px; border: none; font-weight: 900; border-radius: 12px; margin-bottom: 12px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; box-sizing: border-box; }
         #snap { background: #00E0FF; color: #000; }
         .btn-file-label { background: #333; color: #fff; border: 1px solid #555; }
         
@@ -43,7 +42,6 @@
 
     <div class="scroll-box">
         <button id="snap" class="btn-main">🔍 SCANSIONA DOCUMENTO</button>
-        
         <label for="file-upload" class="btn-main btn-file-label">📁 CARICA FILE O FOTO</label>
         <input type="file" id="file-upload" accept="image/*">
         
@@ -83,8 +81,16 @@
 
         function fix(s, type) {
             if(!s) return "";
-            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/T/g,'7');
-            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B');
+            if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
+            if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B').replace(/4/g,'A');
+            return s;
+        }
+
+        // Funzione per rimuovere la doppia iniziale errata (es. BBETTI -> BETTI)
+        function cleanDoubleStart(s) {
+            if (s.length > 2 && s[0] === s[1]) {
+                return s.substring(1);
+            }
             return s;
         }
 
@@ -99,7 +105,7 @@
             
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                parseV103(text);
+                parseV104(text);
                 btnSnap.innerText = "🔍 SCANSIONA DOCUMENTO";
             } catch (e) { btnSnap.innerText = "ERRORE"; }
         }
@@ -117,7 +123,7 @@
             reader.readAsDataURL(file);
         });
 
-        function parseV103(raw) {
+        function parseV104(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
@@ -126,12 +132,12 @@
             let dc = clean.match(/ITA([A-Z0-9]{9})/); if(dc) fill("v-doc", dc[1]);
             let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
             if(nm) { 
-                fill("v-cog", fix(nm[1], 'L')); 
+                let cog = fix(nm[1], 'L');
+                fill("v-cog", cleanDoubleStart(cog)); // Applica il fix della doppia iniziale
                 fill("v-nom", fix(nm[2], 'L').replace(/</g, ' ')); 
             }
 
-            // 2. BIO - Migliorato per Scadenza e Cittadinanza
-            // Pattern: 6 cifre (nascita) + 1 carattere (controllo) + Sesso + 6 cifre (scadenza) + 1 carattere + 3 lettere (Cittadinanza)
+            // 2. BIO
             let bioMatch = clean.match(/([0-9OIZSB]{6,7})([MF])([0-9OIZSB]{6,7})([A-Z0-9]{3})/);
             if(bioMatch) {
                 fill("v-dob", formatDate(fix(bioMatch[1].substr(0,6), 'N')));
