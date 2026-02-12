@@ -3,100 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V53 - Alloggiati Anchor</title>
+    <title>Scanner V54 - Real Scale</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* RESET E BASE */
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; background: #000; height: 100vh; overflow: hidden; 
-            display: flex; flex-direction: column; 
+            font-family: Arial, sans-serif; margin: 0; background: #000; 
+            height: 100vh; overflow: hidden; display: flex; flex-direction: column; 
         }
 
-        /* AREA CAMERA */
+        /* VIDEOCAMERA */
         .viewport { 
-            position: relative; flex: 1; background: #000; overflow: hidden; 
-            display: flex; justify-content: center; align-items: center;
+            position: relative; flex: 1; display: flex; 
+            justify-content: center; align-items: center; overflow: hidden;
         }
         video { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
         }
 
-        /* SAGOMA CARTA ESATTA (Proporzione ID-1: 85.60 x 53.98 mm -> Ratio ~1.58) */
+        /* SAGOMA ORIZZONTALE REALE (Ratio 1.58:1) */
         .card-frame {
             position: relative;
-            width: 85vw; 
-            height: 53.8vw; /* Mantiene il ratio corretto */
-            max-width: 500px; max-height: 316px;
-            border: 2px solid rgba(255, 255, 255, 0.8);
+            width: 90vw; /* Occupa quasi tutta la larghezza per simulare la grandezza reale */
+            aspect-ratio: 85.6 / 54; /* Proporzione esatta ID-1 */
+            border: 3px solid rgba(255, 255, 255, 0.9);
             border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.85); /* Effetto focus scuro */
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.9); /* Maschera nera attorno */
             z-index: 10;
-            pointer-events: none; /* Lascia passare i click */
+            transition: border-color 0.3s;
         }
+        .card-frame.success { border-color: #32d74b; box-shadow: 0 0 20px #32d74b, 0 0 0 1000px rgba(0,0,0,0.9); }
 
-        /* Testo Guida */
         .guide-text {
-            position: absolute; top: -40px; width: 100%; text-align: center;
-            color: #fff; font-weight: 700; font-size: 14px; letter-spacing: 1px;
-            text-shadow: 0 2px 4px #000; text-transform: uppercase;
+            position: absolute; top: -50px; width: 100%; text-align: center;
+            color: #fff; font-weight: bold; font-size: 16px; text-transform: uppercase;
+            text-shadow: 0 2px 4px #000;
         }
 
-        /* BOTTONE SCANSIONE */
+        /* LOGO ANCHOR */
+        .anchor-icon {
+            position: absolute; bottom: 10px; right: 10px; 
+            color: rgba(255,255,255,0.5); font-size: 12px; font-weight: bold;
+        }
+
+        /* TASTO SCANSIONE */
         .controls {
             position: absolute; bottom: 40px; width: 100%; text-align: center; z-index: 20;
         }
         .btn-scan {
-            background: #007AFF; color: #fff; border: none; 
-            padding: 18px 50px; border-radius: 50px; 
-            font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.5); cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .btn-scan:active { transform: scale(0.95); }
-
-        /* LOADING */
-        #loader {
-            display: none; position: absolute; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); z-index: 25;
-            background: rgba(0,0,0,0.8); padding: 20px 40px; border-radius: 12px;
-            color: #00E0FF; font-weight: bold; font-size: 14px; text-transform: uppercase;
+            background: #007AFF; color: #fff; border: none; padding: 20px 60px;
+            border-radius: 50px; font-size: 20px; font-weight: bold; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5); cursor: pointer;
         }
 
-        /* PANNELLO RISULTATI (Nascosto di base) */
-        .result-panel {
+        /* PANNELLO RISULTATI */
+        .panel {
             position: absolute; bottom: 0; left: 0; width: 100%; 
-            background: #1c1c1e; border-top: 2px solid #333;
-            border-radius: 20px 20px 0 0; 
+            background: #1c1c1e; border-top: 3px solid #32d74b;
             padding: 20px; box-sizing: border-box;
-            max-height: 85vh; overflow-y: auto;
-            transform: translateY(110%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            z-index: 30;
-            display: flex; flex-direction: column; gap: 10px;
+            transform: translateY(110%); transition: transform 0.3s ease-out;
+            z-index: 30; max-height: 80vh; overflow-y: auto;
         }
-        .result-panel.visible { transform: translateY(0); }
+        .panel.visible { transform: translateY(0); }
 
-        .panel-header { text-align: center; color: #32d74b; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; font-size: 14px; }
-
-        /* GRIGLIA CAMPI */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .full { grid-column: span 2; }
 
-        .field-box { 
-            background: #2c2c2e; padding: 10px 12px; 
-            border-radius: 8px; border-left: 4px solid #555; 
-        }
-        .field-box.ok { border-left-color: #007AFF; background: #1a222e; }
+        .field { background: #2c2c2e; padding: 10px; border-radius: 8px; }
+        .lbl { color: #888; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        .val { color: #fff; font-size: 16px; font-weight: bold; }
 
-        .lbl { font-size: 9px; color: #888; display: block; margin-bottom: 3px; text-transform: uppercase; font-weight: bold; }
-        .val { font-size: 15px; color: #fff; font-weight: 700; min-height: 18px; word-break: break-word; }
+        .btn-reset { width: 100%; padding: 15px; background: #333; color: white; border: none; border-radius: 10px; font-weight: bold; }
 
-        .btn-reset {
-            width: 100%; padding: 15px; background: #333; color: #fff; 
-            border: none; border-radius: 12px; font-weight: bold; margin-top: 10px;
-            text-transform: uppercase;
-        }
-
+        #loader { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: #00E0FF; padding: 20px; border-radius: 10px; z-index: 25; font-weight: bold; }
+        
         canvas { display: none; }
     </style>
 </head>
@@ -105,34 +84,34 @@
     <div class="viewport">
         <video id="webcam" autoplay playsinline></video>
         
-        <div class="card-frame">
-            <div class="guide-text">Inquadra il Retro</div>
+        <div class="card-frame" id="frame">
+            <div class="guide-text">Inquadra il Retro (Orizzontale)</div>
+            <div class="anchor-icon">ANCHOR V3.0</div>
         </div>
 
-        <div id="loader">Analisi Anchor in corso...</div>
+        <div id="loader">Lettura MRZ in corso...</div>
 
         <div class="controls">
             <button class="btn-scan" id="btn-snap">SCANSIONA</button>
         </div>
     </div>
 
-    <div class="result-panel" id="panel">
-        <div class="panel-header">Dati Alloggiati Web (Retro)</div>
+    <div class="panel" id="result-panel">
+        <div style="text-align:center; color:#32d74b; font-weight:bold; margin-bottom:15px;">DATI ACQUISITI CORRETTAMENTE</div>
         
         <div class="grid">
-            <div class="field-box full ok"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
-            <div class="field-box full ok"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
+            <div class="field full"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
+            <div class="field full"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
             
-            <div class="field-box ok"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
-            <div class="field-box ok"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
+            <div class="field"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
             
-            <div class="field-box full ok"><span class="lbl">Cittadinanza</span><div class="val" id="v-cit">ITALIANA</div></div>
-
-            <div class="field-box ok"><span class="lbl">Numero Doc</span><div class="val" id="v-doc">---</div></div>
-            <div class="field-box ok"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
-
-            <div class="field-box full ok"><span class="lbl">Comune Residenza</span><div class="val" id="v-com">---</div></div>
-            <div class="field-box full ok"><span class="lbl">Indirizzo</span><div class="val" id="v-via">---</div></div>
+            <div class="field"><span class="lbl">N. Documento</span><div class="val" id="v-doc">---</div></div>
+            <div class="field"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+            
+            <div class="field full"><span class="lbl">Cittadinanza</span><div class="val" id="v-cit">---</div></div>
+            
+            <div class="field full"><span class="lbl">Residenza (Extra)</span><div class="val" id="v-res">---</div></div>
         </div>
 
         <button class="btn-reset" onclick="resetScan()">Nuova Scansione</button>
@@ -144,12 +123,13 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('cvs');
         const btn = document.getElementById('btn-snap');
-        const panel = document.getElementById('panel');
+        const frame = document.getElementById('frame');
+        const panel = document.getElementById('result-panel');
         const loader = document.getElementById('loader');
 
-        // Camera ad alta risoluzione per leggere i caratteri piccoli del retro
+        // Alta risoluzione per leggere i caratteri piccoli del MRZ
         navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 2560 }, height: { ideal: 1440 } } 
+            video: { facingMode: "environment", width: { ideal: 3840 }, height: { ideal: 2160 } } 
         }).then(s => video.srcObject = s);
 
         btn.addEventListener('click', async () => {
@@ -159,108 +139,106 @@
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // Filtro ANCHOR: Alto contrasto per far risaltare il nero su azzurrino
-            ctx.filter = 'grayscale(100%) contrast(180%) brightness(100%)';
+            // Filtro Anchor: B/N e alto contrasto
+            ctx.filter = 'grayscale(100%) contrast(200%)';
             ctx.drawImage(video, 0, 0);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                const success = parseAnchor(text);
+                const ok = parseMRZ(text);
                 
                 loader.style.display = 'none';
-                if (success) {
+                if(ok) {
+                    frame.classList.add('success');
                     panel.classList.add('visible');
                 } else {
-                    alert("Dati non agganciati. Assicurati che l'immagine sia a fuoco e riprova.");
+                    alert("MRZ non trovato. Assicurati che il codice a 3 righe sia ben visibile.");
                     btn.style.display = 'inline-block';
                 }
             } catch (e) {
                 loader.style.display = 'none';
                 btn.style.display = 'inline-block';
-                alert("Errore tecnico OCR.");
+                alert("Errore tecnico.");
             }
         });
 
-        // --- LOGICA ANCHOR (SOLO RETRO) ---
-        function parseAnchor(raw) {
-            const clean = raw.toUpperCase().replace(/\s/g, ''); // Per codici MRZ
-            const lines = raw.toUpperCase().split('\n').map(l => l.trim()).filter(l => l.length > 2); // Per Indirizzo
+        // --- MOTORE ANCHOR 3-RIGHE (Specifico per la tua foto) ---
+        function parseMRZ(raw) {
+            // Pulisci tutto: niente spazi, tutto maiuscolo
+            const clean = raw.toUpperCase().replace(/\s/g, ''); 
+            
+            // Variabili dati
+            let docNum = null, dob = null, sex = null, expiry = null, surname = null, name = null, cit = "ITA";
 
-            let foundImportantData = false;
-
-            // 1. ANCHOR: MRZ (Machine Readable Zone) - Infallibile se a fuoco
-            // Cerca Cognome e Nome (Formato: COGNOME<<NOME)
-            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if (nameMatch) {
-                document.getElementById('v-cog').innerText = nameMatch[1];
-                document.getElementById('v-nom').innerText = nameMatch[2].replace(/</g, ' ');
-                foundImportantData = true;
+            // 1. CERCA RIGA 1: Inizia con C<ITA o I<ITA o A<ITA
+            // Esempio foto: C<ITACA07427WT1<<<<<<<<<<<<<<<
+            const line1Regex = /[ACI]<ITA([A-Z0-9]{9})/;
+            const match1 = clean.match(line1Regex);
+            
+            if (match1) {
+                docNum = match1[1];
+            } else {
+                // Fallback generico se non trova C<ITA
+                const docGeneric = clean.match(/ITA([A-Z0-9]{9})/);
+                if(docGeneric) docNum = docGeneric[1];
             }
 
-            // Cerca Numero Documento (Inizia con C o I, seguito da <IT o TA)
-            // Esempio: C<ITACA50322TW
-            let docMatch = clean.match(/[CI]<IT[A-Z]?([A-Z0-9]{9})/);
-            if (!docMatch) docMatch = clean.match(/ITA([A-Z0-9]{9})/); // Fallback
-            if (docMatch) {
-                document.getElementById('v-doc').innerText = docMatch[1];
-                foundImportantData = true;
-            }
+            // 2. CERCA RIGA 2: Numeri + Sesso
+            // Esempio foto: 7212158F3412156ITA<<<<<<<<<<<8
+            // Formato: [YYMMDD] [check] [Sex] [YYMMDD]
+            const line2Regex = /(\d{6})\d([MF])(\d{6})/;
+            const match2 = clean.match(line2Regex);
 
-            // Cerca Date e Sesso (Riga 2 MRZ: YYMMDD S YYMMDD)
-            // Esempio: 9912016M331201... (Nato 01/12/99 M, Scade 01/12/33)
-            let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})/);
-            if (bioMatch) {
+            if (match2) {
                 // Data Nascita
-                let d = bioMatch[1]; 
-                let y = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
-                document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
+                let d = match2[1];
+                let year = (parseInt(d.substr(0,2)) > 40) ? '19' + d.substr(0,2) : '20' + d.substr(0,2);
+                dob = `${d.substr(4,2)}/${d.substr(2,2)}/${year}`;
                 
                 // Sesso
-                document.getElementById('v-sex').innerText = bioMatch[2];
+                sex = match2[2];
 
-                // Scadenza (i 6 numeri dopo il sesso)
-                let e = bioMatch[3];
-                let ye = '20'+e.substr(0,2);
-                document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ye}`;
+                // Scadenza
+                let e = match2[3];
+                let eYear = '20' + e.substr(0,2);
+                expiry = `${e.substr(4,2)}/${e.substr(2,2)}/${eYear}`;
             }
 
-            // 2. ANCHOR: INDIRIZZO (Via/Piazza)
-            // Cerca la riga che contiene una parola chiave di via
-            let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|VICOLO)\s/));
-            if (addrLine) {
-                // Pulizia Via
-                let viaClean = addrLine.split(/,|N\.|CIV/)[0].trim(); // Prendi tutto prima del numero civico
-                document.getElementById('v-via').innerText = viaClean;
+            // 3. CERCA RIGA 3: Cognome e Nome
+            // Esempio foto: BETTI<<GIULIA<<<<<<<<<<<<<<<<<
+            const line3Regex = /([A-Z]+)<<([A-Z]+)/;
+            const match3 = clean.match(line3Regex);
 
-                // Cerca Comune e Provincia (Riga successiva o fine riga)
-                // Cerca pattern: NOME COMUNE (XX)
-                let cityRegex = /([A-Z\s']+)\s*\(?([A-Z]{2})\)?/;
-                let cityMatch = null;
-                
-                // Controlla riga corrente
-                let currentMatch = addrLine.match(cityRegex);
-                // Controlla riga successiva (più probabile)
-                let nextIdx = lines.indexOf(addrLine) + 1;
-                let nextMatch = (lines[nextIdx]) ? lines[nextIdx].match(cityRegex) : null;
-
-                // Preferisci la riga successiva se contiene la provincia (XX)
-                if (nextMatch) cityMatch = nextMatch;
-                else if (currentMatch && currentMatch[0].length < addrLine.length) cityMatch = currentMatch;
-
-                if (cityMatch) {
-                    let comune = cityMatch[1].replace(/.*N\.\s*\d+/, '').trim(); // Rimuovi residui numeri
-                    document.getElementById('v-com').innerText = comune + " (" + cityMatch[2] + ")";
-                }
+            if (match3) {
+                surname = match3[1];
+                name = match3[2];
             }
 
-            return foundImportantData;
+            // 4. RESIDENZA (Extra, via Regex)
+            let resTxt = "---";
+            const rawLines = raw.toUpperCase().split('\n');
+            const addrLine = rawLines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE)\s/));
+            if(addrLine) resTxt = addrLine.replace(/[^A-Z0-9\s,\.]/g, '').trim();
+
+            // VERIFICA FINALE
+            if (docNum && dob && surname) {
+                document.getElementById('v-doc').innerText = docNum;
+                document.getElementById('v-dob').innerText = dob;
+                document.getElementById('v-sex').innerText = sex;
+                document.getElementById('v-scad').innerText = expiry;
+                document.getElementById('v-cog').innerText = surname;
+                document.getElementById('v-nom').innerText = name;
+                document.getElementById('v-cit').innerText = cit;
+                document.getElementById('v-res').innerText = resTxt;
+                return true;
+            }
+            return false;
         }
 
         function resetScan() {
             panel.classList.remove('visible');
+            frame.classList.remove('success');
             btn.style.display = 'inline-block';
-            // Resetta i campi
-            document.querySelectorAll('.val').forEach(el => el.innerText = '---');
         }
     </script>
 </body>
