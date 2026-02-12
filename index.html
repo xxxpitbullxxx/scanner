@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V100 - Full Mapping</title>
+    <title>Scanner V101 - Fixed Engine</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 0; background: #000; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; color: white; }
-        
-        /* Area Visualizzazione Identica per Cam e File */
-        .cam-box { position: relative; flex: 0 0 45%; overflow: hidden; border-bottom: 2px solid #333; background: #111; }
+        .cam-box { position: relative; flex: 0 0 45%; overflow: hidden; border-bottom: 2px solid #333; background: #000; }
         video, #preview-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         #preview-img { display: none; }
 
-        /* Rettangoli di Guida Universali */
         .guide-res { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); width: 94%; height: 14%; border: 2px solid #FFD60A; border-radius: 4px; z-index: 10; pointer-events: none; }
         .guide-mrz { position: absolute; top: 82%; left: 50%; transform: translate(-50%, -50%); width: 94%; height: 22%; border: 3px solid #00E0FF; border-radius: 4px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.8); pointer-events: none; }
         .label-guide { position: absolute; font-size: 10px; font-weight: bold; padding: 2px 5px; top: -18px; left: 0; background: rgba(0,0,0,0.5); }
@@ -34,16 +31,16 @@
     </style>
 </head>
 <body>
-    <div class="cam-box" id="display-area">
+    <div class="cam-box">
         <video id="webcam" autoplay playsinline></video>
         <img id="preview-img">
         <div class="guide-res"><span class="label-guide" style="color:#FFD60A">AREA INDIRIZZO</span></div>
-        <div class="guide-mrz"><span class="label-guide" style="color:#00E0FF">ZONA MRZ (SOTTO IL BARCODE)</span></div>
+        <div class="guide-mrz"><span class="label-guide" style="color:#00E0FF">ZONA MRZ</span></div>
     </div>
 
     <div class="scroll-box">
-        <button id="snap" class="btn-scan">SCANSIONA CAMERA</button>
-        <label for="file-upload" class="btn-file">📁 CARICA E ADATTA FOTO</label>
+        <button id="snap" class="btn-scan">SCANSIONA</button>
+        <label for="file-upload" class="btn-file">📁 CARICA FOTO</label>
         <input type="file" id="file-upload" accept="image/*">
         
         <div class="sec-t" style="color:#00E0FF">Anagrafica</div>
@@ -74,28 +71,35 @@
         const btnSnap = document.getElementById('snap');
         const fileUpload = document.getElementById('file-upload');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } })
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } })
             .then(s => video.srcObject = s);
 
-        // LOGICA DI SCANSIONE UNIFICATA
         async function runOCR(source) {
+            btnSnap.innerText = "ELABORAZIONE...";
             const ctx = canvas.getContext('2d');
-            // Sincronizza il canvas con la visualizzazione reale
-            canvas.width = source.videoWidth || source.width;
-            canvas.height = source.videoHeight || source.height;
+            
+            // NORMALIZZAZIONE: Forza il canvas a una risoluzione gestibile (es. 1280px)
+            const scale = 1280 / (source.videoWidth || source.width);
+            canvas.width = 1280;
+            canvas.height = (source.videoHeight || source.height) * scale;
+            
             ctx.filter = 'grayscale(100%) contrast(300%)';
             ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
             
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                parseV100(text);
-                btnSnap.innerText = "SCANSIONA CAMERA";
-            } catch (e) { btnSnap.innerText = "ERRORE ANALISI"; }
+                parseV101(text);
+                btnSnap.innerText = "SCANSIONA";
+            } catch (e) { 
+                btnSnap.innerText = "ERRORE"; 
+                console.error(e);
+            }
         }
 
         btnSnap.addEventListener('click', () => {
-            btnSnap.innerText = "ANALISI...";
-            runOCR(video);
+            // Se l'immagine caricata è visibile, elabora quella, altrimenti il video
+            const activeSource = previewImg.style.display === "block" ? previewImg : video;
+            runOCR(activeSource);
         });
 
         fileUpload.addEventListener('change', (e) => {
@@ -106,32 +110,29 @@
                 previewImg.onload = () => {
                     video.style.display = "none";
                     previewImg.style.display = "block";
-                    runOCR(previewImg);
+                    runOCR(previewImg); // Avvia automaticamente l'analisi al caricamento
                 };
                 previewImg.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
 
-        function parseV100(raw) {
+        function parseV101(raw) {
             const up = raw.toUpperCase();
             const clean = up.replace(/\s/g, '');
             const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
 
-            // Estrazione Nome/Cognome
             let nm = clean.match(/([A-Z]+)<<([A-Z]+)/);
             if(nm) { fill("v-cog", nm[1]); fill("v-nom", nm[2].replace(/</g, ' ')); }
 
-            // Estrazione Documento
             let dc = clean.match(/ITA([A-Z0-9]{9})/);
             if(dc) fill("v-doc", dc[1]);
 
-            // Estrazione Residenza
             lines.forEach(l => {
                 if(l.includes("VIA") || l.includes("PIAZZA") || l.match(/\(([A-Z]{2})\)/)) {
                     let prov = l.match(/\(([A-Z]{2})\)/); if(prov) fill("v-prov", prov[1]);
                     let civ = l.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || l.match(/\s(\d+[A-Z]?)$/); if(civ) fill("v-civ", civ[1]);
-                    let via = l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO)\s+[A-Z\s\.]+/); if(via) fill("v-via", via[0].trim());
+                    let via = l.match(/(VIA|PIAZZA|CORSO|LARGO|VIALE)\s+[A-Z\s\.]+/); if(via) fill("v-via", via[0].trim());
                     let com = l.match(/([A-Z\s']+)\s+\(/); if(com) fill("v-com", com[1].trim());
                 }
             });
