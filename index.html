@@ -55,6 +55,7 @@
         .btn-primary { background: #0f766e; color: white; }
         .btn-success { background: #10b981; color: white; }
         .btn-danger { background: #ef4444; color: white; }
+        .btn-secondary { background: #334155; color: white; border: 1px solid #475569; }
         .btn-primary:active:not(:disabled) { transform: scale(0.97); }
         .btn-primary:disabled, .btn-success:disabled { background: #cbd5e1 !important; color: #94a3b8 !important; cursor: not-allowed; box-shadow: none; }
         
@@ -116,25 +117,25 @@
         const TRANSLATIONS = {
             it: { 
                 welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
-                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento. Il sistema leggerà automaticamente i dati dalla C.I. Elettronica.", photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA FOTO E PROCEDI", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
+                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento per autocompilare o carica una foto.", photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA FOTO E PROCEDI", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
                 warning_save: "Carica le foto e compila tutti i campi obbligatori per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
                 tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
                 label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_prov: "Prov.", label_citizenship: "Cittadinanza", label_cit_ph: "Specifica Cittadinanza...", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_address: "Via / Piazza", label_civic: "Civico", label_issued: "Rilasciato da", label_issued_ph: "Es. Milano...", label_docnum: "N. Documento", label_expiry: "Scadenza",
                 thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
                 data_true_label: "Dichiaro che i dati inseriti sono reali", clear_sign: "CANCELLA FIRMA", sign_title: "Firma e Tassa",
-                ocr_btn: "🔍 SCANSIONA DOCUMENTO", ocr_processing: "ELABORAZIONE..."
+                ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO DOCUMENTO"
             },
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
-                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document. The system will read data from Electronic ID.", photo_req: "PHOTO REQUIRED", confirm_btn: "CONFIRM & PROCEED", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
+                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document to autofill or upload a photo.", photo_req: "PHOTO REQUIRED", confirm_btn: "CONFIRM & PROCEED", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
                 warning_save: "Upload photos and fill all fields to save", finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back",
                 tax_info: "In accordance with local regulations, if you booked via Booking.com, the tourist tax must be paid on-site upon arrival (cash), or via the secure credit/debit card link I will send you shortly. If you booked via Airbnb, the tax is already included.",
                 doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "Driving License",
                 label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_prov: "Prov.", label_citizenship: "Citizenship", label_cit_ph: "Specify Citizenship...", label_res_city: "Residence City", label_res_prov: "Prov.", label_address: "Address", label_civic: "No.", label_issued: "Issued by", label_issued_ph: "Ex. London...", label_docnum: "Doc Number", label_expiry: "Expiry Date",
                 thanks: "Thank you", success_msg: "Check-in successfully completed.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
                 data_true_label: "I declare that the data entered is true", clear_sign: "CLEAR SIGNATURE", sign_title: "Signature",
-                ocr_btn: "🔍 SCAN DOCUMENT", ocr_processing: "PROCESSING..."
+                ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD DOC PHOTO"
             },
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Pour faciliter votre arrivée, je vous demande de remplir l'enregistrement en ligne.", 
@@ -145,18 +146,18 @@
                 label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Lieu de naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_cit_ph: "Préciser...", label_res_city: "Ville de résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_issued: "Délivré par", label_issued_ph: "Ex. Paris...", label_docnum: "N° Document", label_expiry: "Expiration",
                 thanks: "Merci", success_msg: "Enregistrement terminé avec succès.", exit: "Sortie", guest_list: "Invités", cloud_save: "Sauvegarde...",
                 data_true_label: "Je déclare que les données sont réelles", clear_sign: "EFFACER", sign_title: "Signature",
-                ocr_btn: "🔍 SCANNER DOCUMENT", ocr_processing: "TRAITEMENT..."
+                ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "📁 TÉLÉCHARGER PHOTO"
             },
             es: { 
                 welcome: "¡Hola! Soy Giulia. Para facilitar su llegada, le pido que complete el registro en línea.", 
-                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee el documento.", photo_req: "FOTO OBLIGATORIA", confirm_btn: "CONFIRMAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
+                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee il reverso per l'autocompilazione.", photo_req: "FOTO OBLIGATORIA", confirm_btn: "CONFIRMAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
                 warning_save: "Cargue las fotos y complete los campos para guardar", finish_btn: "TERMINAR", verify: "Verificar datos", front: "Frente", back_doc: "Dorso",
                 tax_info: "De acuerdo con las normativas locales, si reservó a través de Booking.com, la tasa turística debe pagarse en el lugar a la llegada (en efectivo) o mediante el enlace seguro de tarjeta de crédito/débito que le enviaré en breve. Si reservó a través de Airbnb, la tasa ya está incluida.",
                 doc_type: "Tipo de Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia de Conducir",
                 label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Lugar de nacimiento", label_prov: "Prov.", label_citizenship: "Ciudadanía", label_cit_ph: "Especificar...", label_res_city: "Ciudad de residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Madrid...", label_docnum: "N° Documento", label_expiry: "Caducidad",
                 thanks: "Gracias", success_msg: "Registro completado con éxito.", exit: "Salir", guest_list: "Huéspedes", cloud_save: "Guardando...",
                 data_true_label: "Declaro que los datos son reales", clear_sign: "BORRAR", sign_title: "Firma",
-                ocr_btn: "🔍 ESCANEAR DOCUMENTO", ocr_processing: "PROCESANDO..."
+                ocr_btn: "ESCANEAR", ocr_processing: "PROCESANDO...", ocr_file_btn: "📁 CARGAR FOTO"
             },
             de: { 
                 welcome: "Hallo! Ich bin Giulia. Um Ihre Ankunft zu erleichtern, bitte ich Sie, den Online-Check-in abzuschließen.", 
@@ -167,7 +168,7 @@
                 label_surname: "Nachname", label_name: "Vorname", label_sex: "Geschlecht", label_birth: "Geburtsdatum", label_city: "Geburtsort", label_prov: "Prov.", label_citizenship: "Staatsangehörigkeit", label_cit_ph: "Angeben...", label_res_city: "Wohnort", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "Nr.", label_issued: "Ausgestellt von", label_issued_ph: "Z.B. Berlin...", label_docnum: "Dokumentnummer", label_expiry: "Ablaufdatum",
                 thanks: "Danke", success_msg: "Check-in erfolgreich abgeschlossen.", exit: "Beenden", guest_list: "Gäste", cloud_save: "Speichern...",
                 data_true_label: "Ich erkläre, dass die Daten echt sind", clear_sign: "LÖSCHEN", sign_title: "Unterschrift",
-                ocr_btn: "🔍 DOKUMENT SCANNEN", ocr_processing: "VERARBEITUNG..."
+                ocr_btn: "SCANNEN", ocr_processing: "VERARBEITUNG...", ocr_file_btn: "📁 FOTO HOCHLADEN"
             }
         };
 
@@ -181,7 +182,8 @@
                 lock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />,
                 scan: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10" />,
                 copy: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />,
-                download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
+                upload: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             };
             return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name] || icons.camera}</svg>;
         };
@@ -214,7 +216,7 @@
         );
 
         // --- SIGNATURE PAD COMPONENT (Outside App) ---
-        const SignaturePad = ({ canvasRef, onClear }) => {
+        const SignaturePad = ({ canvasRef }) => {
             useEffect(() => {
                 const canvas = canvasRef.current;
                 if (!canvas) return;
@@ -290,6 +292,7 @@
             const [dates, setDates] = useState({ arrival: new Date().toISOString().split('T')[0], departure: "" });
             const [adminLink, setAdminLink] = useState("");
             const [searchTerm, setSearchTerm] = useState("");
+            const [ocrProcessing, setOcrProcessing] = useState(false);
 
             const [formData, setFormData] = useState({
                 surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "",
@@ -300,6 +303,7 @@
             const [dataTrue, setDataTrue] = useState(false);
             const sigCanvasRef = useRef(null);
             const videoRef = useRef(null); // Reference for camera
+            const fileInputRef = useRef(null); // Reference for file input
 
             const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'tuscan-retreats-portal';
@@ -340,17 +344,19 @@
                 const params = new URLSearchParams(window.location.search);
                 const d = params.get('d'); 
                 if (d) {
+                    // Check localstorage
                     if (localStorage.getItem(`checkin_done_${d}`)) {
                          try {
                             const decoded = JSON.parse(atob(d)); 
                             if (PROPERTIES[decoded.p]) {
                                 setProperty(PROPERTIES[decoded.p]);
                                 setBookingDetails({ guestName: decoded.n || "Ospite", doorCode: decoded.c });
-                                setStep('success'); 
+                                setStep('success'); // Redirect to success
                                 return;
                             }
                         } catch (e) {}
                     }
+
                     try {
                         const decoded = JSON.parse(atob(d)); 
                         if (PROPERTIES[decoded.p]) {
@@ -394,6 +400,7 @@
 
             const saveToCloud = async () => {
                 setIsSaving(true);
+                // Capture Signature
                 let signatureData = null;
                 if(sigCanvasRef.current) {
                     signatureData = sigCanvasRef.current.toDataURL();
@@ -499,7 +506,7 @@
             };
 
             const cleanDoubleStart = (s) => {
-                if (s.length > 2 && s[0] === s[1]) {
+                if (s && s.length > 2 && s[0] === s[1]) {
                     return s.substring(1);
                 }
                 return s;
@@ -516,16 +523,18 @@
                 const clean = up.replace(/\s/g, '');
                 const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 5);
                 let newForm = { ...formData };
+                let foundAny = false;
 
                 // 1. DOC & NOMI
                 let dc = clean.match(/ITA([A-Z0-9]{9})/); 
-                if(dc) newForm.docNumber = dc[1];
+                if(dc) { newForm.docNumber = dc[1]; foundAny = true; }
 
                 let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
                 if(nm) { 
                     let cog = fixOCRText(nm[1], 'L');
                     newForm.surname = cleanDoubleStart(cog);
                     newForm.name = fixOCRText(nm[2], 'L').replace(/</g, ' '); 
+                    foundAny = true;
                 }
 
                 // 2. BIO
@@ -534,38 +543,52 @@
                     newForm.birthDate = formatDateOCR(fixOCRText(bioMatch[1].substr(0,6), 'N'));
                     newForm.sex = bioMatch[2];
                     newForm.expiryDate = formatDateOCR(fixOCRText(bioMatch[3].substr(0,6), 'N'));
+                    foundAny = true;
                 }
 
                 // 3. RESIDENZA
                 lines.forEach(l => {
                     if(l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO") || l.match(/\(([A-Z]{2})\)/)) {
-                        let prov = l.match(/\(([A-Z]{2})\)/); if(prov) newForm.residenceProvince = prov[1];
+                        let prov = l.match(/\(([A-Z]{2})\)/); if(prov) { newForm.residenceProvince = prov[1]; foundAny = true; }
                         
                         let civ = l.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || l.match(/\s(\d+[A-Z]?)$/); 
-                        if(civ) newForm.houseNumber = civ[1];
+                        if(civ) { newForm.houseNumber = civ[1]; foundAny = true; }
                         
                         let via = l.match(/(VIA|PIAZZA|CORSO|LARGO|VIALE)\s+[A-Z\s\.]+/); 
-                        if(via) newForm.residenceAddress = via[0].trim();
+                        if(via) { newForm.residenceAddress = via[0].trim(); foundAny = true; }
                         
                         let com = l.match(/([A-Z\s']+)\s+\(/); 
-                        if(com) newForm.residenceCity = com[1].trim();
+                        if(com) { newForm.residenceCity = com[1].trim(); foundAny = true; }
                     }
                 });
                 
                 setFormData(newForm);
-                setIsScanning(false); // Stop scanning automatically on success
-                alert("Dati estratti con successo! Verifica la correttezza.");
+                setOcrProcessing(false);
+                setIsScanning(false);
+                if(foundAny) {
+                    alert("Dati rilevati! Verifica i campi.");
+                    setStep('manual_entry');
+                } else {
+                    alert("Nessun dato rilevato automaticamente. Riprova o inserisci manualmente.");
+                }
             };
 
             const runOCR = async (source) => {
                 const btn = document.getElementById('snap-btn');
                 if(btn) btn.innerText = t.ocr_processing;
+                setOcrProcessing(true);
                 
                 const canvas = document.getElementById('ocr-canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = 1280;
-                const scale = 1280 / (source.videoWidth || source.width);
-                canvas.height = (source.videoHeight || source.height) * scale;
+                
+                // Handle image vs video source dimensions
+                let w = source.videoWidth || source.width;
+                let h = source.videoHeight || source.height;
+                
+                const scale = 1280 / w;
+                canvas.height = h * scale;
+                
                 ctx.filter = 'grayscale(100%) contrast(300%) brightness(110%)';
                 ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
                 
@@ -573,9 +596,26 @@
                     const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
                     parseV104(text);
                 } catch (e) { 
-                    alert("Errore scansione, riprova o inserisci manualmente.");
+                    alert("Errore elaborazione immagine.");
+                    setOcrProcessing(false);
                     setIsScanning(false);
                 }
+            };
+            
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                setOcrProcessing(true);
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        runOCR(img);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
             };
 
             const startCamera = async () => {
@@ -587,8 +627,9 @@
                         });
                         if (videoRef.current) videoRef.current.srcObject = stream;
                     } catch (err) {
-                        alert("Impossibile accedere alla fotocamera");
-                        setIsScanning(false);
+                        console.error("Camera error:", err);
+                        // Fallback or alert if camera fails (e.g. on http localhost without trust flags)
+                        // alert("Impossibile accedere alla fotocamera. Usa il caricamento file.");
                     }
                 }, 500);
             };
@@ -760,13 +801,10 @@
                                                 <CopyField label="Nome" value={g.name} />
                                                 <CopyField label="Sesso" value={g.sex} />
                                                 <CopyField label="Data Nascita" value={formatDateIT(g.birthDate)} />
-                                                <CopyField label="Luogo Nascita" value={g.birthCity} />
-                                                <CopyField label="Prov. Nascita" value={g.birthProvince} />
-
+                                                <div className="col-span-2"><CopyField label="Luogo Nascita" value={`${g.birthCity} ${g.birthProvince ? '('+g.birthProvince+')' : ''}`} /></div>
                                                 <div className="col-span-2"><CopyField label="Cittadinanza" value={g.citizenship === 'ALTRO' ? g.citizenshipManual : g.citizenship} /></div>
-                                                <div className="col-span-2"><CopyField label="Indirizzo" value={g.residenceAddress} /></div>
+                                                <div className="col-span-2"><CopyField label="Indirizzo Residenza" value={g.residenceAddress} /></div>
                                                 <CopyField label="N. Civico" value={g.houseNumber} />
-                                                <CopyField label="CAP" value="" />
                                                 <CopyField label="Comune Residenza" value={g.residenceCity} />
                                                 <CopyField label="Prov. Residenza" value={g.residenceProvince} />
                                                 
@@ -879,6 +917,23 @@
                         )}
                         </>
                     )}
+                    
+                    {/* Ocr File Button always available for electronic/passport too */}
+                    {docType !== 'paper' && docType !== 'license' && !isScanning && (
+                         <div className="mb-4">
+                            <button onClick={() => fileInputRef.current.click()} className="btn btn-secondary w-2/3 mx-auto py-3 uppercase font-bold flex flex-row items-center justify-center shadow-lg text-xs gap-2 rounded-full">
+                                {t.ocr_file_btn}
+                            </button>
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                ref={fileInputRef} 
+                                onChange={handleFileUpload} 
+                                style={{display: 'none'}} 
+                            />
+                            {ocrProcessing && <p className="text-xs text-blue-600 font-bold mt-2 animate-pulse">{t.ocr_processing}</p>}
+                        </div>
+                    )}
 
                     {!isScanning && (
                         <div className="space-y-4 flex-1 text-center text-center mt-4">
@@ -913,8 +968,10 @@
                             </div>
                             
                             {/* GRIGLIA CITTA NASCITA E PROVINCIA */}
-                            <div><label className="input-label text-left ml-1">{t.label_city}</label><input className="input-field" value={formData.birthCity} onChange={e=>setFormData({...formData,birthCity: e.target.value.toUpperCase()})} required /></div>
-                            <div><label className="input-label text-left ml-1">{t.label_prov}</label><input className="input-field text-center uppercase" maxLength="2" value={formData.birthProvince} onChange={e=>setFormData({...formData, birthProvince: e.target.value.toUpperCase()})} placeholder="PR" /></div>
+                            <div className="grid grid-cols-4 gap-2 text-center text-center">
+                                <div className="col-span-3"><label className="input-label text-left ml-1">{t.label_city}</label><input className="input-field" value={formData.birthCity} onChange={e=>setFormData({...formData,birthCity: e.target.value.toUpperCase()})} required /></div>
+                                <div><label className="input-label text-left ml-1">{t.label_prov}</label><input className="input-field text-center uppercase" maxLength="2" value={formData.birthProvince} onChange={e=>setFormData({...formData, birthProvince: e.target.value.toUpperCase()})} placeholder="PR" /></div>
+                            </div>
 
                             <div><label className="input-label">{t.label_citizenship}</label><select className="input-field bg-white" value={formData.citizenship} onChange={e=>setFormData({...formData, citizenship: e.target.value.toUpperCase()})}><option value="ITALIANA">ITALIANA</option><option value="FRANCESE">FRANCESE</option><option value="INGLESE">INGLESE</option><option value="SPAGNOLA">SPAGNOLA</option><option value="TEDESCA">TEDESCA</option><option value="ALTRO">ALTRO</option></select>{formData.citizenship === 'ALTRO' && <input className="input-field mt-2" placeholder={t.label_cit_ph} value={formData.citizenshipManual} onChange={e=>setFormData({...formData, citizenshipManual: e.target.value.toUpperCase()})} />}</div>
                             
