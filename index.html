@@ -3,328 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V69 - Sync</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <title>Scanner V70 - Auto</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        /* STRUTTURA */
-        body { 
-            margin: 0; padding: 0; background: #000; 
-            height: 100vh; width: 100vw; overflow: hidden; 
-            font-family: Arial, sans-serif;
-            display: flex; align-items: center; justify-content: center;
+        /* RESET & LAYOUT */
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
-        /* CONTENITORE ROTANTE (Contiene Video + Rettangoli) */
-        #stage {
-            position: relative;
-            width: 100vw; height: 100vh;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-            transform-origin: center center;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        /* VIDEO / IMMAGINE */
-        #media-layer {
+        /* VIDEO A TUTTO SCHERMO */
+        #cam-view {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
         }
-        video, img#uploaded-view { 
+        video { 
             width: 100%; height: 100%; object-fit: cover; 
         }
-        img#uploaded-view { display: none; } /* Nascosto finché non si carica un file */
 
-        /* RETTANGOLI DI GUIDA (Z-Index sopra il video) */
-        #overlay-layer {
-            position: absolute; z-index: 10;
-            width: 80vw; aspect-ratio: 1.58; /* Proporzione Carta */
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 15px;
-            box-shadow: 0 0 0 4000px rgba(0,0,0,0.85); /* Maschera Scura */
-            pointer-events: none;
+        /* SAGOMA GUIDA (Semplice) */
+        .guide-box {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85vw; /* Occupa quasi tutta la larghezza */
+            aspect-ratio: 1.58; /* Proporzione ID-1 */
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.8); /* Maschera nera esterna */
+            z-index: 10; pointer-events: none;
         }
-        
-        /* ZONA INDIRIZZO (Gialla) */
-        .zone-addr {
-            position: absolute; top: 15%; left: 2%; width: 96%; height: 25%;
-            border: 2px solid #FFD60A; background: rgba(255, 214, 10, 0.1);
-            border-radius: 5px;
-        }
-        .tag-addr { background: #FFD60A; color: #000; font-size: 9px; padding: 2px; position: absolute; top: -14px; left: 0; font-weight: bold;}
-
-        /* ZONA MRZ (Blu) */
-        .zone-mrz {
-            position: absolute; bottom: 5%; left: 2%; width: 96%; height: 35%;
-            border: 2px solid #00E0FF; background: rgba(0, 224, 255, 0.1);
-            border-radius: 5px;
-        }
-        .tag-mrz { background: #00E0FF; color: #000; font-size: 9px; padding: 2px; position: absolute; top: -14px; left: 0; font-weight: bold;}
-
-        /* UI FISSA (Non ruota) */
-        #ui-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 100; pointer-events: none;
+        .guide-text {
+            position: absolute; top: -30px; width: 100%; text-align: center;
+            color: #fff; font-weight: bold; font-size: 14px; text-transform: uppercase; text-shadow: 0 1px 3px #000;
         }
 
-        /* BOTTONI (Cliccabili) */
-        .btn-group {
-            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-            display: flex; flex-direction: column; gap: 20px; pointer-events: auto;
+        /* CONTROLLI (Sempre visibili) */
+        .controls {
+            position: absolute; bottom: 30px; width: 100%; z-index: 50;
+            display: flex; justify-content: space-around; align-items: center;
         }
-        .btn {
-            width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; cursor: pointer; color: #fff; 
-            text-align: center; font-size: 10px; box-shadow: 0 4px 10px #000;
-        }
-        .btn-shot { background: rgba(255,0,0,0.6); font-size: 14px; }
-        .btn-upload { background: rgba(0,122,255,0.6); }
-        .btn-rotate { background: #333; font-size: 24px; }
 
-        /* DEBUG PREVIEW (Cosa vede l'AI) */
-        #debug-canvas {
-            position: absolute; bottom: 10px; left: 10px; 
-            width: 120px; border: 2px solid red; background: #000;
-            z-index: 150; display: none; /* Attiva se vuoi vedere cosa legge */
+        .btn-capture {
+            width: 80px; height: 80px; border-radius: 50%; background: #fff;
+            border: 4px solid #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-capture:active { transform: scale(0.95); background: #eee; }
+
+        .btn-upload {
+            background: #333; color: #fff; padding: 10px 20px; border-radius: 20px;
+            font-size: 12px; font-weight: bold; border: 1px solid #666; cursor: pointer;
         }
 
         /* LOADING */
         #loader {
-            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 20px; z-index: 200;
-            border-radius: 10px; font-weight: bold; text-align: center; pointer-events: auto;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 100; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: #00E0FF; font-size: 18px; font-weight: bold; text-align: center;
         }
 
         /* RISULTATI */
         #results {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; z-index: 300; display: none; overflow-y: auto;
-            flex-direction: column; padding: 15px; pointer-events: auto;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #121212; z-index: 200; display: none; overflow-y: auto; padding: 20px;
         }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .full { grid-column: span 2; }
-        .field { background: #222; padding: 10px; border-left: 4px solid #00E0FF; border-radius: 5px; }
-        .lbl { color: #888; font-size: 9px; display: block; }
-        .val { color: #fff; font-size: 15px; font-weight: bold; }
-        .btn-close { width: 100%; padding: 15px; margin-top: 20px; background: #444; color: #fff; border: none; font-size: 18px; cursor: pointer;}
+        .res-title { color: #32d74b; margin-bottom: 20px; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full { grid-column: span 2; }
+        .field { background: #1f1f1f; padding: 12px; border-radius: 8px; border-left: 4px solid #007AFF; }
+        .lbl { color: #888; font-size: 10px; display: block; margin-bottom: 4px; text-transform: uppercase; }
+        .val { color: #fff; font-size: 16px; font-weight: bold; word-break: break-word; }
+
+        .btn-reset { width: 100%; padding: 15px; margin-top: 20px; background: #444; color: #fff; border: none; font-size: 18px; border-radius: 10px; }
+
         #file-input { display: none; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="stage">
-        <div id="media-layer">
-            <video id="webcam" autoplay playsinline muted></video>
-            <img id="uploaded-view">
-        </div>
-        
-        <div id="overlay-layer">
-            <div class="zone-addr"><span class="tag-addr">INDIRIZZO (Giallo)</span></div>
-            <div class="zone-mrz"><span class="tag-mrz">CODICI MRZ (Blu)</span></div>
-        </div>
+    <div id="cam-view">
+        <video id="video" autoplay playsinline muted></video>
     </div>
 
-    <div id="ui-layer">
-        <div class="btn-group">
-            <button class="btn btn-rotate" onclick="rotateStage()">↻</button>
-            <button class="btn btn-shot" id="snap-btn">SCATTA</button>
-            <button class="btn btn-upload" onclick="document.getElementById('file-input').click()">CARICA<br>FOTO</button>
-        </div>
-        <canvas id="debug-canvas"></canvas>
+    <div class="guide-box">
+        <div class="guide-text">INQUADRA IL RETRO QUI</div>
     </div>
+
+    <div class="controls">
+        <button class="btn-upload" onclick="document.getElementById('file-input').click()">CARICA<br>FILE</button>
+        <div class="btn-capture" id="snap-btn"></div>
+        <div style="width: 60px;"></div> </div>
 
     <input type="file" id="file-input" accept="image/*">
 
-    <div id="loader">ANALISI IN CORSO...<br><small>Attendere prego</small></div>
-
-    <div id="results">
-        <h3 style="color:#32d74b; text-align:center;">DATI ESTRATTI (RETRO)</h3>
-        <div class="grid">
-            <div class="field full"><span class="lbl">COGNOME</span><span class="val" id="v-cog">---</span></div>
-            <div class="field full"><span class="lbl">NOME</span><span class="val" id="v-nom">---</span></div>
-            <div class="field"><span class="lbl">NASCITA</span><span class="val" id="v-dob">---</span></div>
-            <div class="field"><span class="lbl">SESSO</span><span class="val" id="v-sex">---</span></div>
-            <div class="field full"><span class="lbl">NUMERO DOC</span><span class="val" id="v-doc">---</span></div>
-            <div class="field"><span class="lbl">SCADENZA</span><span class="val" id="v-scad">---</span></div>
-            <div class="field"><span class="lbl">CITTADINANZA</span><span class="val" id="v-cit">ITA</span></div>
-            
-            <div class="field full"><span class="lbl">VIA</span><span class="val" id="addr-via">---</span></div>
-            <div class="field"><span class="lbl">CIVICO</span><span class="val" id="addr-civ">---</span></div>
-            <div class="field"><span class="lbl">COMUNE</span><span class="val" id="addr-com">---</span></div>
-            <div class="field"><span class="lbl">PROVINCIA</span><span class="val" id="addr-prov">---</span></div>
-        </div>
-        <button class="btn-close" onclick="location.reload()">CHIUDI</button>
+    <div id="loader">
+        <div>ANALISI INTELLIGENTE...</div>
+        <div style="font-size:12px; color:#888; margin-top:10px;" id="status-text">Sto cercando l'orientamento giusto</div>
     </div>
 
-    <script>
-        const stage = document.getElementById('stage');
-        const video = document.getElementById('webcam');
-        const imgView = document.getElementById('uploaded-view');
-        const debugCanvas = document.getElementById('debug-canvas');
-        const fileInput = document.getElementById('file-input');
-        const loader = document.getElementById('loader');
-        const snapBtn = document.getElementById('snap-btn');
-
-        let rotation = 0;
-        let mode = 'CAMERA'; // CAMERA o FILE
-
-        // 1. AVVIO CAMERA
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
-        }).then(stream => {
-            video.srcObject = stream;
-        }).catch(e => console.log("Camera non disponibile, usa Carica Foto"));
-
-        // 2. ROTAZIONE SINCRONIZZATA
-        function rotateStage() {
-            rotation = (rotation + 90) % 360;
-            // Ruota tutto il contenitore (video + rettangoli)
-            stage.style.transform = `rotate(${rotation}deg)`;
+    <div id="results">
+        <h2 class="res-title">DATI ESTRATTI</h2>
+        <div class="grid">
+            <div class="field full"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
+            <div class="field full"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
+            <div class="field"><span class="lbl">NASCITA</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">SESSO</span><div class="val" id="v-sex">---</div></div>
+            <div class="field full"><span class="lbl">DOCUMENTO</span><div class="val" id="v-doc">---</div></div>
+            <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
+            <div class="field"><span class="lbl">CITTADINANZA</span><div class="val" id="v-cit">ITA</div></div>
             
-            // Adattamento Dimensioni
-            if(rotation === 90 || rotation === 270) {
-                stage.style.width = "100vh"; 
-                stage.style.height = "100vw";
-            } else {
-                stage.style.width = "100vw"; 
-                stage.style.height = "100vh";
+            <div class="field full"><span class="lbl">INDIRIZZO</span><div class="val" id="v-via">---</div></div>
+            <div class="field"><span class="lbl">CIVICO</span><div class="val" id="v-civ">---</div></div>
+            <div class="field full"><span class="lbl">COMUNE</span><div class="val" id="v-com">---</div></div>
+            <div class="field"><span class="lbl">PROVINCIA</span><div class="val" id="v-prov">---</div></div>
+        </div>
+        <button class="btn-reset" onclick="location.reload()">NUOVA SCANSIONE</button>
+    </div>
+
+    <canvas id="cvs"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('cvs');
+        const loader = document.getElementById('loader');
+        const statusText = document.getElementById('status-text');
+        const results = document.getElementById('results');
+
+        // 1. AVVIO CAMERA PIÙ ROBUSTO POSSIBILE
+        async function startCamera() {
+            try {
+                // Chiediamo la massima risoluzione possibile
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 4096 },
+                        height: { ideal: 2160 }
+                    },
+                    audio: false
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Errore fotocamera. Usa il tasto 'Carica File'.");
             }
         }
+        startCamera();
 
-        // 3. GESTIONE CARICAMENTO FILE
-        fileInput.addEventListener('change', (e) => {
-            if(e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    imgView.src = evt.target.result;
-                    imgView.style.display = 'block';
-                    video.style.display = 'none';
-                    mode = 'FILE';
-                    // Reset rotazione quando carichi un file nuovo
-                    rotation = 0;
-                    stage.style.transform = `rotate(0deg)`;
-                    stage.style.width = "100vw"; stage.style.height = "100vh";
-                };
-                reader.readAsDataURL(file);
+        // FULLSCREEN AL CLICK
+        document.body.addEventListener('click', () => {
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+        }, {once: true});
+
+        // 2. GESTIONE INPUT (Scatto o File)
+        document.getElementById('snap-btn').addEventListener('click', () => processImage(video));
+        
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            if(e.target.files[0]) {
+                const img = new Image();
+                img.onload = () => processImage(img);
+                img.src = URL.createObjectURL(e.target.files[0]);
             }
         });
 
-        // 4. SCATTO ED ELABORAZIONE
-        snapBtn.addEventListener('click', () => {
-            loader.style.display = 'block';
+        // 3. MOTORE "BRUTE FORCE" (Prova a ruotare l'immagine finché non legge)
+        async function processImage(source) {
+            loader.style.display = 'flex';
             
-            // Creiamo un canvas temporaneo per elaborare l'immagine
-            const canvas = document.createElement('canvas');
+            let w = source.videoWidth || source.width;
+            let h = source.videoHeight || source.height;
+            
+            canvas.width = w;
+            canvas.height = h;
             const ctx = canvas.getContext('2d');
             
-            const source = (mode === 'CAMERA') ? video : imgView;
-            
-            let w = source.videoWidth || source.naturalWidth;
-            let h = source.videoHeight || source.naturalHeight;
+            // Disegna immagine originale
+            ctx.drawImage(source, 0, 0);
 
-            // Se l'utente ha ruotato l'interfaccia, dobbiamo ruotare l'immagine
-            // per l'OCR, altrimenti legge storto.
-            if(rotation === 90) {
-                canvas.width = h; canvas.height = w;
-                ctx.translate(h, 0); ctx.rotate(90 * Math.PI / 180);
-                ctx.drawImage(source, 0, 0, w, h);
-            } else if (rotation === 180) {
-                canvas.width = w; canvas.height = h;
-                ctx.translate(w, h); ctx.rotate(180 * Math.PI / 180);
-                ctx.drawImage(source, 0, 0, w, h);
-            } else if (rotation === 270) {
-                canvas.width = h; canvas.height = w;
-                ctx.translate(0, w); ctx.rotate(-90 * Math.PI / 180);
-                ctx.drawImage(source, 0, 0, w, h);
+            // TENTATIVO 1: Immagine Originale
+            statusText.innerText = "Tentativo 1 (Originale)...";
+            if (await tryOCR(canvas)) return;
+
+            // TENTATIVO 2: Ruota 90° (Spesso i telefoni scattano così)
+            statusText.innerText = "Tentativo 2 (Ruoto 90°)...";
+            rotateCanvas(canvas, 90);
+            if (await tryOCR(canvas)) return;
+
+            // TENTATIVO 3: Ruota altri 90° (Totale 180°)
+            statusText.innerText = "Tentativo 3 (Ruoto 180°)...";
+            rotateCanvas(canvas, 90); // Ruota su se stesso
+            if (await tryOCR(canvas)) return;
+
+            // TENTATIVO 4: Ruota altri 90° (Totale 270°)
+            statusText.innerText = "Tentativo 4 (Ruoto 270°)...";
+            rotateCanvas(canvas, 90);
+            if (await tryOCR(canvas)) return;
+
+            alert("Impossibile leggere i dati. Assicurati che la foto sia a fuoco e che ci sia luce.");
+            loader.style.display = 'none';
+        }
+
+        // Funzione helper per ruotare il canvas fisicamente
+        function rotateCanvas(cvs, deg) {
+            const temp = document.createElement('canvas');
+            const tCtx = temp.getContext('2d');
+            
+            // Scambia dimensioni se 90/270
+            if (deg === 90 || deg === 270) {
+                temp.width = cvs.height;
+                temp.height = cvs.width;
             } else {
-                canvas.width = w; canvas.height = h;
-                ctx.drawImage(source, 0, 0, w, h);
+                temp.width = cvs.width;
+                temp.height = cvs.height;
             }
 
-            // Mostra anteprima debug in basso a sinistra
-            debugCanvas.width = canvas.width;
-            debugCanvas.height = canvas.height;
-            debugCanvas.getContext('2d').drawImage(canvas, 0, 0);
-            debugCanvas.style.display = 'block'; // Mostra per capire cosa vede
+            tCtx.translate(temp.width/2, temp.height/2);
+            tCtx.rotate(deg * Math.PI / 180);
+            tCtx.drawImage(cvs, -cvs.width/2, -cvs.height/2);
+            
+            // Copia indietro
+            cvs.width = temp.width;
+            cvs.height = temp.height;
+            cvs.getContext('2d').drawImage(temp, 0, 0);
+        }
 
-            // Filtro contrasto per aiutare OCR
-            const processedCtx = canvas.getContext('2d');
-            processedCtx.filter = 'grayscale(100%) contrast(150%)';
-            processedCtx.drawImage(canvas, 0, 0); // Riapplica su se stesso
-
-            runOCR(canvas);
-        });
-
-        async function runOCR(imageCanvas) {
+        // 4. ESECUZIONE OCR E PARSING
+        async function tryOCR(cvs) {
+            // Applica filtri temporanei per l'OCR
+            const ctx = cvs.getContext('2d');
+            const imgData = ctx.getImageData(0,0, cvs.width, cvs.height);
+            // (Qui potremmo manipolare i pixel, ma lasciamo fare a Tesseract su canvas pulito)
+            
             try {
-                const { data: { text } } = await Tesseract.recognize(imageCanvas, 'ita');
-                if(parseData(text)) {
-                    document.getElementById('results').style.display = 'flex';
-                    loader.style.display = 'none';
-                    debugCanvas.style.display = 'none';
-                } else {
-                    alert("OCR Fallito. Dati non trovati.\n1. Assicurati che l'immagine nell'anteprima rossa sia DRITTA.\n2. Se è storta, usa il tasto RUOTA prima di scattare.");
-                    loader.style.display = 'none';
+                const { data: { text } } = await Tesseract.recognize(cvs, 'ita');
+                const clean = text.toUpperCase().replace(/\s/g, ''); 
+                
+                // VERIFICA SE ABBIAMO TROVATO QUALCOSA (Anchor ITA)
+                // Se non troviamo "ITA" o "<", l'orientamento è sbagliato
+                if (!clean.includes('ITA') && !clean.includes('<')) return false;
+
+                // Parsing
+                const lines = text.toUpperCase().split('\n');
+                let foundData = false;
+
+                // MRZ
+                let docMatch = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
+                if(!docMatch) docMatch = clean.match(/ITA([A-Z0-9]{9})/);
+                let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})/);
+                let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
+
+                if(docMatch && bioMatch && nameMatch) {
+                    fillData(docMatch, nameMatch, bioMatch);
+                    foundData = true;
                 }
+
+                // INDIRIZZO
+                let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|V\.)\s/));
+                if(addrLine) {
+                    parseAddr(addrLine);
+                    // Se troviamo l'indirizzo, consideriamo il tentativo valido anche se l'MRZ fallisce parzialmente
+                    if(foundData) return true; 
+                }
+
+                return foundData;
+
             } catch (e) {
-                alert("Errore Tecnico: " + e.message);
-                loader.style.display = 'none';
+                return false;
             }
         }
 
-        // LOGICA ESTRAZIONE DATI
-        function parseData(raw) {
-            const clean = raw.toUpperCase().replace(/\s/g, ''); 
-            const lines = raw.toUpperCase().split('\n');
-            let found = false;
+        function fillData(doc, name, bio) {
+            document.getElementById('v-doc').innerText = doc[1];
+            document.getElementById('v-cog').innerText = name[1];
+            document.getElementById('v-nom').innerText = name[2].replace(/</g, ' ');
 
-            // 1. MRZ (Basso)
-            let docM = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
-            if(!docM) docM = clean.match(/ITA([A-Z0-9]{9})/);
-            let bioM = clean.match(/(\d{6})\d([MF])(\d{6})/);
-            let nameM = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            let d = bio[1]; 
+            let y = (parseInt(d.substr(0,2))>40 ? '19':'20') + d.substr(0,2);
+            document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
+            document.getElementById('v-sex').innerText = bio[2];
 
-            if(docM && bioM && nameM) {
-                document.getElementById('v-doc').innerText = docM[1];
-                document.getElementById('v-cog').innerText = nameM[1];
-                document.getElementById('v-nom').innerText = nameM[2].replace(/</g, ' ');
+            let e = bio[3];
+            let ey = '20'+e.substr(0,2);
+            document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
+            
+            loader.style.display = 'none';
+            results.style.display = 'block';
+        }
 
-                let d = bioM[1];
-                let y = (parseInt(d.substr(0,2))>40 ? '19':'20') + d.substr(0,2);
-                document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
-                document.getElementById('v-sex').innerText = bioM[2];
-
-                let e = bioM[3];
-                let ey = '20'+e.substr(0,2);
-                document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
-                found = true;
+        function parseAddr(line) {
+            let txt = line.replace(/[^A-Z0-9\s,\.\(\)]/g, '').trim();
+            
+            let provM = txt.match(/\(([A-Z]{2})\)/);
+            if(provM) {
+                document.getElementById('v-prov').innerText = provM[1];
+                txt = txt.replace(provM[0], '');
             }
 
-            // 2. INDIRIZZO (Alto)
-            let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|STRADA|V\.)\s/));
-            if(addrLine) {
-                let txt = addrLine.replace(/[^A-Z0-9\s,\.\(\)]/g, '').trim();
-                
-                // Prov
-                let provM = txt.match(/\(([A-Z]{2})\)/);
-                if(provM) {
-                    document.getElementById('addr-prov').innerText = provM[1];
-                    txt = txt.replace(provM[0], '');
-                }
-
-                // Civico e Comune
-                let civM = txt.match(/,\s*(\d+[A-Z]?)/) || txt.match(/\s(\d+[A-Z]?)$/);
-                if(civM) {
-                    document.getElementById('addr-civ').innerText = civM[1];
-                    let parts = txt.split(civM[0]);
-                    document.getElementById('addr-via').innerText = parts[0].trim();
-                    if(parts[1]) document.getElementById('addr-com').innerText = parts[1].trim();
-                } else {
-                    document.getElementById('addr-via').innerText = txt;
-                }
+            let civM = txt.match(/,\s*(\d+[A-Z]?)/) || txt.match(/\s(\d+[A-Z]?)$/);
+            if(civM) {
+                document.getElementById('v-civ').innerText = civM[1];
+                let parts = txt.split(civM[0]);
+                document.getElementById('v-via').innerText = parts[0].trim();
+                if(parts[1]) document.getElementById('v-com').innerText = parts[1].trim();
+            } else {
+                document.getElementById('v-via').innerText = txt;
             }
-            return found;
         }
     </script>
 </body>
