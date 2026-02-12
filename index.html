@@ -3,252 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V52 - Stealth Anchor</title>
+    <title>Scanner V53 - Alloggiati Anchor</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #000; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        /* RESET E BASE */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; background: #000; height: 100vh; overflow: hidden; 
+            display: flex; flex-direction: column; 
+        }
 
         /* AREA CAMERA */
-        .camera-view { 
-            position: relative; flex: 1; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        .viewport { 
+            position: relative; flex: 1; background: #000; overflow: hidden; 
+            display: flex; justify-content: center; align-items: center;
         }
         video { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
         }
 
-        /* SAGOMA ORIZZONTALE (Grandezza Carta) */
+        /* SAGOMA CARTA ESATTA (Proporzione ID-1: 85.60 x 53.98 mm -> Ratio ~1.58) */
         .card-frame {
             position: relative;
-            width: 85vw; /* Larghezza quasi tutto lo schermo */
-            height: 53.5vw; /* Proporzione esatta ID-1 (85.60 × 53.98 mm) */
-            max-width: 500px; max-height: 315px;
+            width: 85vw; 
+            height: 53.8vw; /* Mantiene il ratio corretto */
+            max-width: 500px; max-height: 316px;
             border: 2px solid rgba(255, 255, 255, 0.8);
-            border-radius: 12px;
-            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.85); /* Scurisce tutto attorno */
+            border-radius: 15px;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.85); /* Effetto focus scuro */
             z-index: 10;
-        }
-        
-        /* Linea di scansione animata (Solo estetica) */
-        .scan-line {
-            position: absolute; width: 100%; height: 2px; background: #00E0FF;
-            top: 0; animation: scanMove 3s infinite linear; opacity: 0.7; box-shadow: 0 0 4px #00E0FF;
-        }
-        @keyframes scanMove { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
-
-        .hint {
-            position: absolute; bottom: -40px; width: 100%; text-align: center;
-            color: #fff; font-weight: 600; font-size: 14px; text-shadow: 0 2px 4px #000;
-            text-transform: uppercase; letter-spacing: 1px;
+            pointer-events: none; /* Lascia passare i click */
         }
 
-        /* TASTO SCANSIONE (Galleggiante) */
+        /* Testo Guida */
+        .guide-text {
+            position: absolute; top: -40px; width: 100%; text-align: center;
+            color: #fff; font-weight: 700; font-size: 14px; letter-spacing: 1px;
+            text-shadow: 0 2px 4px #000; text-transform: uppercase;
+        }
+
+        /* BOTTONE SCANSIONE */
         .controls {
-            position: absolute; bottom: 30px; width: 100%; z-index: 20; text-align: center;
+            position: absolute; bottom: 40px; width: 100%; text-align: center; z-index: 20;
         }
-        .btn-capture {
-            background: #007AFF; color: white; border: none; padding: 18px 40px;
-            border-radius: 50px; font-size: 18px; font-weight: bold; text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(0,122,255,0.5); cursor: pointer; transition: transform 0.1s;
+        .btn-scan {
+            background: #007AFF; color: #fff; border: none; 
+            padding: 18px 50px; border-radius: 50px; 
+            font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.5); cursor: pointer;
+            transition: transform 0.1s;
         }
-        .btn-capture:active { transform: scale(0.95); }
+        .btn-scan:active { transform: scale(0.95); }
 
-        /* MODALE RISULTATI (Nascosto finché non trova i dati) */
-        .result-sheet {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #121212; z-index: 30; display: none; flex-direction: column;
-            padding: 20px; box-sizing: border-box; overflow-y: auto;
+        /* LOADING */
+        #loader {
+            display: none; position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); z-index: 25;
+            background: rgba(0,0,0,0.8); padding: 20px 40px; border-radius: 12px;
+            color: #00E0FF; font-weight: bold; font-size: 14px; text-transform: uppercase;
         }
-        .result-sheet.active { display: flex; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        .sheet-header { color: #32d74b; font-weight: 800; font-size: 18px; margin-bottom: 20px; text-align: center; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        /* PANNELLO RISULTATI (Nascosto di base) */
+        .result-panel {
+            position: absolute; bottom: 0; left: 0; width: 100%; 
+            background: #1c1c1e; border-top: 2px solid #333;
+            border-radius: 20px 20px 0 0; 
+            padding: 20px; box-sizing: border-box;
+            max-height: 85vh; overflow-y: auto;
+            transform: translateY(110%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 30;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .result-panel.visible { transform: translateY(0); }
 
-        /* GRIGLIA DATI ORDINATA */
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .full-width { grid-column: span 2; }
-        
-        .data-box { background: #1c1c1e; padding: 10px; border-radius: 8px; border-left: 4px solid #444; }
-        .data-box.valid { border-left-color: #007AFF; } /* Blu per dati trovati */
-        
-        .d-label { font-size: 9px; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 3px; }
-        .d-value { font-size: 15px; color: #fff; font-weight: 700; min-height: 18px; word-break: break-word; }
+        .panel-header { text-align: center; color: #32d74b; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; font-size: 14px; }
 
-        .btn-reset { margin-top: 30px; background: #333; color: #fff; width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; }
+        /* GRIGLIA CAMPI */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full { grid-column: span 2; }
 
-        /* LOADING SPINNER */
-        #loader { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #00E0FF; font-weight: bold; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; z-index: 25; }
+        .field-box { 
+            background: #2c2c2e; padding: 10px 12px; 
+            border-radius: 8px; border-left: 4px solid #555; 
+        }
+        .field-box.ok { border-left-color: #007AFF; background: #1a222e; }
+
+        .lbl { font-size: 9px; color: #888; display: block; margin-bottom: 3px; text-transform: uppercase; font-weight: bold; }
+        .val { font-size: 15px; color: #fff; font-weight: 700; min-height: 18px; word-break: break-word; }
+
+        .btn-reset {
+            width: 100%; padding: 15px; background: #333; color: #fff; 
+            border: none; border-radius: 12px; font-weight: bold; margin-top: 10px;
+            text-transform: uppercase;
+        }
 
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="camera-view">
-        <video id="video" autoplay playsinline></video>
+    <div class="viewport">
+        <video id="webcam" autoplay playsinline></video>
         
         <div class="card-frame">
-            <div class="scan-line"></div>
-            <div class="hint">Inquadra il Retro (Orizzontale)</div>
+            <div class="guide-text">Inquadra il Retro</div>
         </div>
+
+        <div id="loader">Analisi Anchor in corso...</div>
 
         <div class="controls">
-            <button class="btn-capture" id="btn-scan">SCANSIONA</button>
+            <button class="btn-scan" id="btn-snap">SCANSIONA</button>
         </div>
-        
-        <div id="loader">ANALISI ANCHOR IN CORSO...</div>
     </div>
 
-    <div class="result-sheet" id="results">
-        <div class="sheet-header">Dati Acquisiti</div>
+    <div class="result-panel" id="panel">
+        <div class="panel-header">Dati Alloggiati Web (Retro)</div>
         
-        <div class="data-grid">
-            <div class="data-box full-width valid"><span class="d-label">Cognome</span><div class="d-value" id="res-cognome">---</div></div>
-            <div class="data-box full-width valid"><span class="d-label">Nome</span><div class="d-value" id="res-nome">---</div></div>
+        <div class="grid">
+            <div class="field-box full ok"><span class="lbl">Cognome</span><div class="val" id="v-cog">---</div></div>
+            <div class="field-box full ok"><span class="lbl">Nome</span><div class="val" id="v-nom">---</div></div>
             
-            <div class="data-box valid"><span class="d-label">Nascita</span><div class="d-value" id="res-dob">---</div></div>
-            <div class="data-box valid"><span class="d-label">Sesso</span><div class="d-value" id="res-sex">---</div></div>
+            <div class="field-box ok"><span class="lbl">Nato il</span><div class="val" id="v-dob">---</div></div>
+            <div class="field-box ok"><span class="lbl">Sesso</span><div class="val" id="v-sex">---</div></div>
             
-            <div class="data-box full-width valid"><span class="d-label">Luogo Nascita</span><div class="d-value" id="res-luogo">---</div></div> <div class="data-box full-width valid"><span class="d-label">Indirizzo (Via)</span><div class="d-value" id="res-via">---</div></div>
-            <div class="data-box valid"><span class="d-label">Civico</span><div class="d-value" id="res-civ">---</div></div>
-            <div class="data-box valid"><span class="d-label">Provincia</span><div class="d-value" id="res-prov">---</div></div>
-            <div class="data-box full-width valid"><span class="d-label">Comune Residenza</span><div class="d-value" id="res-comune">---</div></div>
+            <div class="field-box full ok"><span class="lbl">Cittadinanza</span><div class="val" id="v-cit">ITALIANA</div></div>
 
-            <div class="data-box full-width valid"><span class="d-label">Numero Documento</span><div class="d-value" id="res-doc">---</div></div>
-            <div class="data-box valid"><span class="d-label">Scadenza</span><div class="d-value" id="res-scad">---</div></div>
-            <div class="data-box valid"><span class="d-label">Cittadinanza</span><div class="d-value">ITALIANA</div></div>
+            <div class="field-box ok"><span class="lbl">Numero Doc</span><div class="val" id="v-doc">---</div></div>
+            <div class="field-box ok"><span class="lbl">Scadenza</span><div class="val" id="v-scad">---</div></div>
+
+            <div class="field-box full ok"><span class="lbl">Comune Residenza</span><div class="val" id="v-com">---</div></div>
+            <div class="field-box full ok"><span class="lbl">Indirizzo</span><div class="val" id="v-via">---</div></div>
         </div>
 
-        <button class="btn-reset" onclick="reset()">Nuova Scansione</button>
+        <button class="btn-reset" onclick="resetScan()">Nuova Scansione</button>
     </div>
 
-    <canvas id="hidden-canvas"></canvas>
+    <canvas id="cvs"></canvas>
 
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('hidden-canvas');
-        const btn = document.getElementById('btn-scan');
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('cvs');
+        const btn = document.getElementById('btn-snap');
+        const panel = document.getElementById('panel');
         const loader = document.getElementById('loader');
-        const results = document.getElementById('results');
 
-        // Camera alta risoluzione per leggere da lontano
+        // Camera ad alta risoluzione per leggere i caratteri piccoli del retro
         navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: "environment", width: { ideal: 2560 }, height: { ideal: 1440 } } 
-        }).then(stream => video.srcObject = stream);
+        }).then(s => video.srcObject = s);
 
         btn.addEventListener('click', async () => {
             btn.style.display = 'none';
             loader.style.display = 'block';
 
             const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // Filtro ANCHOR: Alto contrasto, luminosità controllata
+            // Filtro ANCHOR: Alto contrasto per far risaltare il nero su azzurrino
             ctx.filter = 'grayscale(100%) contrast(180%) brightness(100%)';
             ctx.drawImage(video, 0, 0);
 
             try {
                 const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                const success = processAnchorLogic(text);
+                const success = parseAnchor(text);
                 
                 loader.style.display = 'none';
                 if (success) {
-                    results.classList.add('active');
+                    panel.classList.add('visible');
                 } else {
-                    alert("Dati non trovati. Assicurati che l'immagine sia a fuoco e riprova.");
+                    alert("Dati non agganciati. Assicurati che l'immagine sia a fuoco e riprova.");
                     btn.style.display = 'inline-block';
                 }
-            } catch (err) {
+            } catch (e) {
                 loader.style.display = 'none';
                 btn.style.display = 'inline-block';
-                alert("Errore tecnico. Riprova.");
+                alert("Errore tecnico OCR.");
             }
         });
 
-        // LOGICA ANCHOR (Il motore affidabile V36 + Regex V50)
-        function processAnchorLogic(text) {
-            const clean = text.replace(/\s/g, '').toUpperCase(); // Per codici
-            const rawLines = text.toUpperCase().split('\n'); // Per indirizzi
+        // --- LOGICA ANCHOR (SOLO RETRO) ---
+        function parseAnchor(raw) {
+            const clean = raw.toUpperCase().replace(/\s/g, ''); // Per codici MRZ
+            const lines = raw.toUpperCase().split('\n').map(l => l.trim()).filter(l => l.length > 2); // Per Indirizzo
 
-            let foundAny = false;
+            let foundImportantData = false;
 
-            // 1. ANCHOR MRZ (Cerca la sequenza <<<<)
-            let mrzName = clean.match(/([A-Z]+)<<([A-Z]+)/);
-            if (mrzName) {
-                fill('res-cognome', mrzName[1]);
-                fill('res-nome', mrzName[2]);
-                foundAny = true;
+            // 1. ANCHOR: MRZ (Machine Readable Zone) - Infallibile se a fuoco
+            // Cerca Cognome e Nome (Formato: COGNOME<<NOME)
+            let nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
+            if (nameMatch) {
+                document.getElementById('v-cog').innerText = nameMatch[1];
+                document.getElementById('v-nom').innerText = nameMatch[2].replace(/</g, ' ');
+                foundImportantData = true;
             }
 
-            // Cerca Documento (Inizia con C, I, ITA)
-            let docMatch = clean.match(/ITA([A-Z0-9]{9})/);
-            if (!docMatch) docMatch = clean.match(/[CI][A-Z0-9]{8}/);
+            // Cerca Numero Documento (Inizia con C o I, seguito da <IT o TA)
+            // Esempio: C<ITACA50322TW
+            let docMatch = clean.match(/[CI]<IT[A-Z]?([A-Z0-9]{9})/);
+            if (!docMatch) docMatch = clean.match(/ITA([A-Z0-9]{9})/); // Fallback
             if (docMatch) {
-                let docNum = docMatch[1] || docMatch[0];
-                fill('res-doc', docNum.substr(0,9));
-                foundAny = true;
+                document.getElementById('v-doc').innerText = docMatch[1];
+                foundImportantData = true;
             }
 
-            // Cerca Data Nascita e Sesso (Formato MRZ: YYMMDD S)
-            let bioMatch = clean.match(/(\d{6})\d([MF])/);
+            // Cerca Date e Sesso (Riga 2 MRZ: YYMMDD S YYMMDD)
+            // Esempio: 9912016M331201... (Nato 01/12/99 M, Scade 01/12/33)
+            let bioMatch = clean.match(/(\d{6})\d([MF])(\d{6})/);
             if (bioMatch) {
-                let d = bioMatch[1];
-                let year = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
-                fill('res-dob', `${d.substr(4,2)}/${d.substr(2,2)}/${year}`);
-                fill('res-sex', bioMatch[2]);
+                // Data Nascita
+                let d = bioMatch[1]; 
+                let y = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
+                document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
                 
-                // Stima scadenza (spesso dopo il sesso)
-                let remaining = clean.split(bioMatch[0])[1];
-                if(remaining && remaining.length > 6) {
-                    let sd = remaining.substr(0,6); // La scadenza è spesso subito dopo
-                    if(!isNaN(sd)) fill('res-scad', `${sd.substr(4,2)}/${sd.substr(2,2)}/20${sd.substr(0,2)}`);
-                }
+                // Sesso
+                document.getElementById('v-sex').innerText = bioMatch[2];
+
+                // Scadenza (i 6 numeri dopo il sesso)
+                let e = bioMatch[3];
+                let ye = '20'+e.substr(0,2);
+                document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ye}`;
             }
 
-            // 2. ANCHOR INDIRIZZO (Cerca VIA/PIAZZA)
-            let addrLine = rawLines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|V\.|P\.|C\.)\s+/));
+            // 2. ANCHOR: INDIRIZZO (Via/Piazza)
+            // Cerca la riga che contiene una parola chiave di via
+            let addrLine = lines.find(l => l.match(/(VIA|PIAZZA|CORSO|VIALE|LARGO|VICOLO)\s/));
             if (addrLine) {
-                // Civico (N. o numero finale)
-                let civMatch = addrLine.match(/(?:N\.|,)\s*(\d+[A-Z]?)/) || addrLine.match(/\s(\d+)$/);
-                if (civMatch) fill('res-civ', civMatch[1]);
+                // Pulizia Via
+                let viaClean = addrLine.split(/,|N\.|CIV/)[0].trim(); // Prendi tutto prima del numero civico
+                document.getElementById('v-via').innerText = viaClean;
 
-                // Via (tutto prima del numero)
-                let viaText = addrLine.split(/N\.|,|\d+$/)[0].replace(/[0-9]/g, '').trim();
-                fill('res-via', viaText);
-
-                // Comune e Provincia (Cerca parentesi (XX))
-                // Controlla la riga stessa o quella dopo
+                // Cerca Comune e Provincia (Riga successiva o fine riga)
+                // Cerca pattern: NOME COMUNE (XX)
                 let cityRegex = /([A-Z\s']+)\s*\(?([A-Z]{2})\)?/;
-                let cityMatch = addrLine.match(cityRegex);
+                let cityMatch = null;
                 
-                if (!cityMatch) {
-                    let idx = rawLines.indexOf(addrLine);
-                    if (rawLines[idx + 1]) cityMatch = rawLines[idx + 1].match(cityRegex);
-                }
+                // Controlla riga corrente
+                let currentMatch = addrLine.match(cityRegex);
+                // Controlla riga successiva (più probabile)
+                let nextIdx = lines.indexOf(addrLine) + 1;
+                let nextMatch = (lines[nextIdx]) ? lines[nextIdx].match(cityRegex) : null;
+
+                // Preferisci la riga successiva se contiene la provincia (XX)
+                if (nextMatch) cityMatch = nextMatch;
+                else if (currentMatch && currentMatch[0].length < addrLine.length) cityMatch = currentMatch;
 
                 if (cityMatch) {
-                    fill('res-comune', cityMatch[1].replace('(', '').trim());
-                    fill('res-prov', cityMatch[2]);
+                    let comune = cityMatch[1].replace(/.*N\.\s*\d+/, '').trim(); // Rimuovi residui numeri
+                    document.getElementById('v-com').innerText = comune + " (" + cityMatch[2] + ")";
                 }
-                
-                // Fallback Luogo Nascita: Se abbiamo il codice fiscale (spesso sopra l'indirizzo), possiamo dedurre il luogo, ma qui ci limitiamo a ciò che è scritto.
-                // Spesso il luogo di nascita sul retro non c'è esplicitamente come testo chiaro, ma a volte l'OCR legge il fronte in trasparenza o righe vaganti.
-                // Per ora lasciamo "---" se non trovato, per evitare falsi positivi.
             }
 
-            return foundAny;
+            return foundImportantData;
         }
 
-        function fill(id, val) {
-            if (val) document.getElementById(id).innerText = val.replace(/</g, ' ').trim();
-        }
-
-        function reset() {
-            results.classList.remove('active');
+        function resetScan() {
+            panel.classList.remove('visible');
             btn.style.display = 'inline-block';
-            document.querySelectorAll('.d-value').forEach(el => {
-                if(el.innerText !== 'ITALIANA') el.innerText = '---';
-            });
+            // Resetta i campi
+            document.querySelectorAll('.val').forEach(el => el.innerText = '---');
         }
     </script>
 </body>
