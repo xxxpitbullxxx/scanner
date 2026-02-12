@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner V55 - Landscape</title>
+    <title>Scanner V56 - AutoStart</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <style>
         body { 
@@ -12,86 +12,78 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* MESSAGGIO DI ROTAZIONE (Se tieni il telefono verticale) */
+        /* MESSAGGIO ROTAZIONE */
         #rotate-msg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999;
             background: #000; color: #00E0FF; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center;
+            align-items: center; justify-content: center; text-align: center; font-size: 20px; font-weight: bold;
         }
-        .icon-rotate { font-size: 50px; margin-bottom: 20px; }
-        
-        /* Nascondi messaggio quando è landscape */
-        @media screen and (orientation: landscape) {
-            #rotate-msg { display: none; }
-        }
+        @media screen and (orientation: landscape) { #rotate-msg { display: none; } }
 
-        /* CAMERA A TUTTO SCHERMO */
-        .viewport { 
-            position: relative; width: 100%; height: 100%; 
-            display: flex; justify-content: center; align-items: center;
-        }
+        /* VIDEO */
         video { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;
         }
 
-        /* SAGOMA CARTA GRANDEZZA REALE (Horizontal) */
+        /* SAGOMA CARTA (Più Grande e Alzata) */
         .card-frame {
-            position: relative;
-            /* In landscape, l'altezza è il lato corto. Usiamo l'80% dell'altezza */
-            height: 75vh; 
-            /* Calcola la larghezza in base al rapporto esatto della CIE (1.585) */
-            aspect-ratio: 85.6 / 53.98;
+            position: absolute;
+            /* ALZATA: Invece di top 50%, mettiamo 42% */
+            top: 42%; left: 50%; transform: translate(-50%, -50%);
             
-            border: 3px solid rgba(255, 255, 255, 0.8);
-            border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.9); /* Maschera nera totale */
+            /* PIÙ GRANDE: 85% dell'altezza dello schermo */
+            height: 85vh; 
+            aspect-ratio: 85.6 / 53.98; /* Ratio esatto ID-1 */
+            
+            border: 4px solid rgba(255, 255, 255, 0.8);
+            border-radius: 18px;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.85); /* Maschera nera */
             z-index: 10;
-            transition: border-color 0.2s;
+            pointer-events: none;
         }
-        .card-frame.success { border-color: #32d74b; box-shadow: 0 0 30px #32d74b, 0 0 0 1000px rgba(0,0,0,0.9); }
-
+        
+        /* Istruzioni dentro la sagoma */
         .guide-text {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: rgba(255,255,255,0.3); font-size: 24px; font-weight: bold; text-transform: uppercase;
-            pointer-events: none; white-space: nowrap;
+            position: absolute; top: 50%; width: 100%; text-align: center;
+            color: rgba(255,255,255,0.4); font-size: 2vw; font-weight: 800; 
+            text-transform: uppercase; text-shadow: 0 2px 5px #000;
         }
 
-        /* CONTROLLI (Sulla destra in landscape) */
+        /* TASTO SCATTO (A destra) */
         .controls {
-            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-            z-index: 20; display: flex; flex-direction: column; gap: 20px;
+            position: absolute; right: 30px; top: 50%; transform: translateY(-50%); z-index: 20;
         }
-
-        .btn-scan {
-            width: 70px; height: 70px; border-radius: 50%; border: 4px solid #fff;
-            background: rgba(255,255,255,0.2); cursor: pointer;
+        .btn-shot {
+            width: 80px; height: 80px; border-radius: 50%; 
+            background: rgba(255,255,255,0.3); border: 5px solid #fff;
+            cursor: pointer; transition: 0.2s;
         }
-        .btn-scan:active { background: #fff; }
+        .btn-shot:active { background: #fff; transform: scale(0.9); }
 
-        /* LOADING */
-        #loader { 
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-            color: #00E0FF; font-weight: bold; font-size: 18px; z-index: 30; display: none;
-            background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px;
+        /* LOADING SPINNER */
+        #loader {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); color: #00E0FF; padding: 20px 40px; 
+            border-radius: 12px; font-size: 20px; font-weight: bold; z-index: 100;
         }
 
         /* PANNELLO RISULTATI */
         .panel {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(18, 18, 18, 0.98); z-index: 50;
-            display: none; flex-direction: column; padding: 20px; box-sizing: border-box;
+            background: #121212; z-index: 200; display: none; 
+            flex-direction: column; padding: 20px; box-sizing: border-box;
             overflow-y: auto;
         }
         .panel.visible { display: flex; }
 
-        .panel-header { text-align: center; color: #32d74b; font-size: 20px; margin-bottom: 20px; font-weight: bold; }
+        .panel-header { text-align: center; color: #32d74b; font-size: 22px; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
         
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 80%; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; margin: 0 auto; }
         .full { grid-column: span 2; }
         
-        .field { background: #2c2c2e; padding: 10px; border-radius: 8px; border-left: 5px solid #007AFF; }
-        .lbl { color: #888; font-size: 10px; display: block; margin-bottom: 3px; }
-        .val { color: #fff; font-size: 18px; font-weight: bold; }
+        .field { background: #222; padding: 12px; border-radius: 8px; border-left: 5px solid #007AFF; }
+        .lbl { color: #888; font-size: 11px; display: block; margin-bottom: 4px; text-transform: uppercase; }
+        .val { color: #fff; font-size: 18px; font-weight: bold; font-family: monospace; }
 
         .btn-close {
             margin-top: 30px; padding: 15px; background: #444; color: #fff; border: none;
@@ -104,123 +96,29 @@
 <body>
 
     <div id="rotate-msg">
-        <div class="icon-rotate">↻</div>
-        <div>RUOTA IL TELEFONO IN ORIZZONTALE<br>PER VEDERE LA CARD A GRANDEZZA REALE</div>
+        <h1>RUOTA IL TELEFONO ↻</h1>
     </div>
 
-    <div class="viewport">
-        <video id="webcam" autoplay playsinline></video>
-        
-        <div class="card-frame" id="frame">
-            <div class="guide-text">INQUADRA IL RETRO</div>
-        </div>
-
-        <div id="loader">LETTURA MRZ...</div>
-
-        <div class="controls">
-            <button class="btn-scan" id="btn-snap"></button>
-        </div>
+    <video id="webcam" autoplay playsinline muted></video>
+    
+    <div class="card-frame">
+        <div class="guide-text">INQUADRA IL RETRO</div>
     </div>
+
+    <div class="controls">
+        <button class="btn-shot" id="snap"></button>
+    </div>
+
+    <div id="loader">Analisi in corso...</div>
 
     <div class="panel" id="result-panel">
-        <div class="panel-header">DATI ALLOGGIATI WEB</div>
+        <div class="panel-header">DATI ALLOGGIATI (RETRO)</div>
         <div class="grid">
             <div class="field full"><span class="lbl">COGNOME</span><div class="val" id="v-cog">---</div></div>
             <div class="field full"><span class="lbl">NOME</span><div class="val" id="v-nom">---</div></div>
-            <div class="field"><span class="lbl">DATA NASCITA</span><div class="val" id="v-dob">---</div></div>
+            <div class="field"><span class="lbl">NASCITA</span><div class="val" id="v-dob">---</div></div>
             <div class="field"><span class="lbl">SESSO</span><div class="val" id="v-sex">---</div></div>
             <div class="field full"><span class="lbl">CITTADINANZA</span><div class="val" id="v-cit">ITA</div></div>
+            <div class="field full"><span class="lbl">NUMERO DOC</span><div class="val" id="v-doc">---</div></div>
+            <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
             <div class="field"><span class="lbl">TIPO DOC</span><div class="val">CARTA D'IDENTITÀ</div></div>
-            <div class="field"><span class="lbl">NUMERO DOC</span><div class="val" id="v-doc">---</div></div>
-            <div class="field"><span class="lbl">RILASCIO (Luogo)</span><div class="val" id="v-luogo">---</div></div> <div class="field"><span class="lbl">SCADENZA</span><div class="val" id="v-scad">---</div></div>
-            <div class="field full"><span class="lbl">RESIDENZA (Extra)</span><div class="val" id="v-res">---</div></div>
-        </div>
-        <button class="btn-close" onclick="resetScan()">CHIUDI E SCANSIONA</button>
-    </div>
-
-    <canvas id="cvs"></canvas>
-
-    <script>
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('cvs');
-        const btn = document.getElementById('btn-snap');
-        const frame = document.getElementById('frame');
-        const panel = document.getElementById('result-panel');
-        const loader = document.getElementById('loader');
-
-        // Avvia camera alla massima risoluzione
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment", width: { ideal: 4096 }, height: { ideal: 2160 } } 
-        }).then(s => video.srcObject = s);
-
-        btn.addEventListener('click', async () => {
-            loader.style.display = 'block';
-            
-            const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            // Filtro Anchor MRZ
-            ctx.filter = 'grayscale(100%) contrast(200%)'; 
-            ctx.drawImage(video, 0, 0);
-
-            try {
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                const ok = processAnchor(text);
-                
-                loader.style.display = 'none';
-                if(ok) {
-                    frame.classList.add('success');
-                    setTimeout(() => panel.classList.add('visible'), 500);
-                } else {
-                    alert("Codici non leggibili. Avvicinati e metti a fuoco il retro.");
-                }
-            } catch (e) {
-                loader.style.display = 'none';
-                alert("Errore OCR.");
-            }
-        });
-
-        // LOGICA ANCHOR SOLO RETRO (Dati Alloggiati)
-        function processAnchor(raw) {
-            const clean = raw.toUpperCase().replace(/\s/g, ''); 
-            let found = false;
-
-            // 1. Cerca MRZ (Cognome, Nome, Doc, Date)
-            // Supporta formato 3 righe (CIE 3.0)
-            
-            // Riga 1: Documento (C<ITACA...)
-            let docM = clean.match(/[CI]<ITA([A-Z0-9]{9})/);
-            if(!docM) docM = clean.match(/ITA([A-Z0-9]{9})/);
-            
-            // Riga 2: Date (YYMMDD S YYMMDD)
-            let bioM = clean.match(/(\d{6})\d([MF])(\d{6})/);
-            
-            // Riga 3: Cognome<<Nome
-            let nameM = clean.match(/([A-Z]+)<<([A-Z]+)/);
-
-            if(docM && bioM && nameM) {
-                // Documento
-                document.getElementById('v-doc').innerText = docM[1];
-                
-                // Cognome Nome
-                document.getElementById('v-cog').innerText = nameM[1];
-                document.getElementById('v-nom').innerText = nameM[2].replace(/</g, ' ');
-
-                // Nascita
-                let d = bioM[1];
-                let y = (parseInt(d.substr(0,2)) > 40) ? '19'+d.substr(0,2) : '20'+d.substr(0,2);
-                document.getElementById('v-dob').innerText = `${d.substr(4,2)}/${d.substr(2,2)}/${y}`;
-
-                // Sesso
-                document.getElementById('v-sex').innerText = bioM[2];
-
-                // Scadenza
-                let e = bioM[3];
-                let ey = '20'+e.substr(0,2);
-                document.getElementById('v-scad').innerText = `${e.substr(4,2)}/${e.substr(2,2)}/${ey}`;
-
-                found = true;
-            }
-
-            // 2. Residenza (Opzionale)
-            const lines = raw.toUpperCase().split('\n');
-            let addr = lines.find(l => l.match(/(VIA|PIAZZA|
