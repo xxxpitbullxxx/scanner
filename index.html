@@ -46,9 +46,10 @@
 
         /* Scanner OCR Styles - Full Width Mode */
         .cam-box { 
-            position: relative; width: 100%; height: 320px; 
+            position: relative; width: 100%; height: 65vw; /* Aspect ratio card */
+            max-height: 350px;
             overflow: hidden; background: #000; 
-            border-top: 1px solid #333; border-bottom: 1px solid #333;
+            border-bottom: 2px solid #333;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         
@@ -58,7 +59,7 @@
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
         .guide-mrz { 
-            position: absolute; bottom: 15%; left: 5%; right: 5%; height: 20%; 
+            position: absolute; bottom: 10%; left: 5%; right: 5%; height: 25%; 
             border: 2px solid #00E0FF; border-radius: 4px; 
             background: rgba(0, 224, 255, 0.1);
             display: flex; align-items: center; justify-content: center;
@@ -87,25 +88,21 @@
         .btn-primary:active:not(:disabled) { transform: scale(0.97); }
         .btn-primary:disabled, .btn-success:disabled { background: #cbd5e1 !important; color: #94a3b8 !important; cursor: not-allowed; box-shadow: none; }
         
-        /* LINGUE - Rese più piccole e compatte */
+        /* Flag Buttons - Nuova posizione */
         .flag-btn { 
-            font-size: 10px; 
-            padding: 6px 8px; 
-            opacity: 0.6; 
+            font-size: 24px; /* Emojis più grandi */
+            padding: 4px 6px; 
+            opacity: 0.5; 
             transition: 0.2s; 
             cursor: pointer; 
             border: none; 
-            background: #f1f5f9; 
-            border-radius: 6px; 
-            font-weight: 700; 
-            color: #64748b;
-            min-width: 28px;
+            background: transparent;
+            filter: grayscale(100%);
         }
         .flag-btn.active { 
             opacity: 1; 
-            background: #0f766e; 
-            color: white; 
-            box-shadow: 0 2px 4px rgba(15, 118, 110, 0.2); 
+            transform: scale(1.1); 
+            filter: grayscale(0%);
         }
 
         .card-select { width: 100%; padding: 18px; border-radius: 18px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
@@ -172,8 +169,8 @@
                 label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_prov: "Prov.", label_citizenship: "Cittadinanza", label_cit_ph: "Specifica Cittadinanza...", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_address: "Via / Piazza", label_civic: "Civico", label_issued: "Rilasciato da", label_issued_ph: "Es. Milano...", label_docnum: "N. Documento", label_expiry: "Scadenza",
                 thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
                 data_true_label: "Dichiaro che i dati inseriti sono reali", clear_sign: "CANCELLA FIRMA", sign_title: "Firma e Tassa",
-                ocr_btn: "SCANSIONA ORA", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "CARICA FOTO",
-                ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla attentamente nella scheda successiva. È comunque obbligatorio caricare le foto del documento."
+                ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO",
+                ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla attentamente nella scheda successiva. È comunque obbligatorio caricare le foto."
             },
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
@@ -185,20 +182,20 @@
                 label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_prov: "Prov.", label_citizenship: "Citizenship", label_cit_ph: "Specify Citizenship...", label_res_city: "Residence City", label_res_prov: "Prov.", label_address: "Address", label_civic: "No.", label_issued: "Issued by", label_issued_ph: "Ex. London...", label_docnum: "Doc Number", label_expiry: "Expiry Date",
                 thanks: "Thank you", success_msg: "Check-in successfully completed.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
                 data_true_label: "I declare that the data entered is true", clear_sign: "CLEAR SIGNATURE", sign_title: "Signature",
-                ocr_btn: "SCAN NOW", ocr_processing: "PROCESSING...", ocr_file_btn: "UPLOAD PHOTO",
+                ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD PHOTO",
                 ocr_warn: "WARNING: Lighting and shadows may affect data accuracy. Please verify carefully in the next step. Uploading document photos is mandatory."
             },
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Pour faciliter votre arrivée, je vous demande de remplir l'enregistrement en ligne.", 
                 login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOCUMENT", scan_info: "Scannez le document horizontalement.", 
-                photo_req: "PHOTO OBLIGATOIRE", confirm_btn: "CONFIRMER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER UN INVITÉ", save_guest: "ENREGISTRER",
+                photo_req: "PHOTO OBLIGATOIRE", confirm_btn: "CONFIRMER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
                 warning_save: "Téléchargez les photos et remplissez tous les champs pour enregistrer", finish_btn: "TERMINER", verify: "Vérifier les données", front: "Recto", back_doc: "Verso",
                 tax_info: "Conformément à la réglementation locale, si vous avez réservé via Booking.com, la taxe de séjour doit être payée sur place à l'arrivée (en espèces) ou via le lien sécurisé par carte de crédit/débit que je vous enverrai sous peu. Si vous avez réservé via Airbnb, la taxe est déjà incluse.",
                 doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis de Conduire",
                 label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Lieu de naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_cit_ph: "Préciser...", label_res_city: "Ville de résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_issued: "Délivré par", label_issued_ph: "Ex. Paris...", label_docnum: "N° Document", label_expiry: "Expiration",
                 thanks: "Merci", success_msg: "Enregistrement terminé avec succès.", exit: "Sortie", guest_list: "Invités", cloud_save: "Sauvegarde...",
                 data_true_label: "Je déclare que les données sont réelles", clear_sign: "EFFACER", sign_title: "Signature",
-                ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "TÉLÉCHARGER",
+                ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "📁 TÉLÉCHARGER",
                 ocr_warn: "ATTENTION: L'éclairage peut affecter la précision. Vérifiez les données. Le téléchargement des photos est obligatoire."
             },
             es: { 
@@ -211,7 +208,7 @@
                 label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Lugar de nacimiento", label_prov: "Prov.", label_citizenship: "Ciudadanía", label_cit_ph: "Especificar...", label_res_city: "Ciudad de residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Madrid...", label_docnum: "N° Documento", label_expiry: "Caducidad",
                 thanks: "Gracias", success_msg: "Registro completado con éxito.", exit: "Salir", guest_list: "Huéspedes", cloud_save: "Guardando...",
                 data_true_label: "Declaro que los datos son reales", clear_sign: "BORRAR", sign_title: "Firma",
-                ocr_btn: "ESCANEAR", ocr_processing: "PROCESANDO...", ocr_file_btn: "CARGAR FOTO",
+                ocr_btn: "ESCANEAR", ocr_processing: "PROCESANDO...", ocr_file_btn: "📁 CARGAR FOTO",
                 ocr_warn: "ATENCIÓN: La iluminación puede afectar los datos. Verifique cuidadosamente. Es obligatorio cargar las fotos."
             },
             de: { 
@@ -330,14 +327,20 @@
         };
 
         const Header = ({ showBack, backStep, setStep, setLang, lang }) => (
-            <div className="flex justify-between items-center p-5 bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
-                <div className="flex items-center text-center">
-                    {showBack && <button onClick={() => setStep(backStep)} className="mr-3 p-1 text-slate-400"><Icon name="chevronLeft" /></button>}
-                    <div className="header-logo-circle"><img src="logo.png" /></div>
-                    <div><span className="header-title">Tuscan Retreats</span></div>
+            <div className="flex flex-col bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
+                <div className="flex justify-end p-2 pb-0">
+                     <div className="flex space-x-1">
+                        {['it','en','fr','es','de'].map(l => (
+                             <button key={l} onClick={() => setLang(l)} className={`flag-btn ${lang === l ? 'active' : ''}`}>
+                                 {l === 'it' ? '🇮🇹' : l === 'en' ? '🇬🇧' : l === 'fr' ? '🇫🇷' : l === 'es' ? '🇪🇸' : '🇩🇪'}
+                             </button>
+                        ))}
+                    </div>
                 </div>
-                <div className="flex space-x-1">
-                    {['it','en','fr','es','de'].map(l => <button key={l} onClick={() => setLang(l)} className={`flag-btn ${lang === l ? 'active' : ''}`}>{l.toUpperCase()}</button>)}
+                <div className="flex items-center justify-center p-3 pt-0">
+                    {showBack && <button onClick={() => setStep(backStep)} className="absolute left-4 p-1 text-slate-400"><Icon name="chevronLeft" /></button>}
+                    <div className="header-logo-circle"><img src="logo.png" /></div>
+                    <div className="ml-3"><span className="block font-bold text-slate-700 text-[14px] leading-tight uppercase tracking-widest">Tuscan Retreats</span></div>
                 </div>
             </div>
         );
@@ -601,17 +604,6 @@
                 let newForm = { ...formData };
                 let found = false;
 
-                // Typical CIE structure might differ, this is a robust attempt
-                lines.forEach(l => {
-                    if(l.includes("COGNOME") || l.includes("SURNAME")) {
-                         // often next word is surname
-                    }
-                    if(l.includes("NOME") || l.includes("NAME")) {
-                        // often next word is name
-                    }
-                });
-
-                // Fallback to V104 Logic which works for Italian ID
                 // 1. DOC & NOMI (MRZ)
                 const clean = up.replace(/\s/g, '');
                 let dc = clean.match(/ITA([A-Z0-9]{9})/); 
@@ -635,22 +627,32 @@
                 }
 
                 // 3. ADDRESS (Visual Zone)
-                lines.forEach(l => {
-                    if(l.includes("VIA") || l.includes("PIAZZA") || l.includes("CORSO")) {
-                        let parts = l.match(/(VIA|PIAZZA|CORSO|LARGO|VIALE)\s+([A-Z\s\.]+)\s+(\d+[A-Z]?)/);
-                        if(parts) {
-                            newForm.residenceAddress = parts[1] + " " + parts[2];
-                            newForm.houseNumber = parts[3];
-                            found = true;
-                        } else {
-                           // Try splitting
-                           let prov = l.match(/\(([A-Z]{2})\)/);
-                           if(prov) newForm.residenceProvince = prov[1];
-                        }
-                    }
-                     if(l.match(/\d{5}\s+([A-Z\s]+)\s+\(/)) {
-                         let m = l.match(/\d{5}\s+([A-Z\s]+)\s+\(/);
-                         if(m) newForm.residenceCity = m[1];
+                // Enhanced Logic for Residence
+                // Try to find specific keywords for street/piazza
+                lines.forEach((l, i) => {
+                     // Check if line contains common street prefixes
+                     if(l.match(/^(VIA|V\.|PIAZZA|P\.|CORSO|C\.|LARGO|VICOLO|STRADA)\s+/)) {
+                         // Found likely address line
+                         // If previous line has RESIDENZA, it's definitely address. 
+                         // Or if we already have name/surname/dob, this is likely address.
+                         let parts = l.match(/(.+?)\s+(\d+[A-Z]?)$/); // Try to split street and number at end
+                         if(parts) {
+                             newForm.residenceAddress = parts[1].trim();
+                             newForm.houseNumber = parts[2];
+                         } else {
+                             newForm.residenceAddress = l; // fallback whole line
+                         }
+                         found = true;
+                         
+                         // Look at next line for City/Prov
+                         if(lines[i+1]) {
+                             let nextL = lines[i+1];
+                             let cityMatch = nextL.match(/(.+)\s+\(([A-Z]{2})\)/);
+                             if(cityMatch) {
+                                 newForm.residenceCity = cityMatch[1].trim();
+                                 newForm.residenceProvince = cityMatch[2];
+                             }
+                         }
                      }
                 });
 
@@ -1042,14 +1044,20 @@
 
             if (step === 'scan') return (
                 <div className="app-container flex flex-col text-center text-slate-800 text-center">
-                    <div className="flex justify-between items-center p-5 bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
-                        <div className="flex items-center text-center">
-                            <button onClick={() => setStep('type_select')} className="mr-3 p-1 text-slate-400"><Icon name="chevronLeft" /></button>
-                            <div className="header-logo-circle"><img src="logo.png" /></div>
-                            <div><span className="block font-bold text-slate-700 text-[9px] leading-tight uppercase tracking-widest text-center ml-2 font-bold">Tuscan Retreats</span></div>
+                    <div className="flex flex-col bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
+                         <div className="flex justify-end p-2 pb-0">
+                             <div className="flex space-x-1">
+                                {['it','en','fr','es','de'].map(l => (
+                                     <button key={l} onClick={() => setLang(l)} className={`flag-btn ${lang === l ? 'active' : ''}`}>
+                                         {l === 'it' ? '🇮🇹' : l === 'en' ? '🇬🇧' : l === 'fr' ? '🇫🇷' : l === 'es' ? '🇪🇸' : '🇩🇪'}
+                                     </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex space-x-1">
-                            {['it','en','fr','es','de'].map(l => <button key={l} onClick={() => setLang(l)} className={`flag-btn ${lang === l ? 'active' : ''}`}>{l.toUpperCase()}</button>)}
+                        <div className="flex items-center justify-center p-3 pt-0">
+                            <button onClick={() => setStep('type_select')} className="absolute left-4 p-1 text-slate-400"><Icon name="chevronLeft" /></button>
+                            <div className="header-logo-circle"><img src="logo.png" /></div>
+                            <div className="ml-3"><span className="block font-bold text-slate-700 text-[14px] leading-tight uppercase tracking-widest">Tuscan Retreats</span></div>
                         </div>
                     </div>
                     
