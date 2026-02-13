@@ -15,10 +15,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; }
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
         
-        /* LOGO GIULIA - ZOOM 115% */
+        /* LOGO GIULIA */
         .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 25px 0; background: white; }
         .logo-circle {
             width: 200px; height: 200px; background: white; border-radius: 50%;
@@ -44,12 +44,13 @@
         }
         .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 
-        /* Scanner OCR Styles - FULL WIDTH & HEIGHT */
+        /* Scanner OCR Styles - FULL WIDTH TOTALE */
         .scan-wrapper {
             position: relative;
-            width: 100vw; /* Forza larghezza viewport */
-            margin-left: 50%; transform: translateX(-50%); /* Centra forzatamente per rompere il padding */
-            height: 380px; /* Altezza aumentata */
+            width: 100vw; /* Occupa tutta la larghezza della finestra */
+            left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; /* Trucco per rompere il container centrato */
+            height: 60vh; /* Molto alto per vedere bene */
+            max-height: 500px;
             background: #000;
             overflow: hidden;
             border-top: 1px solid #333;
@@ -58,35 +59,39 @@
         
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* GUIDE VISIVE RETRO CIE */
+        /* GUIDE VISIVE - FAC-SIMILE RETRO CARTA IDENTITÀ */
         .guide-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.7);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 20px;
         }
         
-        /* Rettangolo Giallo - Indirizzo (Parte alta) */
+        /* Area Indirizzo (Alto) */
         .guide-address { 
-            position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; height: 18%; 
+            width: 100%; height: 20%; 
+            margin-top: 15%;
             border: 2px dashed #FFD60A; border-radius: 6px; 
-            background: rgba(255, 214, 10, 0.1);
+            background: rgba(255, 214, 10, 0.15);
             display: flex; align-items: center; justify-content: center;
+            position: relative;
         }
         
-        /* Rettangolo Azzurro - MRZ (Parte bassa) */
+        /* Area MRZ (Basso) */
         .guide-mrz { 
-            position: absolute; bottom: 8%; left: 50%; transform: translate(-50%, 0);
-            width: 96%; height: 28%; 
+            width: 100%; height: 25%; 
+            margin-bottom: 10%;
             border: 2px solid #00E0FF; border-radius: 6px; 
-            background: rgba(0, 224, 255, 0.15);
+            background: rgba(0, 224, 255, 0.2);
             display: flex; align-items: center; justify-content: center;
+            position: relative;
         }
 
         .label-guide { 
-            font-size: 10px; font-weight: 800; padding: 2px 6px; 
-            background: rgba(0,0,0,0.7); color: white; border-radius: 4px; 
-            text-transform: uppercase; letter-spacing: 0.5px;
-            position: absolute; top: -20px;
+            font-size: 11px; font-weight: 900; padding: 4px 8px; 
+            background: rgba(0,0,0,0.8); color: white; border-radius: 4px; 
+            text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
         /* Warning Text */
@@ -157,7 +162,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- CHIAVI FIREBASE ---
+        // --- TUE CHIAVI FIREBASE REALI ---
         const MY_FIREBASE_CONFIG = {
           apiKey: "AIzaSyAI9ehjq0UAiYu6l_VxXiAZCV12QL0RbDk",
           authDomain: "tuscan-retreats-9322c.firebaseapp.com",
@@ -177,8 +182,8 @@
             it: { 
                 welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
                 login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", 
-                scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento in orizzontale.", 
-                scan_help: "Inquadra il retro della C.I. (MRZ in basso, Indirizzo in alto).",
+                scan_rear: "SCANSIONA DOC", scan_info: "Posiziona il documento in orizzontale.", 
+                scan_help: "Inquadra il retro della C.I. (Indirizzo in alto, MRZ in basso).",
                 photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA E CONTINUA", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
                 warning_save: "Carica le foto e compila tutti i campi obbligatori per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
                 tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
@@ -192,12 +197,13 @@
                 guest_count_q: "Quanti ospiti siete? (1+ anni)", guest_count_sub: "Inserisci il numero totale di persone per abilitare il completamento del check-in.", continue: "CONTINUA",
                 share_link: "CONDIVIDI LINK CON AMICI", guests_missing: "Mancano ancora ospiti da registrare",
                 upload_docs_title: "Carica Documenti", upload_docs_desc: "Carica la foto fronte e retro del documento. È obbligatorio.",
-                take_photo: "SCATTA FOTO", upload_file: "CARICA FILE", proceed_docs: "PROCEDI AI DOCUMENTI"
+                take_photo: "SCATTA FOTO", upload_file: "CARICA FILE", proceed_docs: "PROCEDI AI DOCUMENTI",
+                label_res_zone: "RESIDENZA (INDIRIZZO)", label_mrz_zone: "CODICI MRZ"
             },
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
                 login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document horizontally.", 
-                scan_help: "Frame the back of ID (MRZ at bottom, Address at top).",
+                scan_help: "Frame the back of ID (Address at top, MRZ at bottom).",
                 photo_req: "DOCUMENT PHOTO", confirm_btn: "SAVE & CONTINUE", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
                 warning_save: "Fill all mandatory fields", finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back",
                 tax_info: "In accordance with local regulations, if you booked via Booking.com, the tourist tax must be paid on-site upon arrival (cash), or via the secure credit/debit card link I will send you shortly. If you booked via Airbnb, the tax is already included.",
@@ -211,12 +217,13 @@
                 guest_count_q: "How many guests? (1+ years)", guest_count_sub: "Enter total number of people to enable check-in completion.", continue: "CONTINUE",
                 share_link: "SHARE LINK WITH FRIENDS", guests_missing: "Guests missing",
                 upload_docs_title: "Upload Documents", upload_docs_desc: "Upload front and back photo of the document. Mandatory.",
-                take_photo: "TAKE PHOTO", upload_file: "UPLOAD FILE", proceed_docs: "PROCEED TO DOCS"
+                take_photo: "TAKE PHOTO", upload_file: "UPLOAD FILE", proceed_docs: "PROCEED TO DOCS",
+                label_res_zone: "ADDRESS", label_mrz_zone: "MRZ CODES"
             },
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Pour faciliter votre arrivée, je vous demande de remplir l'enregistrement en ligne.", 
-                login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOC", scan_info: "Scannez le document horizontalement.", 
-                scan_help: "Cadrez le verso (MRZ en bas, Adresse en haut).",
+                login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOCUMENT", scan_info: "Scannez le document horizontalement.", 
+                scan_help: "Cadrez le verso (Adresse en haut, MRZ en bas).",
                 photo_req: "PHOTO DOCUMENT", confirm_btn: "ENREGISTRER ET CONTINUER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
                 warning_save: "Remplissez tous les champs obligatoires", finish_btn: "TERMINER", verify: "Vérifier les données", front: "Recto", back_doc: "Verso",
                 tax_info: "Conformément à la réglementation locale, si vous avez réservé via Booking.com, la taxe de séjour doit être payée sur place à l'arrivée (en espèces) ou via le lien sécurisé par carte de crédit/débit que je vous enverrai sous peu. Si vous avez réservé via Airbnb, la taxe est déjà incluse.",
@@ -230,12 +237,13 @@
                 guest_count_q: "Combien d'invités ? (1+ ans)", guest_count_sub: "Entrez le nombre total pour permettre la finalisation.", continue: "CONTINUER",
                 share_link: "PARTAGER LE LIEN", guests_missing: "Invités manquants",
                 upload_docs_title: "Charger les documents", upload_docs_desc: "Chargez la photo recto et verso du document. Obligatoire.",
-                take_photo: "PRENDRE PHOTO", upload_file: "CHARGER FICHIER", proceed_docs: "DOCUMENTS SUIVANTS"
+                take_photo: "PRENDRE PHOTO", upload_file: "CHARGER FICHIER", proceed_docs: "DOCUMENTS SUIVANTS",
+                label_res_zone: "ADRESSE", label_mrz_zone: "CODES MRZ"
             },
             es: { 
                 welcome: "¡Hola! Soy Giulia. Para facilitar su llegada, le pido que complete el registro en línea.", 
                 login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee el documento horizontalmente.", 
-                scan_help: "Encuadre el reverso (MRZ abajo, Dirección arriba).",
+                scan_help: "Encuadre el reverso (Dirección arriba, MRZ abajo).",
                 photo_req: "FOTO DOCUMENTO", confirm_btn: "GUARDAR Y CONTINUAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
                 warning_save: "Complete todos los campos obligatorios", finish_btn: "TERMINAR", verify: "Verificar datos", front: "Frente", back_doc: "Dorso",
                 tax_info: "De acuerdo con las normativas locales, si reservó a través de Booking.com, la tasa turística debe pagarse en el lugar a la llegada (en efectivo) o mediante el enlace seguro de tarjeta de crédito/débito que le enviaré en breve. Si reservó a través de Airbnb, la tasa ya está incluida.",
@@ -249,12 +257,13 @@
                 guest_count_q: "¿Cuántos huéspedes? (1+ años)", guest_count_sub: "Ingrese el número total para habilitar la finalización.", continue: "CONTINUAR",
                 share_link: "COMPARTIR ENLACE", guests_missing: "Faltan huéspedes",
                 upload_docs_title: "Subir Documentos", upload_docs_desc: "Suba foto del frente y dorso del documento. Obligatorio.",
-                take_photo: "TOMAR FOTO", upload_file: "SUBIR ARCHIVO", proceed_docs: "IR A DOCUMENTOS"
+                take_photo: "TOMAR FOTO", upload_file: "SUBIR ARCHIVO", proceed_docs: "IR A DOCUMENTOS",
+                label_res_zone: "DIRECCIÓN", label_mrz_zone: "CÓDIGOS MRZ"
             },
             de: { 
                 welcome: "Hallo! Ich bin Giulia. Um Ihre Ankunft zu erleichtern, bitte ich Sie, den Online-Check-in abzuschließen.", 
                 login_ph: "CODE", start_btn: "STARTEN", scan_rear: "DOKUMENT SCANNEN", scan_info: "Dokument horizontal scannen.", 
-                scan_help: "Rückseite einrahmen (MRZ unten, Adresse oben).",
+                scan_help: "Rückseite einrahmen (Adresse oben, MRZ unten).",
                 photo_req: "FOTO", confirm_btn: "SPEICHERN & WEITER", recover_btn: "TÜRCODE ANZEIGEN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
                 warning_save: "Füllen Sie alle Pflichtfelder aus", finish_btn: "ABSCHLIESSEN", verify: "Daten prüfen", front: "Vorderseite", back_doc: "Rückseite",
                 tax_info: "Gemäß den örtlichen Vorschriften muss die Kurtaxe bei Buchung über Booking.com vor Ort bei Ankunft (in bar) oder über den sicheren Kredit-/Debitkartenlink, den ich Ihnen in Kürze zusende, bezahlt werden. Bei Buchung über Airbnb ist die Steuer bereits enthalten.",
@@ -268,7 +277,8 @@
                 guest_count_q: "Wie viele Gäste? (1+ Jahre)", guest_count_sub: "Gesamtzahl eingeben, um Check-in abzuschließen.", continue: "WEITER",
                 share_link: "LINK TEILEN", guests_missing: "Gäste fehlen",
                 upload_docs_title: "Dokumente hochladen", upload_docs_desc: "Laden Sie Vorder- und Rückseite hoch. Obligatorisch.",
-                take_photo: "FOTO MACHEN", upload_file: "DATEI HOCHLADEN", proceed_docs: "ZU DEN DOKUMENTEN"
+                take_photo: "FOTO MACHEN", upload_file: "DATEI HOCHLADEN", proceed_docs: "ZU DEN DOKUMENTEN",
+                label_res_zone: "ADRESSE", label_mrz_zone: "MRZ CODES"
             }
         };
 
@@ -702,7 +712,7 @@
                     setOcrProcessing(false);
                     setIsScanning(false);
                     alert(t.ocr_success);
-                    setStep('manual_entry');
+                    setStep('manual_entry'); // Move to verification
                 } else {
                     alert("Nessun dato CIE rilevato. Riprova o inserisci manualmente.");
                     setOcrProcessing(false);
@@ -737,7 +747,7 @@
                     setOcrProcessing(false);
                     setIsScanning(false);
                     alert(t.ocr_success);
-                    setStep('manual_entry');
+                    setStep('manual_entry'); // Move to verification
                 } else {
                     alert("Nessun dato Passaporto rilevato. Riprova o inserisci manualmente.");
                     setOcrProcessing(false);
@@ -965,6 +975,7 @@
                                                 <CopyField label="Sesso" value={g.sex} />
                                                 <CopyField label="Data Nascita" value={formatDateIT(g.birthDate)} />
                                                 
+                                                {/* MODIFICA: Campo Luogo e Provincia Nascita SEPARATI */}
                                                 <div className="col-span-2"><CopyField label="Luogo Nascita" value={g.birthCity} /></div>
                                                 <div className="col-span-2"><CopyField label="Prov. Nascita" value={g.birthProvince} /></div>
                                                 
@@ -1043,12 +1054,6 @@
                      </div>
                      
                      <button onClick={() => { setGuests([]); setStep('guest_list'); }} className="btn btn-primary uppercase font-bold shadow-xl text-white">{t.continue}</button>
-                     
-                     <div className="mt-8 pt-8 border-t w-full">
-                         <button onClick={shareLink} className="btn bg-blue-100 text-blue-700 font-bold uppercase text-sm border border-blue-200">
-                            <Icon name="copy" className="w-4 h-4 mr-2" /> {t.share_link}
-                         </button>
-                     </div>
                  </div>
             );
 
@@ -1119,8 +1124,8 @@
                                 <div className="scan-wrapper">
                                      <video ref={videoRef} autoPlay playsInline muted style={{width:'100%', height:'100%', objectFit:'cover'}}></video>
                                      <div className="guide-overlay">
-                                        <div className="guide-address"><span className="label-guide">RESIDENZA</span></div>
-                                        <div className="guide-mrz"><span className="label-guide">MRZ ZONE &gt;&gt;&gt;</span></div>
+                                        <div className="guide-address"><span className="label-guide">{t.label_res_zone}</span></div>
+                                        <div className="guide-mrz"><span className="label-guide">{t.label_mrz_zone}</span></div>
                                     </div>
                                 </div>
                                 <div className="p-4 bg-white">
@@ -1151,18 +1156,8 @@
                                 </div>
 
                                 <div className="space-y-4 flex-1 text-center text-center mt-6">
-                                    <div className={`upload-box ${images.front ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-front').click()}>
-                                        {images.front ? <img src={images.front} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.front.toUpperCase()})</div>}
-                                        <input id="file-front" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, front: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
-                                    </div>
-                                    
-                                    {(docType !== 'passport') && (
-                                        <div className={`upload-box ${images.back ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-back').click()}>
-                                            {images.back ? <img src={images.back} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.back_doc.toUpperCase()})</div>}
-                                            <input id="file-back" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, back: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
-                                        </div>
-                                    )}
-                                    <button onClick={() => setStep('manual_entry')} disabled={!checkPhotos()} className="btn btn-primary w-full mt-6 uppercase font-bold tracking-widest shadow-lg text-center font-bold text-white">{t.confirm_btn}</button>
+                                    {/* RIMOSSO CARICAMENTO FOTO QUI - SPOSTATO IN FASE SUCCESSIVA */}
+                                    <button onClick={() => setStep('manual_entry')} className="btn btn-primary w-full mt-6 uppercase font-bold tracking-widest shadow-lg text-center font-bold text-white">SALTARE SCANSIONE</button>
                                 </div>
                             </div>
                         )}
@@ -1173,18 +1168,7 @@
                         <div className="p-6 flex-1 text-center text-center">
                             <h2 className="text-2xl font-bold mb-4 text-slate-800 mt-4 uppercase tracking-tight text-center">{t.scan_title}</h2>
                             <div className="space-y-4 flex-1 text-center text-center mt-6">
-                                <div className={`upload-box ${images.front ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-front').click()}>
-                                    {images.front ? <img src={images.front} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.front.toUpperCase()})</div>}
-                                    <input id="file-front" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, front: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
-                                </div>
-                                
-                                {(docType !== 'passport') && (
-                                    <div className={`upload-box ${images.back ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-back').click()}>
-                                        {images.back ? <img src={images.back} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.back_doc.toUpperCase()})</div>}
-                                        <input id="file-back" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, back: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
-                                    </div>
-                                )}
-                                <button onClick={() => setStep('manual_entry')} disabled={!checkPhotos()} className="btn btn-primary w-full mt-6 uppercase font-bold tracking-widest shadow-lg text-center font-bold text-white">{t.confirm_btn}</button>
+                                <button onClick={() => setStep('manual_entry')} className="btn btn-primary w-full mt-6 uppercase font-bold tracking-widest shadow-lg text-center font-bold text-white">{t.confirm_btn}</button>
                             </div>
                         </div>
                     )}
@@ -1333,7 +1317,12 @@
                             <div className="text-5xl font-mono font-bold tracking-widest text-slate-800 uppercase text-center">{bookingDetails.doorCode || "9988"}</div>
                         </div>
                     </div>
-                    <button onClick={handleExit} className="mt-12 text-teal-100 font-bold uppercase tracking-widest text-sm hover:text-white transition underline opacity-60 text-center text-center text-center text-center">{t.exit}</button>
+                    <div className="mt-8 pt-8 border-t border-teal-700/50 w-full">
+                         <button onClick={shareLink} className="btn bg-teal-900 text-teal-100 font-bold uppercase text-sm border border-teal-700/50">
+                            <Icon name="copy" className="w-4 h-4 mr-2" /> {t.share_link}
+                         </button>
+                     </div>
+                    <button onClick={handleExit} className="mt-6 text-teal-200 font-bold uppercase tracking-widest text-sm hover:text-white transition underline opacity-60 text-center text-center text-center text-center">{t.exit}</button>
                 </div>
             );
             return null;
