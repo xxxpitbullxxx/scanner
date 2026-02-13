@@ -37,7 +37,7 @@
         .scan-wrapper-full {
             position: relative;
             width: 100vw; /* Larghezza totale schermo */
-            height: 500px; /* Altezza generosa per vedere bene */
+            height: 480px; /* Altezza ottimizzata */
             background: #000;
             overflow: hidden;
             left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; /* Rompe il container */
@@ -49,7 +49,7 @@
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
         }
         
-        /* Rettangolo Giallo - Indirizzo (Centrale - Coordinate V104) */
+        /* Rettangolo Giallo - Indirizzo (Centrale/Alto) */
         .zone-residenza {
             position: absolute;
             top: 48%; /* Abbassato per evitare l'intestazione */
@@ -63,7 +63,7 @@
             z-index: 10;
         }
 
-        /* Rettangolo Azzurro - MRZ (Basso - Coordinate V104) */
+        /* Rettangolo Azzurro - MRZ (Basso) */
         .zone-mrz {
             position: absolute;
             top: 82%; /* Spostato in basso per evitare barcode centrale */
@@ -88,6 +88,7 @@
         /* Warning Text */
         .warning-red { color: #ef4444; font-size: 11px; font-weight: 700; line-height: 1.3; margin-top: 5px; text-align: center; border: 1px solid #fee2e2; background: #fef2f2; padding: 8px; border-radius: 8px; }
         .info-blue { color: #1e40af; font-size: 12px; line-height: 1.4; background: #eff6ff; padding: 12px; border-radius: 12px; border: 1px solid #dbeafe; text-align: left; margin-bottom: 20px; }
+        .info-success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 15px; text-align: center; }
 
         .input-field { 
             width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; 
@@ -166,7 +167,7 @@
                 scan_help: "Inquadra il retro della C.I. (MRZ in basso, Indirizzo in alto).",
                 photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA E CONTINUA", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
                 warning_save: "Carica le foto e compila tutti i campi obbligatori per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
-                tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti). Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
+                tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
                 label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_prov: "Prov.", label_citizenship: "Cittadinanza", label_cit_ph: "Specifica...", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_address: "Via / Piazza", label_civic: "Civico", label_issued: "Rilasciato da", label_issued_ph: "Es. Milano...", label_docnum: "N. Documento", label_expiry: "Scadenza",
                 thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
@@ -175,12 +176,13 @@
                 ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla attentamente nella scheda successiva.",
                 ocr_success: "Dati rilevati! Verifica i campi compilati e inserisci quelli mancanti. Poi prosegui per caricare le foto.",
                 guest_count_q: "Quanti ospiti siete? (1+ anni)", 
-                guest_count_tip: "⚠️ IMPORTANTE: Se ognuno compila dal proprio telefono, scrivi 1 e poi condividi il link alla fine. Se invece compili TU per tutti ora, scrivi il numero totale.",
+                guest_count_tip: "⚠️ IMPORTANTE: Se ognuno compila dal proprio telefono, scrivi 1 e poi invia questo link agli altri. Se invece compili TU per tutti ora, scrivi il numero totale.",
                 continue: "CONTINUA",
-                share_link: "CONDIVIDI LINK CON AMICI", guests_missing: "Mancano ancora ospiti da registrare",
+                share_link: "INVIA LINK AGLI ALTRI OSPITI (Ognuno compila il suo)", guests_missing: "Mancano ancora ospiti da registrare",
                 upload_docs_title: "Carica Documenti", upload_docs_desc: "Carica la foto fronte e retro del documento. È obbligatorio.",
                 take_photo: "SCATTA FOTO", upload_file: "CARICA FILE", proceed_docs: "PROCEDI AI DOCUMENTI",
-                label_res_zone: "RESIDENZA", label_mrz_zone: "CODICI MRZ"
+                label_res_zone: "RESIDENZA", label_mrz_zone: "CODICI MRZ",
+                save_link_msg: "💡 CONSIGLIO: Salvati questo link! Se dimentichi il codice, potrai riaprirlo per visualizzarlo senza rifare il check-in."
             },
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
@@ -197,12 +199,13 @@
                 ocr_warn: "WARNING: Lighting and shadows may affect data accuracy. Check next screen.",
                 ocr_success: "Data detected! Verify filled fields and complete missing ones. Then go back to upload document photos and complete check-in.",
                 guest_count_q: "How many guests? (1+ years)", 
-                guest_count_tip: "⚠️ IMPORTANT: If everyone uses their own phone, enter 1 and share the link later. If YOU fill for everyone now, enter total number.",
+                guest_count_tip: "⚠️ IMPORTANT: If everyone uses their own phone, enter 1 and send this link to others. If YOU fill for everyone now, enter total number.",
                 continue: "CONTINUE",
-                share_link: "SHARE LINK WITH FRIENDS", guests_missing: "Guests missing",
+                share_link: "SEND LINK TO OTHER GUESTS (Each fills their own)", guests_missing: "Guests missing",
                 upload_docs_title: "Upload Documents", upload_docs_desc: "Upload front and back photo. Mandatory.",
                 take_photo: "TAKE PHOTO", upload_file: "UPLOAD FILE", proceed_docs: "PROCEED TO DOCS",
-                label_res_zone: "ADDRESS", label_mrz_zone: "MRZ CODES"
+                label_res_zone: "ADDRESS", label_mrz_zone: "MRZ CODES",
+                save_link_msg: "💡 TIP: Save this link! If you forget the code, reopen it to view without repeating check-in."
             },
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement en ligne.", 
@@ -219,12 +222,13 @@
                 ocr_warn: "ATTENTION: L'éclairage peut affecter la précision. Vérifiez l'écran suivant.",
                 ocr_success: "Données détectées ! Vérifiez les champs et complétez les manquants. Ensuite, passez au téléchargement des photos.",
                 guest_count_q: "Combien d'invités ? (1+ ans)", 
-                guest_count_tip: "⚠️ IMPORTANT : Si chacun remplit depuis son téléphone, entrez 1 et partagez le lien. Si VOUS remplissez pour tout le monde, entrez le total.",
+                guest_count_tip: "⚠️ IMPORTANT : Si chacun remplit depuis son téléphone, entrez 1 et envoyez ce lien aux autres. Si VOUS remplissez pour tout le monde, entrez le total.",
                 continue: "CONTINUER",
-                share_link: "PARTAGER LE LIEN", guests_missing: "Invités manquants",
+                share_link: "ENVOYER LIEN AUX AUTRES (Chacun remplit le sien)", guests_missing: "Invités manquants",
                 upload_docs_title: "Charger les documents", upload_docs_desc: "Chargez la photo recto et verso du document. Obligatoire.",
                 take_photo: "PHOTO", upload_file: "FICHIER", proceed_docs: "DOCUMENTS SUIVANTS",
-                label_res_zone: "ADRESSE", label_mrz_zone: "CODES MRZ"
+                label_res_zone: "ADRESSE", label_mrz_zone: "CODES MRZ",
+                save_link_msg: "💡 CONSEIL : Sauvegardez ce lien ! Si vous oubliez le code, rouvrez-le pour voir sans refaire l'enregistrement."
             },
             es: { 
                 welcome: "¡Hola! Soy Giulia. Complete el registro en línea.", 
@@ -241,12 +245,13 @@
                 ocr_warn: "ATENCIÓN: La iluminación puede afectar los datos. Verifique en la siguiente pantalla.",
                 ocr_success: "¡Datos detectados! Verifique los campos y complete los que faltan. Luego proceda a cargar las fotos.",
                 guest_count_q: "¿Cuántos huéspedes? (1+ años)", 
-                guest_count_tip: "⚠️ IMPORTANTE: Si cada uno llena desde su teléfono, ingrese 1 y comparta el enlace. Si USTED llena por todos, ingrese el total.",
+                guest_count_tip: "⚠️ IMPORTANTE: Si cada uno llena desde su teléfono, ingrese 1 y envíe este enlace a otros. Si USTED llena por todos, ingrese el total.",
                 continue: "CONTINUAR",
-                share_link: "COMPARTIR ENLACE", guests_missing: "Faltan huéspedes",
+                share_link: "ENVIAR ENLACE A OTROS (Cada uno llena el suyo)", guests_missing: "Faltan huéspedes",
                 upload_docs_title: "Subir Documentos", upload_docs_desc: "Suba foto del frente y dorso. Obligatorio.",
                 take_photo: "FOTO", upload_file: "ARCHIVO", proceed_docs: "IR A DOCUMENTOS",
-                label_res_zone: "DIRECCIÓN", label_mrz_zone: "CÓDIGOS MRZ"
+                label_res_zone: "DIRECCIÓN", label_mrz_zone: "CÓDIGOS MRZ",
+                save_link_msg: "💡 CONSEJO: ¡Guarde este enlace! Si olvida el código, ábralo de nuevo para ver sin repetir el registro."
             },
             de: { 
                 welcome: "Hallo! Ich bin Giulia. Bitte schließen Sie den Online-Check-in ab.", 
@@ -263,12 +268,13 @@
                 ocr_warn: "WARNUNG: Beleuchtung kann Daten verfälschen. Bitte im nächsten Bildschirm überprüfen.",
                 ocr_success: "Daten erkannt! Überprüfen Sie die Felder und ergänzen Sie fehlende Daten. Fahren Sie dann mit dem Hochladen der Fotos fort.",
                 guest_count_q: "Wie viele Gäste? (1+ Jahre)", 
-                guest_count_tip: "⚠️ WICHTIG: Wenn jeder sein eigenes Handy benutzt, geben Sie 1 ein und teilen Sie den Link. Wenn SIE für alle ausfüllen, geben Sie die Gesamtzahl ein.",
+                guest_count_tip: "⚠️ WICHTIG: Wenn jeder sein eigenes Handy benutzt, geben Sie 1 ein und senden Sie diesen Link an andere. Wenn SIE für alle ausfüllen, geben Sie die Gesamtzahl ein.",
                 continue: "WEITER",
-                share_link: "LINK TEILEN", guests_missing: "Gäste fehlen",
+                share_link: "LINK AN ANDERE SENDEN (Jeder füllt selbst aus)", guests_missing: "Gäste fehlen",
                 upload_docs_title: "Dokumente hochladen", upload_docs_desc: "Laden Sie Vorder- und Rückseite hoch. Obligatorisch.",
                 take_photo: "FOTO MACHEN", upload_file: "DATEI HOCHLADEN", proceed_docs: "ZU DEN DOKUMENTEN",
-                label_res_zone: "ADRESSE", label_mrz_zone: "MRZ CODES"
+                label_res_zone: "ADRESSE", label_mrz_zone: "MRZ CODES",
+                save_link_msg: "💡 TIPP: Speichern Sie diesen Link! Wenn Sie den Code vergessen, öffnen Sie ihn erneut, um ihn ohne erneutes Einchecken anzuzeigen."
             }
         };
 
@@ -395,16 +401,30 @@
             const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'tuscan-retreats-portal';
 
+            // Firebase Boot logic
             useEffect(() => {
                 const checkFB = setInterval(() => {
                     if (window.FirebaseSDK) {
                         clearInterval(checkFB);
+                        const config = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : {
+                            apiKey: "INSERISCI_API_KEY",
+                            authDomain: "tuo-progetto.firebaseapp.com",
+                            projectId: "tuo-progetto",
+                            storageBucket: "tuo-progetto.appspot.com",
+                            messagingSenderId: "123456",
+                            appId: "1:123456:web:abc"
+                        };
+                        
                         try {
                              const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
                              const auth = window.FirebaseSDK.getAuth(app);
                              const db = window.FirebaseSDK.getFirestore(app);
                              window.db = db;
-                             const initAuth = async () => { await window.FirebaseSDK.signInAnonymously(auth); window.FirebaseSDK.onAuthStateChanged(auth, setUser); };
+                             
+                             const initAuth = async () => {
+                                 await window.FirebaseSDK.signInAnonymously(auth);
+                                 window.FirebaseSDK.onAuthStateChanged(auth, setUser);
+                             };
                              initAuth();
                         } catch(e) { console.log("Firebase init error", e); }
                     }
@@ -538,23 +558,14 @@
 
             const parseCIE = (raw) => {
                 const up = raw.toUpperCase();
-                const clean = up.replace(/\s/g, '');
+                const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
                 let newForm = { ...formData };
                 let found = false;
 
-                // MRZ Parsing (Back of CIE)
-                // Line 1: I<ITA...
-                // Line 2: Birth... Sex... Expiry...
-                // Line 3: Name<<Surname
-                
-                // Typical MRZ Pattern for CIE (3 lines)
-                // C<ITA...
-                
-                // Simplified logic based on previous working version
+                const clean = up.replace(/\s/g, '');
                 let dc = clean.match(/ITA([A-Z0-9]{9})/); 
                 if(dc) { newForm.docNumber = dc[1]; found = true; }
 
-                // Attempt to find name in MRZ (Surname<<Name)
                 let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
                 if(nm) { 
                     let cog = fixOCRText(nm[1], 'L');
@@ -571,15 +582,25 @@
                     found = true;
                 }
 
-                // Address logic (Top part of Back)
-                // Look for VIA, PIAZZA, etc.
-                const lines = up.split('\n');
                 lines.forEach((l, i) => {
-                     if(l.match(/(VIA|PIAZZA|CORSO|LARGO|VICOLO|STRADA)\s+/)) {
-                         newForm.residenceAddress = l.trim();
+                     if(l.match(/^(VIA|V\.|PIAZZA|P\.|CORSO|C\.|LARGO|VICOLO|STRADA)\s+/)) {
+                         let parts = l.match(/(.+?)\s+(\d+[A-Z]?)$/); 
+                         if(parts) {
+                             newForm.residenceAddress = parts[1].trim();
+                             newForm.houseNumber = parts[2];
+                         } else {
+                             newForm.residenceAddress = l; 
+                         }
                          found = true;
-                         // Try to find City in next line or same line
-                         // Simplified: just taking the line as address
+                         
+                         if(lines[i+1]) {
+                             let nextL = lines[i+1];
+                             let cityMatch = nextL.match(/(.+)\s+\(([A-Z]{2})\)/);
+                             if(cityMatch) {
+                                 newForm.residenceCity = cityMatch[1].trim();
+                                 newForm.residenceProvince = cityMatch[2];
+                             }
+                         }
                      }
                 });
 
@@ -590,7 +611,7 @@
                     alert(t.ocr_success);
                     setStep('manual_entry'); 
                 } else {
-                    alert("Nessun dato CIE rilevato. Riprova o inserisci manualmente.");
+                    alert("Nessun dato rilevato. Riprova o inserisci manualmente.");
                     setOcrProcessing(false);
                 }
             };
@@ -1196,6 +1217,9 @@
                             <div className="text-5xl font-mono font-bold tracking-widest text-slate-800 uppercase text-center">{bookingDetails.doorCode || "9988"}</div>
                         </div>
                     </div>
+                    <div className="info-success">
+                         {t.save_link_msg}
+                     </div>
                     <div className="mt-8 pt-8 border-t border-teal-700/50 w-full">
                          <button onClick={shareLink} className="btn bg-teal-900 text-teal-100 font-bold uppercase text-sm border border-teal-700/50">
                             <Icon name="copy" className="w-4 h-4 mr-2" /> {t.share_link}
