@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tuscan Retreats - Guest Portal</title>
     
-    <!-- LIBRERIE -->
+    <!-- LIBRERIE ESTERNE (React, Tailwind, Tesseract) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -20,17 +20,19 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; position: relative; overflow-x: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         
-        /* LOGHI */
+        /* LOGO GIULIA - Pagina Login/Benvenuto */
         .logo-main-circle { width: 160px; height: 160px; border-radius: 50%; overflow: hidden; border: 4px solid #d4af37; background: white; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .logo-main-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
         
+        /* FOTO HOST - Pagina Benvenuto */
         .host-photo-circle { width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: 0 auto 15px; background: #eee; }
         .host-photo-circle img { width: 100%; height: 100%; object-fit: cover; }
 
+        /* LOGO PICCOLO - Header */
         .header-logo-circle { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; }
         .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 
-        /* SCANNER FULL WIDTH */
+        /* SCANNER FULL SCREEN REALE */
         .scan-wrapper-full {
             position: relative; width: 100vw; height: 500px; background: #000; overflow: hidden;
             /* Rompe i margini del container per andare full width */
@@ -38,7 +40,7 @@
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* GUIDE VISIVE (Coordinate precise V104 per evitare barcode) */
+        /* GUIDE VISIVE (Coordinate V104 per evitare barcode) */
         .guide-overlay { position: absolute; inset: 0; pointer-events: none; }
         
         /* Giallo: Indirizzo (Alto) */
@@ -47,11 +49,10 @@
             width: 94%; height: 14%; 
             border: 2px dashed #FFD60A; border-radius: 6px; 
             background: rgba(255, 214, 10, 0.1);
-            box-shadow: 0 0 0 999px rgba(0,0,0,0.5); /* Oscura il resto per focus */
             z-index: 10;
         }
         
-        /* Azzurro: MRZ (Basso e Stretto) */
+        /* Azzurro: MRZ (Basso - Stretto) */
         .zone-mrz {
             position: absolute; top: 85%; left: 50%; transform: translate(-50%, -50%);
             width: 96%; height: 18%; 
@@ -106,18 +107,18 @@
     <div id="root"></div>
     <canvas id="ocr-canvas" style="display:none;"></canvas>
 
-    <!-- FIREBASE -->
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
         window.FirebaseSDK = { initializeApp, getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken };
     </script>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- CONFIGURAZIONE ---
         const MY_FIREBASE_CONFIG = {
           apiKey: "AIzaSyAI9ehjq0UAiYu6l_VxXiAZCV12QL0RbDk",
           authDomain: "tuscan-retreats-9322c.firebaseapp.com",
@@ -151,7 +152,7 @@
             en: { 
                 welcome_title: "Welcome", welcome_text: "Hi! I'm Giulia. Please complete online check-in.",
                 start_btn: "START CHECK-IN", login_ph: "BOOKING CODE", enter: "ENTER",
-                guest_q: "How many guests?", guest_tip: "⚠️ IMPORTANT: Enter 1 if each person fills their own. Enter total if YOU fill for everyone.", continue: "CONTINUE",
+                guest_q: "How many guests? (1+ years)", guest_tip: "⚠️ IMPORTANT: Enter 1 if each person fills their own. Enter total if YOU fill for everyone.", continue: "CONTINUE",
                 doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "Driving License",
                 scan_title: "SCAN DOCUMENT", scan_info: "Scan document horizontally.", scan_help: "ID Back or Passport Data Page.",
                 ocr_btn: "SNAP & READ", ocr_file_btn: "📁 UPLOAD FILE", ocr_processing: "PROCESSING...", ocr_warn: "WARNING: Check data carefully.", ocr_success: "Data detected!",
@@ -161,8 +162,8 @@
                 sign_title: "Signature", tax_info: "City tax to be paid on site.", clear_sign: "CLEAR", confirm_btn: "CONFIRM & FINISH",
                 success_title: "Done!", success_msg: "Check-in completed.", save_link_msg: "💡 SAVE THIS LINK!", share_link: "COPY LINK FOR OTHERS", exit: "Exit", guests_missing: "Guests missing"
             },
-            fr: { welcome_title: "Bienvenue", welcome_text: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement.", start_btn: "COMMENCER", login_ph: "CODE", enter: "ENTRER", guest_q: "Combien d'invités ?", guest_tip: "⚠️ IMPORTANT : Entrez 1 si chacun remplit le sien.", continue: "CONTINUER", doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis", scan_title: "SCANNER", scan_info: "Horizontalement.", scan_help: "Verso C.I. ou Passeport.", ocr_btn: "SCANNER", ocr_file_btn: "📁 FICHIER", ocr_processing: "TRAITEMENT...", ocr_warn: "Attention aux reflets.", ocr_success: "Données trouvées !", verify: "Vérifier", photo_req: "PHOTO", save: "ENREGISTRER", label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Ville Naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_res_city: "Ville Résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_docnum: "N° Doc", label_expiry: "Expiration", label_issued: "Délivré par", label_issued_ph: "Ex. Ville de...", front: "Recto", back_doc: "Verso", take_photo: "PHOTO", upload_file: "FICHIER", sign_title: "Signature", tax_info: "Taxe de séjour sur place.", clear_sign: "EFFACER", confirm_btn: "TERMINER", success_title: "Fini !", success_msg: "Enregistrement terminé.", save_link_msg: "💡 SAUVEGARDEZ CE LIEN !", share_link: "COPIER LIEN", exit: "Sortie", guests_missing: "Invités manquants" },
-            es: { welcome_title: "Bienvenido", welcome_text: "¡Hola! Soy Giulia. Complete el registro.", start_btn: "EMPEZAR", login_ph: "CÓDIGO", enter: "ENTRAR", guest_q: "¿Cuántos huéspedes?", guest_tip: "⚠️ IMPORTANTE: Ingrese 1 si cada uno llena el suyo.", continue: "CONTINUAR", doc_type: "Tipo Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia", scan_title: "ESCANEAR", scan_info: "Horizontalmente.", scan_help: "Dorso DNI o Pasaporte.", ocr_btn: "ESCANEAR", ocr_file_btn: "📁 ARCHIVO", ocr_processing: "PROCESANDO...", ocr_warn: "Cuidado con los reflejos.", ocr_success: "¡Datos encontrados!", verify: "Verificar", photo_req: "FOTO", save: "GUARDAR", label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Ciudad Nacimiento", label_prov: "Prov.", label_citizenship: "Nacionalidad", label_res_city: "Ciudad Residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Ciudad de...", label_docnum: "N° Documento", label_expiry: "Caducidad", front: "Frente", back_doc: "Dorso", take_photo: "FOTO", upload_file: "ARCHIVO", sign_title: "Firma", tax_info: "Tasa turística en el lugar.", clear_sign: "BORRAR", confirm_btn: "TERMINAR", success_title: "¡Hecho!", success_msg: "Registro completado.", save_link_msg: "💡 ¡GUARDE ESTE ENLACE!", share_link: "COPIAR ENLACE", exit: "Salir", guests_missing: "Faltan huéspedes" },
+            fr: { welcome_title: "Bienvenue", welcome_text: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement.", start_btn: "COMMENCER", login_ph: "CODE", enter: "ENTRER", guest_q: "Combien d'invités ?", guest_tip: "⚠️ IMPORTANT : Entrez 1 si chacun remplit le sien.", continue: "CONTINUER", doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis", scan_title: "SCANNER", scan_info: "Horizontalement.", scan_help: "Verso C.I. ou Passeport.", ocr_btn: "SCANNER", ocr_file_btn: "📁 FICHIER", ocr_processing: "TRAITEMENT...", ocr_warn: "Attention aux reflets.", ocr_success: "Données trouvées !", verify: "Vérifier", photo_req: "PHOTO", save: "ENREGISTRER", label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Ville Naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_res_city: "Ville Résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_issued: "Délivré par", label_issued_ph: "Ex. Ville de...", front: "Recto", back_doc: "Verso", take_photo: "PHOTO", upload_file: "FICHIER", sign_title: "Signature", tax_info: "Taxe de séjour sur place.", clear_sign: "EFFACER", confirm_btn: "TERMINER", success_title: "Fini !", success_msg: "Enregistrement terminé.", save_link_msg: "💡 SAUVEGARDEZ CE LIEN !", share_link: "COPIER LIEN", exit: "Sortie", guests_missing: "Invités manquants" },
+            es: { welcome_title: "Bienvenido", welcome_text: "¡Hola! Soy Giulia. Complete el registro.", start_btn: "EMPEZAR", login_ph: "CÓDIGO", enter: "ENTRAR", guest_q: "¿Cuántos huéspedes?", guest_tip: "⚠️ IMPORTANTE: Ingrese 1 si cada uno llena el suyo.", continue: "CONTINUAR", doc_type: "Tipo Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia", scan_title: "ESCANEAR", scan_info: "Horizontalmente.", scan_help: "Dorso DNI o Pasaporte.", ocr_btn: "ESCANEAR", ocr_file_btn: "📁 ARCHIVO", ocr_processing: "PROCESANDO...", ocr_warn: "Cuidado con los reflejos.", ocr_success: "¡Datos encontrados!", verify: "Verificar", photo_req: "FOTO", save: "GUARDAR", label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Ciudad Nacimiento", label_prov: "Prov.", label_citizenship: "Nacionalidad", label_res_city: "Ciudad Residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Ciudad de...", front: "Frente", back_doc: "Dorso", take_photo: "FOTO", upload_file: "ARCHIVO", sign_title: "Firma", tax_info: "Tasa turística en el lugar.", clear_sign: "BORRAR", confirm_btn: "TERMINAR", success_title: "¡Hecho!", success_msg: "Registro completado.", save_link_msg: "💡 ¡GUARDE ESTE ENLACE!", share_link: "COPIAR ENLACE", exit: "Salir", guests_missing: "Faltan huéspedes" },
             de: { welcome_title: "Willkommen", welcome_text: "Hallo! Ich bin Giulia. Bitte Check-in abschließen.", start_btn: "STARTEN", login_ph: "CODE", enter: "EINGEBEN", guest_q: "Wie viele Gäste?", guest_tip: "⚠️ WICHTIG: Geben Sie 1 ein, wenn jeder selbst ausfüllt.", continue: "WEITER", doc_type: "Dokumentart", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein", scan_title: "SCANNEN", scan_info: "Horizontal.", scan_help: "Rückseite ID oder Reisepass.", ocr_btn: "SCANNEN", ocr_file_btn: "📁 DATEI", ocr_processing: "VERARBEITUNG...", ocr_warn: "Achten Sie auf Reflexionen.", ocr_success: "Daten gefunden!", verify: "Überprüfen", photo_req: "FOTO", save: "SPEICHERN", label_surname: "Nachname", label_name: "Vorname", label_sex: "Geschlecht", label_birth: "Geburtsdatum", label_city: "Geburtsort", label_prov: "Prov.", label_citizenship: "Nationalität", label_res_city: "Wohnort", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "Nr.", label_issued: "Ausgestellt von", label_issued_ph: "Z.B. Stadt...", label_docnum: "Dokumentnummer", label_expiry: "Ablaufdatum", front: "Vorderseite", back_doc: "Rückseite", take_photo: "FOTO", upload_file: "DATEI", sign_title: "Unterschrift", tax_info: "Kurtaxe vor Ort.", clear_sign: "LÖSCHEN", confirm_btn: "FERTIGSTELLEN", success_title: "Fertig!", success_msg: "Check-in abgeschlossen.", save_link_msg: "💡 LINK SPEICHERN!", share_link: "LINK KOPIEREN", exit: "Beenden", guests_missing: "Gäste fehlen" }
         };
 
@@ -217,7 +218,7 @@
                 canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stop);
                 return () => { window.removeEventListener('resize', resize); canvas.removeEventListener('mousedown', start); canvas.removeEventListener('mousemove', draw); canvas.removeEventListener('mouseup', stop); canvas.removeEventListener('mouseleave', stop); canvas.removeEventListener('touchstart', start); canvas.removeEventListener('touchmove', draw); canvas.removeEventListener('touchend', stop); };
             }, []);
-            return <canvas ref={canvasRef} className="w-full h-full" />;
+            return <canvas ref={canvasRef} className="w-full h-full" style={{width: '100%', height: '100%'}} />;
         };
 
         const Header = ({ showBack, backStep, setStep, setLang, lang }) => (
@@ -364,6 +365,13 @@
                 if (selectedSession && selectedSession.id === sessionId) setSelectedSession(null);
             };
 
+            const deleteAll = async () => {
+                if(!confirm("ATTENZIONE: Cancellare TUTTO lo storico?")) return;
+                localStorage.removeItem('local_checkins');
+                if (user && window.db) { adminData.forEach(async (item) => { try { const docRef = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', item.id); await window.FirebaseSDK.deleteDoc(docRef); } catch(e) {} }); }
+                setAdminData([]);
+            };
+
             const fixOCRText = (s, type) => {
                 if(!s) return "";
                 if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
@@ -371,15 +379,22 @@
                 return s;
             };
 
-            const formatDateOCR = (d) => { if(!d || d.length<6) return ""; let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6); return (parseInt(y) > 40 ? "19" : "20") + y + "-" + m + "-" + day; };
+            const cleanDoubleStart = (s) => (s && s.length > 2 && s[0] === s[1]) ? s.substring(1) : s;
+            
+            const formatDateOCR = (d) => { 
+                if(!d || d.length<6) return ""; 
+                let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6);
+                return (parseInt(y) > 40 ? "19" : "20") + y + "-" + m + "-" + day; 
+            };
 
             const parseCIE = (raw) => {
                 const up = raw.toUpperCase(); const clean = up.replace(/\s/g, '');
                 let newForm = { ...formData }; let found = false;
+
                 let dc = clean.match(/ITA([A-Z0-9]{9})/); if(dc) { newForm.docNumber = dc[1]; found = true; }
                 let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
                 if(nm) { 
-                    newForm.surname = fixOCRText(nm[1], 'L');
+                    newForm.surname = cleanDoubleStart(fixOCRText(nm[1], 'L'));
                     newForm.name = fixOCRText(nm[2], 'L').replace(/</g, ' '); 
                     found = true;
                 }
@@ -492,13 +507,10 @@
                         <div className="app-container p-8 justify-center items-center text-center">
                             <div className="logo-main-circle"><img src="logo.png" className="logo-img" /></div>
                             <h1 className="text-3xl font-bold text-slate-800 mb-6 uppercase tracking-widest tracking-tight">Login</h1>
-                            <input id="code" className="input-field text-center mb-4" placeholder={t.login_ph} />
-                            <button onClick={() => { 
-                                const c = document.getElementById('code').value.toUpperCase();
-                                if(c==='ADMIN') setStep('admin_pass');
-                                else if(PROPERTIES[c]) { setProperty(PROPERTIES[c]); setStep('welcome'); } 
-                                else alert('Codice errato');
-                            }} className="btn btn-primary shadow-xl uppercase font-bold text-white">ENTRA</button>
+                            <form onSubmit={e => { e.preventDefault(); const c = e.target.code.value.toUpperCase(); if(c==='ADMIN') setStep('admin_pass'); else if(PROPERTIES[c]){ setProperty(PROPERTIES[c]); setBookingDetails({ guestName: "Ospite", doorCode: PROPERTIES[c].defaultCode }); setStep('welcome'); } else alert('Codice errato'); }} className="space-y-4 w-full px-4">
+                                <input name="code" type="text" className="input-field text-center uppercase font-bold tracking-widest" placeholder={t.login_ph} required />
+                                <button type="submit" className="btn btn-primary shadow-xl uppercase font-bold text-white">ENTRA</button>
+                            </form>
                             <button onClick={() => setStep('admin_pass')} className="mt-10 text-xs text-slate-400 underline">Area Proprietario</button>
                         </div>
                     );
@@ -590,7 +602,7 @@
                     );
                     case 'guest_list': return (
                         <div className="app-container flex flex-col">
-                            <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="guests_count" />
+                            <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="ask_guests" />
                             <div className="p-6 bg-white border-b flex justify-between items-center shadow-sm font-bold uppercase">
                                 <span>{t.guest_list}</span><div className="text-teal-600 bg-teal-50 px-4 py-1 rounded-full text-sm border border-teal-100">{guests.length} / {expectedGuests}</div>
                             </div>
@@ -694,8 +706,8 @@
                     case 'upload_docs': return (
                          <div className="app-container flex flex-col p-6 text-center">
                             <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="manual_entry" />
-                            <h2 className="text-xl font-bold mb-4">{t.upload_docs_title}</h2>
-                            <p className="text-sm text-gray-500 mb-6">{t.upload_docs_desc}</p>
+                            <h2 className="text-xl font-bold mb-4">{t.photo_req}</h2>
+                            
                             <div className="mb-6"><span className="input-label mb-2 text-center block w-full">{t.front}</span><div className="upload-preview mb-2">{images.front ? <img src={images.front} /> : <Icon name="camera" className="w-12 h-12 text-slate-300" />}</div><div className="upload-row"><button className="upload-btn-small" onClick={() => document.getElementById('cam-front').click()}><Icon name="camera" className="w-4 h-4"/> {t.take_photo}</button><button className="upload-btn-small" onClick={() => document.getElementById('file-front').click()}><Icon name="upload" className="w-4 h-4"/> {t.upload_file}</button></div><input id="cam-front" type="file" accept="image/*" capture="environment" onChange={e => e.target.files[0] && setImages({...images, front: URL.createObjectURL(e.target.files[0])})} className="hidden" /><input id="file-front" type="file" accept="image/*" onChange={e => e.target.files[0] && setImages({...images, front: URL.createObjectURL(e.target.files[0])})} className="hidden" /></div>
                             {docType !== 'passport' && <div className="mb-6"><span className="input-label mb-2 text-center block w-full">{t.back_doc}</span><div className="upload-preview mb-2">{images.back ? <img src={images.back} /> : <Icon name="camera" className="w-12 h-12 text-slate-300" />}</div><div className="upload-row"><button className="upload-btn-small" onClick={() => document.getElementById('cam-back').click()}><Icon name="camera" className="w-4 h-4"/> {t.take_photo}</button><button className="upload-btn-small" onClick={() => document.getElementById('file-back').click()}><Icon name="upload" className="w-4 h-4"/> {t.upload_file}</button></div><input id="cam-back" type="file" accept="image/*" capture="environment" onChange={e => e.target.files[0] && setImages({...images, back: URL.createObjectURL(e.target.files[0])})} className="hidden" /><input id="file-back" type="file" accept="image/*" onChange={e => e.target.files[0] && setImages({...images, back: URL.createObjectURL(e.target.files[0])})} className="hidden" /></div>}
                             <button onClick={addGuest} disabled={!images.front} className="btn btn-success w-full mt-4">{t.save}</button>
