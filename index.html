@@ -79,6 +79,7 @@
         }
         .input-field:focus { border-color: #0f766e; outline: none; box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); }
         .input-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; margin-left: 4px; text-align: left; }
+        .input-label.required::after { content: " *"; color: #ef4444; }
 
         .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; transition: all 0.1s; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; border: none; }
         .btn-primary { background: #0f766e; color: white; }
@@ -161,7 +162,7 @@
         const TRANSLATIONS = {
             it: { 
                 welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
-                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOCUMENTO", scan_info: "Inquadra il documento in orizzontale.", 
+                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento in orizzontale.", 
                 photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA FOTO E PROCEDI", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
                 warning_save: "Carica le foto e compila tutti i campi obbligatori per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
                 tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
@@ -171,7 +172,9 @@
                 data_true_label: "Dichiaro che i dati inseriti sono reali", clear_sign: "CANCELLA FIRMA", sign_title: "Firma e Tassa",
                 ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO",
                 ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla attentamente nella scheda successiva. È comunque obbligatorio caricare le foto.",
-                ocr_success: "Dati rilevati! Verifica i campi compilati e inserisci quelli mancanti. Poi torna indietro per caricare le foto del documento e completare il check-in."
+                ocr_success: "Dati rilevati! Verifica i campi compilati e inserisci quelli mancanti. Poi torna indietro per caricare le foto del documento e completare il check-in.",
+                guest_count_q: "Quanti ospiti siete? (1+ anni)", guest_count_sub: "Inserisci il numero totale di persone per abilitare il completamento del check-in.", continue: "CONTINUA",
+                share_link: "CONDIVIDI LINK CON AMICI", guests_missing: "Mancano ancora ospiti da registrare"
             },
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
@@ -185,7 +188,9 @@
                 data_true_label: "I declare that the data entered is true", clear_sign: "CLEAR SIGNATURE", sign_title: "Signature",
                 ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD PHOTO",
                 ocr_warn: "WARNING: Lighting and shadows may affect data accuracy. Please verify carefully in the next step. Uploading document photos is mandatory.",
-                ocr_success: "Data detected! Verify filled fields and complete missing ones. Then go back to upload document photos and complete check-in."
+                ocr_success: "Data detected! Verify filled fields and complete missing ones. Then go back to upload document photos and complete check-in.",
+                guest_count_q: "How many guests? (1+ years)", guest_count_sub: "Enter total number of people to enable check-in completion.", continue: "CONTINUE",
+                share_link: "SHARE LINK WITH FRIENDS", guests_missing: "Guests missing"
             },
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Pour faciliter votre arrivée, je vous demande de remplir l'enregistrement en ligne.", 
@@ -199,7 +204,9 @@
                 data_true_label: "Je déclare que les données sont réelles", clear_sign: "EFFACER", sign_title: "Signature",
                 ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "📁 TÉLÉCHARGER",
                 ocr_warn: "ATTENTION: L'éclairage peut affecter la précision. Vérifiez les données. Le téléchargement des photos est obligatoire.",
-                ocr_success: "Données détectées ! Vérifiez les champs et complétez les manquants. Ensuite, revenez en arrière pour charger les photos et terminer l'enregistrement."
+                ocr_success: "Données détectées ! Vérifiez les champs et complétez les manquants. Ensuite, revenez en arrière pour charger les photos et terminer l'enregistrement.",
+                guest_count_q: "Combien d'invités ? (1+ ans)", guest_count_sub: "Entrez le nombre total pour permettre la finalisation.", continue: "CONTINUER",
+                share_link: "PARTAGER LE LIEN", guests_missing: "Invités manquants"
             },
             es: { 
                 welcome: "¡Hola! Soy Giulia. Para facilitar su llegada, le pido que complete el registro en línea.", 
@@ -213,7 +220,9 @@
                 data_true_label: "Declaro que los datos son reales", clear_sign: "BORRAR", sign_title: "Firma",
                 ocr_btn: "ESCANEAR", ocr_processing: "PROCESANDO...", ocr_file_btn: "📁 CARGAR FOTO",
                 ocr_warn: "ATENCIÓN: La iluminación puede afectar los datos. Verifique cuidadosamente. Es obligatorio cargar las fotos.",
-                ocr_success: "¡Datos detectados! Verifique los campos y complete los que faltan. Luego regrese para cargar las fotos y completar el registro."
+                ocr_success: "¡Datos detectados! Verifique los campos y complete los que faltan. Luego regrese para cargar las fotos y completar el registro.",
+                guest_count_q: "¿Cuántos huéspedes? (1+ años)", guest_count_sub: "Ingrese el número total para habilitar la finalización.", continue: "CONTINUAR",
+                share_link: "COMPARTIR ENLACE", guests_missing: "Faltan huéspedes"
             },
             de: { 
                 welcome: "Hallo! Ich bin Giulia. Um Ihre Ankunft zu erleichtern, bitte ich Sie, den Online-Check-in abzuschließen.", 
@@ -227,7 +236,9 @@
                 data_true_label: "Ich erkläre, dass die Daten echt sind", clear_sign: "LÖSCHEN", sign_title: "Unterschrift",
                 ocr_btn: "SCANNEN", ocr_processing: "VERARBEITUNG...", ocr_file_btn: "FOTO HOCHLADEN",
                 ocr_warn: "WARNUNG: Beleuchtung kann Daten verfälschen. Bitte überprüfen. Das Hochladen von Fotos ist obligatorisch.",
-                ocr_success: "Daten erkannt! Überprüfen Sie die Felder und ergänzen Sie fehlende Daten. Gehen Sie dann zurück, um Fotos hochzuladen und den Check-in abzuschließen."
+                ocr_success: "Daten erkannt! Überprüfen Sie die Felder und ergänzen Sie fehlende Daten. Gehen Sie dann zurück, um Fotos hochzuladen und den Check-in abzuschließen.",
+                guest_count_q: "Wie viele Gäste? (1+ Jahre)", guest_count_sub: "Gesamtzahl eingeben, um Check-in abzuschließen.", continue: "WEITER",
+                share_link: "LINK TEILEN", guests_missing: "Gäste fehlen"
             }
         };
 
@@ -242,7 +253,8 @@
                 scan: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10" />,
                 copy: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />,
                 download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
-                upload: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                upload: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />,
+                share: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             };
             return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name] || icons.camera}</svg>;
         };
@@ -274,7 +286,6 @@
             </div>
         );
 
-        // --- SIGNATURE PAD COMPONENT (Outside App) ---
         const SignaturePad = ({ canvasRef }) => {
             useEffect(() => {
                 const canvas = canvasRef.current;
@@ -368,9 +379,9 @@
             const [selectedSession, setSelectedSession] = useState(null);
             const [moturistCode, setMoturistCode] = useState("");
             const [dates, setDates] = useState({ arrival: new Date().toISOString().split('T')[0], departure: "" });
-            const [adminLink, setAdminLink] = useState("");
             const [searchTerm, setSearchTerm] = useState("");
             const [ocrProcessing, setOcrProcessing] = useState(false);
+            const [expectedGuests, setExpectedGuests] = useState(1);
 
             const [formData, setFormData] = useState({
                 surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "",
@@ -380,8 +391,8 @@
             
             const [dataTrue, setDataTrue] = useState(false);
             const sigCanvasRef = useRef(null);
-            const videoRef = useRef(null); // Reference for camera
-            const fileInputRef = useRef(null); // Reference for file input
+            const videoRef = useRef(null); 
+            const fileInputRef = useRef(null); 
 
             const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'tuscan-retreats-portal';
@@ -391,7 +402,6 @@
                 const checkFB = setInterval(() => {
                     if (window.FirebaseSDK) {
                         clearInterval(checkFB);
-                        // CONFIGURAZIONE FIREBASE
                         const config = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : {
                             apiKey: "INSERISCI_API_KEY",
                             authDomain: "tuo-progetto.firebaseapp.com",
@@ -417,24 +427,21 @@
                 }, 100);
             }, []);
 
-            // Link Analysis
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
                 const d = params.get('d'); 
                 if (d) {
-                    // Check localstorage
                     if (localStorage.getItem(`checkin_done_${d}`)) {
                          try {
                             const decoded = JSON.parse(atob(d)); 
                             if (PROPERTIES[decoded.p]) {
                                 setProperty(PROPERTIES[decoded.p]);
                                 setBookingDetails({ guestName: decoded.n || "Ospite", doorCode: decoded.c });
-                                setStep('success'); // Redirect to success
+                                setStep('success'); 
                                 return;
                             }
                         } catch (e) {}
                     }
-
                     try {
                         const decoded = JSON.parse(atob(d)); 
                         if (PROPERTIES[decoded.p]) {
@@ -447,9 +454,19 @@
 
             const handleExit = () => {
                 sessionStorage.clear();
-                // Clear URL params to prevent auto-login
                 window.history.replaceState({}, document.title, window.location.pathname);
                 window.location.reload();
+            };
+
+            const shareLink = () => {
+                 if (navigator.share) {
+                    navigator.share({
+                        title: 'Tuscan Retreats Check-in',
+                        url: window.location.href
+                    }).catch(console.error);
+                } else {
+                    copyToClipboard(window.location.href);
+                }
             };
 
             const copyToClipboard = (text) => {
@@ -485,7 +502,6 @@
 
             const saveToCloud = async () => {
                 setIsSaving(true);
-                // Capture Signature
                 let signatureData = null;
                 if(sigCanvasRef.current) {
                     signatureData = sigCanvasRef.current.toDataURL();
@@ -503,10 +519,10 @@
 
                     const payload = { 
                         guests: processed, 
-                        signature: signatureData, // Save signature
+                        signature: signatureData, 
                         booking: property?.id || "", 
                         timestamp: new Date().toISOString(), 
-                        checkinDate: new Date().toISOString().split('T')[0], // NEW: Explicit Check-in Date
+                        checkinDate: new Date().toISOString().split('T')[0],
                         guestName: bookingDetails.guestName, 
                         property: property?.name || "" 
                     };
@@ -520,12 +536,10 @@
                          } catch(e) {}
                     }
 
-                    // Always save locally (Backup)
                     const localData = JSON.parse(localStorage.getItem('local_checkins') || '[]');
                     localData.push({ id, ...payload, synced: savedToCloud });
                     localStorage.setItem('local_checkins', JSON.stringify(localData));
                     
-                    // Mark as completed in localStorage to allow re-entry
                     if(d) localStorage.setItem(`checkin_done_${d}`, 'true');
 
                 } catch(e) { console.log("Errore salvataggio generale", e); }
@@ -536,11 +550,9 @@
 
             const fetchCloud = async () => {
                 let list = [];
-                // 1. Get from LocalStorage
                 const localData = JSON.parse(localStorage.getItem('local_checkins') || '[]');
                 list = [...localData];
 
-                // 2. Get from Firebase
                 if (user && window.db) {
                     try {
                         const col = window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'checkins');
@@ -549,7 +561,6 @@
                     } catch (e) { console.error("Cloud fetch error", e); }
                 }
                 
-                // 3. Deduplicate by ID
                 const uniqueList = Array.from(new Map(list.map(item => [item.id, item])).values());
                 uniqueList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 setAdminData(uniqueList);
@@ -558,12 +569,10 @@
             const deleteSession = async (sessionId) => {
                 if(!confirm("Sicuro di voler cancellare questo check-in?")) return;
                 
-                // Delete from local
                 const localData = JSON.parse(localStorage.getItem('local_checkins') || '[]');
                 const newLocal = localData.filter(i => i.id !== sessionId);
                 localStorage.setItem('local_checkins', JSON.stringify(newLocal));
 
-                // Delete from cloud
                 if (user && window.db) {
                     try {
                         const docRef = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', sessionId);
@@ -589,7 +598,6 @@
                 setAdminData([]);
             };
 
-            // --- OCR Logic Functions ---
             const fixOCRText = (s, type) => {
                 if(!s) return "";
                 if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
@@ -616,7 +624,6 @@
                 let newForm = { ...formData };
                 let found = false;
 
-                // 1. DOC & NOMI (MRZ)
                 const clean = up.replace(/\s/g, '');
                 let dc = clean.match(/ITA([A-Z0-9]{9})/); 
                 if(dc) { newForm.docNumber = dc[1]; found = true; }
@@ -629,7 +636,6 @@
                     found = true;
                 }
                 
-                // 2. BIO (MRZ)
                 let bioMatch = clean.match(/([0-9OIZSB]{6,7})([MF])([0-9OIZSB]{6,7})([A-Z0-9]{3})/);
                 if(bioMatch) {
                     newForm.birthDate = formatDateOCR(fixOCRText(bioMatch[1].substr(0,6), 'N'));
@@ -638,7 +644,6 @@
                     found = true;
                 }
 
-                // 3. ADDRESS (Visual Zone)
                 lines.forEach((l, i) => {
                      if(l.match(/^(VIA|V\.|PIAZZA|P\.|CORSO|C\.|LARGO|VICOLO|STRADA)\s+/)) {
                          let parts = l.match(/(.+?)\s+(\d+[A-Z]?)$/); 
@@ -679,7 +684,6 @@
                 let newForm = { ...formData };
                 let found = false;
 
-                // Riga 1: P<ITACOGNOME<<NOME
                 let r1 = clean.match(/P<([A-Z]{3})([A-Z<]+)/);
                 if(r1) {
                     let namePart = r1[2].split('<<');
@@ -688,11 +692,9 @@
                     found = true;
                 }
 
-                // Riga 2: DOC + NAT + DOB + SEX + EXP
                 let r2 = clean.match(/([A-Z0-9]{9})[0-9]([A-Z]{3})([0-9OIZSB]{6})[0-9]([MF])([0-9OIZSB]{6})/);
                 if(r2) {
                     newForm.docNumber = r2[1];
-                    // r2[2] is Nationality (e.g. ITA)
                     newForm.birthDate = formatDateOCR(fixOCRText(r2[3], 'N'));
                     newForm.sex = r2[4];
                     newForm.expiryDate = formatDateOCR(fixOCRText(r2[5], 'N'));
@@ -713,30 +715,20 @@
 
             const runOCR = async (source) => {
                 setOcrProcessing(true);
-                
                 const canvas = document.getElementById('ocr-canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = 1280;
-                
-                // Handle image vs video source dimensions
                 let w = source.videoWidth || source.width;
                 let h = source.videoHeight || source.height;
-                
                 const scale = 1280 / w;
                 canvas.height = h * scale;
-                
-                // Draw normally (Horizontal / As seen on screen)
                 ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-                
-                ctx.filter = 'grayscale(100%) contrast(150%)'; // Enhanced contrast
+                ctx.filter = 'grayscale(100%) contrast(150%)'; 
                 
                 try {
                     const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                    if (docType === 'passport') {
-                        parsePassport(text);
-                    } else {
-                        parseCIE(text);
-                    }
+                    if (docType === 'passport') parsePassport(text);
+                    else parseCIE(text);
                 } catch (e) { 
                     alert("Errore elaborazione immagine.");
                     setOcrProcessing(false);
@@ -747,24 +739,18 @@
             const handleFileUpload = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-                
                 setOcrProcessing(true);
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
-                    img.onload = () => {
-                        runOCR(img);
-                    };
+                    img.onload = () => { runOCR(img); };
                     img.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
             };
 
-            const startCamera = async () => {
-                setIsScanning(true);
-            };
+            const startCamera = async () => { setIsScanning(true); };
 
-            // Trigger camera start when isScanning changes to true
             useEffect(() => {
                 if (isScanning && videoRef.current) {
                     (async () => {
@@ -772,9 +758,7 @@
                             const stream = await navigator.mediaDevices.getUserMedia({ 
                                 video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
                             });
-                            if (videoRef.current) {
-                                videoRef.current.srcObject = stream;
-                            }
+                            if (videoRef.current) videoRef.current.srcObject = stream;
                         } catch (err) {
                             console.error("Camera error:", err);
                             alert("Impossibile accedere alla fotocamera. Assicurati di essere su HTTPS o usa il caricamento file.");
@@ -782,7 +766,6 @@
                         }
                     })();
                 }
-                
                 return () => {
                     if (videoRef.current && videoRef.current.srcObject) {
                         const tracks = videoRef.current.srcObject.getTracks();
@@ -802,12 +785,23 @@
 
             const isFormComplete = () => {
                 const hasPhotos = checkPhotos();
-                const hasInfo = formData.surname && formData.name && formData.birthDate && formData.docNumber && formData.issuedManual;
+                const isItalian = formData.citizenship === 'ITALIANA';
+                
+                // Base fields always required
+                let baseValid = formData.surname && formData.name && formData.birthDate && formData.docNumber && formData.issuedManual;
+
+                // Italian specific mandatory fields
+                if (isItalian) {
+                    if (!formData.birthCity || !formData.birthProvince || !formData.residenceCity || !formData.residenceProvince || !formData.residenceAddress) {
+                        baseValid = false;
+                    }
+                }
+
                 let citOk = true;
                 if (formData.citizenship === 'ALTRO') {
                     citOk = formData.citizenshipManual && formData.citizenshipManual.trim().length > 0;
                 }
-                return hasPhotos && hasInfo && citOk && dataTrue;
+                return hasPhotos && baseValid && citOk && dataTrue;
             };
 
             const formatDateIT = (dateString) => {
@@ -1007,17 +1001,39 @@
                             <p className="text-lg italic leading-relaxed mt-6 text-center">"{t.welcome}"</p>
                             <p className="font-bold text-teal-800 mt-4 text-center">- Giulia</p>
                         </div>
-                        <button onClick={() => { setGuests([]); setStep('guest_list'); }} className="btn btn-primary uppercase font-bold shadow-xl text-white">{t.start_btn}</button>
+                        <button onClick={() => setStep('ask_guests')} className="btn btn-primary uppercase font-bold shadow-xl text-white">{t.start_btn}</button>
                     </div>
                 </div>
             );
 
+            if (step === 'ask_guests') return (
+                 <div className="app-container p-8 flex flex-col justify-center items-center text-center">
+                     <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="welcome" />
+                     <h2 className="text-2xl font-bold mb-4 mt-8">{t.guest_count_q}</h2>
+                     <p className="text-sm text-gray-500 mb-8">{t.guest_count_sub}</p>
+                     
+                     <div className="flex items-center justify-center gap-6 mb-10">
+                         <button onClick={() => setExpectedGuests(Math.max(1, expectedGuests - 1))} className="w-12 h-12 rounded-full bg-slate-100 text-2xl font-bold text-slate-600">-</button>
+                         <span className="text-5xl font-bold text-teal-700">{expectedGuests}</span>
+                         <button onClick={() => setExpectedGuests(expectedGuests + 1)} className="w-12 h-12 rounded-full bg-teal-100 text-2xl font-bold text-teal-700">+</button>
+                     </div>
+                     
+                     <button onClick={() => { setGuests([]); setStep('guest_list'); }} className="btn btn-primary uppercase font-bold shadow-xl text-white">{t.continue}</button>
+                     
+                     <div className="mt-8 pt-8 border-t w-full">
+                         <button onClick={shareLink} className="btn bg-blue-100 text-blue-700 font-bold uppercase text-sm border border-blue-200">
+                            <Icon name="copy" className="w-4 h-4 mr-2" /> {t.share_link}
+                         </button>
+                     </div>
+                 </div>
+            );
+
             if (step === 'guest_list') return (
                 <div className="app-container flex flex-col text-slate-800">
-                    <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="welcome" />
+                    <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="ask_guests" />
                     <div className="p-6 bg-white border-b flex justify-between items-center shadow-sm font-bold uppercase text-slate-800">
                         <span>{t.guest_list}</span>
-                        <div className="text-teal-600 bg-teal-50 px-4 py-1 rounded-full text-sm border border-teal-100">{guests.length}</div>
+                        <div className="text-teal-600 bg-teal-50 px-4 py-1 rounded-full text-sm border border-teal-100">{guests.length} / {expectedGuests}</div>
                     </div>
                     <div className="flex-1 p-6 space-y-4 overflow-y-auto">
                         {guests.map((g, i) => (
@@ -1026,10 +1042,15 @@
                                 <button onClick={() => setGuests(guests.filter((_, idx) => idx !== i))} className="text-red-400 p-2"><Icon name="trash" /></button> 
                             </div>
                         ))}
-                        <button onClick={startNewGuest} className="w-full py-6 border-2 border-dashed border-teal-700 rounded-2xl font-bold text-lg hover:bg-teal-50 transition uppercase tracking-widest text-teal-700">+ {t.add_guest}</button>
+                        {guests.length < expectedGuests ? (
+                            <button onClick={startNewGuest} className="w-full py-6 border-2 border-dashed border-teal-700 rounded-2xl font-bold text-lg hover:bg-teal-50 transition uppercase tracking-widest text-teal-700">+ {t.add_guest}</button>
+                        ) : (
+                            <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-center font-bold text-sm">Tutti gli ospiti registrati!</div>
+                        )}
                     </div>
                     <div className="p-6 bg-white border-t border-slate-100 shadow-lg text-slate-800 font-bold text-center">
-                        <button onClick={() => setStep('sign')} disabled={guests.length === 0} className="btn btn-primary w-full uppercase tracking-widest font-bold disabled:opacity-50 font-bold">{t.finish_btn}</button>
+                        {guests.length < expectedGuests && <p className="text-xs text-red-500 mb-2 font-bold uppercase">{t.guests_missing} ({expectedGuests - guests.length})</p>}
+                        <button onClick={() => setStep('sign')} disabled={guests.length < expectedGuests} className="btn btn-primary w-full uppercase tracking-widest font-bold disabled:opacity-50 font-bold">{t.finish_btn}</button>
                     </div>
                 </div>
             );
@@ -1106,30 +1127,30 @@
                     <div className="flex-1 p-6 overflow-y-auto custom-scroll text-slate-800 text-center text-center">
                         <h2 className="text-xl font-bold mb-6 uppercase tracking-tight font-bold text-slate-800">{t.verify}</h2>
                         <form onSubmit={(e) => { e.preventDefault(); setGuests([...guests, {...formData, imgFront: images.front, imgBack: images.back, docType}]); setImages({front:null, back:null}); setStep('guest_list'); }} className="space-y-4 pb-20 text-center text-slate-800">
-                            <div><label className="input-label text-left ml-1">{t.label_surname}</label><input className="input-field" value={formData.surname} onChange={e=>setFormData({...formData, surname: e.target.value.toUpperCase()})} required /></div>
-                            <div><label className="input-label text-left ml-1">{t.label_name}</label><input className="input-field" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value.toUpperCase()})} required /></div>
+                            <div><label className={`input-label text-left ml-1 ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_surname}</label><input className="input-field" value={formData.surname} onChange={e=>setFormData({...formData, surname: e.target.value.toUpperCase()})} required /></div>
+                            <div><label className={`input-label text-left ml-1 ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_name}</label><input className="input-field" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value.toUpperCase()})} required /></div>
                             <div className="grid grid-cols-2 gap-4 text-slate-800 text-center text-center">
                                 <div><label className="input-label text-left">{t.label_sex}</label><select className="input-field bg-white" value={formData.sex} onChange={e=>setFormData({...formData, sex: e.target.value})}><option value="M">M</option><option value="F">F</option></select></div>
-                                <div><label className="input-label text-left">{t.label_birth}</label><input type="date" className="input-field text-center font-bold" value={formData.birthDate} onChange={e=>setFormData({...formData, birthDate: e.target.value})} required /></div>
+                                <div><label className={`input-label text-left ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_birth}</label><input type="date" className="input-field text-center font-bold" value={formData.birthDate} onChange={e=>setFormData({...formData, birthDate: e.target.value})} required /></div>
                             </div>
                             
                             {/* GRIGLIA CITTA NASCITA E PROVINCIA */}
                             <div className="grid grid-cols-4 gap-2 text-center text-center">
-                                <div className="col-span-3"><label className="input-label text-left ml-1">{t.label_city}</label><input className="input-field" value={formData.birthCity} onChange={e=>setFormData({...formData,birthCity: e.target.value.toUpperCase()})} required /></div>
-                                <div><label className="input-label text-left ml-1">{t.label_prov}</label><input className="input-field text-center uppercase" maxLength="2" value={formData.birthProvince} onChange={e=>setFormData({...formData, birthProvince: e.target.value.toUpperCase()})} placeholder="PR" /></div>
+                                <div className="col-span-3"><label className={`input-label text-left ml-1 ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_city}</label><input className="input-field" value={formData.birthCity} onChange={e=>setFormData({...formData,birthCity: e.target.value.toUpperCase()})} required={formData.citizenship==='ITALIANA'} /></div>
+                                <div><label className={`input-label text-left ml-1 ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_prov}</label><input className="input-field text-center uppercase" maxLength="2" value={formData.birthProvince} onChange={e=>setFormData({...formData, birthProvince: e.target.value.toUpperCase()})} placeholder="PR" required={formData.citizenship==='ITALIANA'} /></div>
                             </div>
 
                             <div><label className="input-label">{t.label_citizenship}</label><select className="input-field bg-white" value={formData.citizenship} onChange={e=>setFormData({...formData, citizenship: e.target.value.toUpperCase()})}><option value="ITALIANA">ITALIANA</option><option value="FRANCESE">FRANCESE</option><option value="INGLESE">INGLESE</option><option value="SPAGNOLA">SPAGNOLA</option><option value="TEDESCA">TEDESCA</option><option value="ALTRO">ALTRO</option></select>{formData.citizenship === 'ALTRO' && <input className="input-field mt-2" placeholder={t.label_cit_ph} value={formData.citizenshipManual} onChange={e=>setFormData({...formData, citizenshipManual: e.target.value.toUpperCase()})} />}</div>
                             
                             {/* GRIGLIA CITTA RESIDENZA E PROVINCIA */}
                             <div className="border-t pt-4 grid grid-cols-4 gap-2 text-center text-center">
-                                <div className="col-span-3"><label className="input-label text-left">{t.label_res_city}</label><input className="input-field" value={formData.residenceCity} onChange={e=>setFormData({...formData, residenceCity: e.target.value.toUpperCase()})} required /></div>
-                                <div><label className="input-label text-left">{t.label_res_prov}</label><input className="input-field uppercase text-center" maxLength="2" value={formData.residenceProvince} onChange={e=>setFormData({...formData, residenceProvince: e.target.value.toUpperCase()})} placeholder="PR" /></div>
+                                <div className="col-span-3"><label className={`input-label text-left ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_res_city}</label><input className="input-field" value={formData.residenceCity} onChange={e=>setFormData({...formData, residenceCity: e.target.value.toUpperCase()})} required={formData.citizenship==='ITALIANA'} /></div>
+                                <div><label className={`input-label text-left ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_res_prov}</label><input className="input-field uppercase text-center" maxLength="2" value={formData.residenceProvince} onChange={e=>setFormData({...formData, residenceProvince: e.target.value.toUpperCase()})} placeholder="PR" required={formData.citizenship==='ITALIANA'} /></div>
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 text-center text-center">
-                                <div className="col-span-2"><label className="input-label text-left">{t.label_address}</label><input className="input-field" value={formData.residenceAddress} onChange={e=>setFormData({...formData, residenceAddress: e.target.value.toUpperCase()})} required /></div>
-                                <div><label className="input-label text-left">{t.label_civic}</label><input className="input-field text-center" value={formData.houseNumber} onChange={e=>setFormData({...formData, houseNumber: e.target.value})} required /></div>
+                                <div className="col-span-2"><label className={`input-label text-left ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_address}</label><input className="input-field" value={formData.residenceAddress} onChange={e=>setFormData({...formData, residenceAddress: e.target.value.toUpperCase()})} required={formData.citizenship==='ITALIANA'} /></div>
+                                <div><label className="input-label text-left">{t.label_civic}</label><input className="input-field text-center" value={formData.houseNumber} onChange={e=>setFormData({...formData, houseNumber: e.target.value})} required={formData.citizenship==='ITALIANA'} /></div>
                             </div>
                             <div className="pt-4 border-t-2 border-teal-100 text-center text-center">
                                 <label className="input-label text-left">{t.label_issued}</label>
