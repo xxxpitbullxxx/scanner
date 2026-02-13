@@ -46,9 +46,8 @@
 
         /* Scanner OCR Styles - Full Width Mode */
         .cam-box { 
-            position: relative; width: 100%; height: 350px; /* Più alto per vedere meglio */
+            position: relative; width: 100%; height: 320px; 
             overflow: hidden; background: #000; 
-            /* Rimossi bordi arrotondati e margini per effetto full-width */
             border-top: 1px solid #333; border-bottom: 1px solid #333;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
@@ -63,12 +62,6 @@
             border: 2px solid #00E0FF; border-radius: 4px; 
             background: rgba(0, 224, 255, 0.1);
             display: flex; align-items: center; justify-content: center;
-        }
-        .guide-text-overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: rgba(255,255,255,0.4); font-weight: bold; font-size: 20px;
-            pointer-events: none; border: 2px dashed rgba(255,255,255,0.3);
-            width: 80%; height: 60%; border-radius: 8px;
         }
         .label-guide { 
             position: absolute; top: -22px; left: 0; 
@@ -94,8 +87,26 @@
         .btn-primary:active:not(:disabled) { transform: scale(0.97); }
         .btn-primary:disabled, .btn-success:disabled { background: #cbd5e1 !important; color: #94a3b8 !important; cursor: not-allowed; box-shadow: none; }
         
-        .flag-btn { font-size: 20px; padding: 4px; opacity: 0.3; transition: 0.2s; cursor: pointer; border: none; background: transparent; }
-        .flag-btn.active { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        /* LINGUE - Rese più piccole e compatte */
+        .flag-btn { 
+            font-size: 10px; 
+            padding: 6px 8px; 
+            opacity: 0.6; 
+            transition: 0.2s; 
+            cursor: pointer; 
+            border: none; 
+            background: #f1f5f9; 
+            border-radius: 6px; 
+            font-weight: 700; 
+            color: #64748b;
+            min-width: 28px;
+        }
+        .flag-btn.active { 
+            opacity: 1; 
+            background: #0f766e; 
+            color: white; 
+            box-shadow: 0 2px 4px rgba(15, 118, 110, 0.2); 
+        }
 
         .card-select { width: 100%; padding: 18px; border-radius: 18px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
         .card-select:hover { border-color: #0f766e; background: #f0fdfa; }
@@ -180,7 +191,7 @@
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Pour faciliter votre arrivée, je vous demande de remplir l'enregistrement en ligne.", 
                 login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOCUMENT", scan_info: "Scannez le document horizontalement.", 
-                photo_req: "PHOTO OBLIGATOIRE", confirm_btn: "CONFIRMER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
+                photo_req: "PHOTO OBLIGATOIRE", confirm_btn: "CONFIRMER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER UN INVITÉ", save_guest: "ENREGISTRER",
                 warning_save: "Téléchargez les photos et remplissez tous les champs pour enregistrer", finish_btn: "TERMINER", verify: "Vérifier les données", front: "Recto", back_doc: "Verso",
                 tax_info: "Conformément à la réglementation locale, si vous avez réservé via Booking.com, la taxe de séjour doit être payée sur place à l'arrivée (en espèces) ou via le lien sécurisé par carte de crédit/débit que je vous enverrai sous peu. Si vous avez réservé via Airbnb, la taxe est déjà incluse.",
                 doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis de Conduire",
@@ -323,7 +334,7 @@
                 <div className="flex items-center text-center">
                     {showBack && <button onClick={() => setStep(backStep)} className="mr-3 p-1 text-slate-400"><Icon name="chevronLeft" /></button>}
                     <div className="header-logo-circle"><img src="logo.png" /></div>
-                    <div><span className="block font-bold text-slate-700 text-[9px] leading-tight uppercase tracking-widest text-center ml-2 font-bold">Tuscan Retreats</span></div>
+                    <div><span className="header-title">Tuscan Retreats</span></div>
                 </div>
                 <div className="flex space-x-1">
                     {['it','en','fr','es','de'].map(l => <button key={l} onClick={() => setLang(l)} className={`flag-btn ${lang === l ? 'active' : ''}`}>{l.toUpperCase()}</button>)}
@@ -372,6 +383,15 @@
                 const checkFB = setInterval(() => {
                     if (window.FirebaseSDK) {
                         clearInterval(checkFB);
+                        // CONFIGURAZIONE FIREBASE
+                        const config = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : {
+                            apiKey: "INSERISCI_API_KEY",
+                            authDomain: "tuo-progetto.firebaseapp.com",
+                            projectId: "tuo-progetto",
+                            storageBucket: "tuo-progetto.appspot.com",
+                            messagingSenderId: "123456",
+                            appId: "1:123456:web:abc"
+                        };
                         
                         try {
                              const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
@@ -1021,20 +1041,23 @@
             );
 
             if (step === 'scan') return (
-                <div className="app-container p-6 flex flex-col text-center text-slate-800 text-center">
-                    <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="type_select" />
-                    <h2 className="text-2xl font-bold mb-4 text-slate-800 mt-4 uppercase tracking-tight text-center">{t.scan_title}</h2>
+                <div className="app-container flex flex-col text-center text-slate-800 text-center">
+                    <div className="flex justify-between items-center p-5 bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
+                        <div className="flex items-center text-center">
+                            <button onClick={() => setStep('type_select')} className="mr-3 p-1 text-slate-400"><Icon name="chevronLeft" /></button>
+                            <div className="header-logo-circle"><img src="logo.png" /></div>
+                            <div><span className="block font-bold text-slate-700 text-[9px] leading-tight uppercase tracking-widest text-center ml-2 font-bold">Tuscan Retreats</span></div>
+                        </div>
+                        <div className="flex space-x-1">
+                            {['it','en','fr','es','de'].map(l => <button key={l} onClick={() => setLang(l)} className={`flag-btn ${lang === l ? 'active' : ''}`}>{l.toUpperCase()}</button>)}
+                        </div>
+                    </div>
                     
                     {/* Scanner solo per Elettronica e Passaporto */}
                     {docType !== 'paper' && docType !== 'license' && (
                         <>
-                        <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl text-xs text-blue-900 mb-6 leading-relaxed italic text-center text-center">
-                            {t.scan_info} <br/>
-                            <span className="font-bold text-[10px] mt-1 block opacity-80">{t.scan_help}</span>
-                            <div className="warning-red mt-2">{t.ocr_warn}</div>
-                        </div>
                         {isScanning ? (
-                            <div className="flex-1 flex flex-col text-center text-center">
+                            <div className="flex-1 flex flex-col text-center text-center bg-black">
                                 <div className="cam-box" style={{borderRadius: 0, border: 'none', height: '100%', marginBottom: 0}}>
                                      <video ref={videoRef} autoPlay playsInline muted style={{width:'100%', height:'100%', objectFit:'cover'}}></video>
                                      <div className="guide-overlay">
@@ -1049,34 +1072,61 @@
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col gap-3 mt-4">
-                                <button onClick={startCamera} className="btn bg-teal-600 text-white w-full py-4 uppercase font-bold flex flex-row items-center justify-center shadow-lg text-sm gap-2 rounded-xl"><Icon name="scan" className="w-5 h-5" /> {t.ocr_btn}</button>
-                                <div className="relative">
-                                    <button onClick={() => fileInputRef.current.click()} className="btn btn-secondary w-full py-4 uppercase font-bold flex flex-row items-center justify-center shadow-md text-sm gap-2 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
-                                        {t.ocr_file_btn}
-                                    </button>
-                                    <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} style={{display: 'none'}} />
-                                    {ocrProcessing && <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl"><p className="text-xs text-blue-600 font-bold animate-pulse">{t.ocr_processing}</p></div>}
+                             <div className="p-6 flex-1 text-center text-center">
+                                <h2 className="text-2xl font-bold mb-4 text-slate-800 mt-4 uppercase tracking-tight text-center">{t.scan_title}</h2>
+                                <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl text-xs text-blue-900 mb-6 leading-relaxed italic text-center text-center">
+                                    {t.scan_info} <br/>
+                                    <span className="font-bold text-[10px] mt-1 block opacity-80">{t.scan_help}</span>
+                                    <div className="warning-red mt-2">{t.ocr_warn}</div>
+                                </div>
+                                
+                                <div className="flex flex-col gap-3 mt-4">
+                                    <button onClick={startCamera} className="btn bg-teal-600 text-white w-full py-4 uppercase font-bold flex flex-row items-center justify-center shadow-lg text-sm gap-2 rounded-xl"><Icon name="scan" className="w-5 h-5" /> {t.ocr_btn}</button>
+                                    <div className="relative">
+                                        <button onClick={() => fileInputRef.current.click()} className="btn btn-secondary w-full py-4 uppercase font-bold flex flex-row items-center justify-center shadow-md text-sm gap-2 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                                            {t.ocr_file_btn}
+                                        </button>
+                                        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} style={{display: 'none'}} />
+                                        {ocrProcessing && <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl"><p className="text-xs text-blue-600 font-bold animate-pulse">{t.ocr_processing}</p></div>}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 flex-1 text-center text-center mt-6">
+                                    <div className={`upload-box ${images.front ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-front').click()}>
+                                        {images.front ? <img src={images.front} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.front.toUpperCase()})</div>}
+                                        <input id="file-front" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, front: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
+                                    </div>
+                                    
+                                    {(docType !== 'passport') && (
+                                        <div className={`upload-box ${images.back ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-back').click()}>
+                                            {images.back ? <img src={images.back} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.back_doc.toUpperCase()})</div>}
+                                            <input id="file-back" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, back: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
+                                        </div>
+                                    )}
+                                    <button onClick={() => setStep('manual_entry')} disabled={!checkPhotos()} className="btn btn-primary w-full mt-6 uppercase font-bold tracking-widest shadow-lg text-center font-bold text-white">{t.confirm_btn}</button>
                                 </div>
                             </div>
                         )}
                         </>
                     )}
 
-                    {!isScanning && (
-                        <div className="space-y-4 flex-1 text-center text-center mt-6">
-                            <div className={`upload-box ${images.front ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-front').click()}>
-                                {images.front ? <img src={images.front} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.front.toUpperCase()})</div>}
-                                <input id="file-front" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, front: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
-                            </div>
-                            
-                            {(docType !== 'passport') && (
-                                <div className={`upload-box ${images.back ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-back').click()}>
-                                    {images.back ? <img src={images.back} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.back_doc.toUpperCase()})</div>}
-                                    <input id="file-back" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, back: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
+                    {!isScanning && (docType === 'paper' || docType === 'license') && (
+                        <div className="p-6 flex-1 text-center text-center">
+                            <h2 className="text-2xl font-bold mb-4 text-slate-800 mt-4 uppercase tracking-tight text-center">{t.scan_title}</h2>
+                            <div className="space-y-4 flex-1 text-center text-center mt-6">
+                                <div className={`upload-box ${images.front ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-front').click()}>
+                                    {images.front ? <img src={images.front} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.front.toUpperCase()})</div>}
+                                    <input id="file-front" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, front: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
                                 </div>
-                            )}
-                            <button onClick={() => setStep('manual_entry')} disabled={!checkPhotos()} className="btn btn-primary w-full mt-6 uppercase font-bold tracking-widest shadow-lg text-center font-bold text-white">{t.confirm_btn}</button>
+                                
+                                {(docType !== 'passport') && (
+                                    <div className={`upload-box ${images.back ? 'border-teal-500 bg-teal-50' : ''}`} onClick={() => document.getElementById('file-back').click()}>
+                                        {images.back ? <img src={images.back} className="w-full h-full object-contain" /> : <div className="text-center text-slate-400 font-bold uppercase text-[10px]"><Icon name="camera" />{t.photo_req} ({t.back_doc.toUpperCase()})</div>}
+                                        <input id="file-back" type="file" accept="image/*" capture="environment" onChange={e => { if(e.target.files[0]) setImages({...images, back: URL.createObjectURL(e.target.files[0])}); }} className="hidden" />
+                                    </div>
+                                )}
+                                <button onClick={() => setStep('manual_entry')} disabled={!checkPhotos()} className="btn btn-primary w-full mt-6 uppercase font-bold tracking-widest shadow-lg text-center font-bold text-white">{t.confirm_btn}</button>
+                            </div>
                         </div>
                     )}
                 </div>
