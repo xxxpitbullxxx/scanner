@@ -47,25 +47,32 @@
         /* GUIDE VISIVE - MISURE DA TUO SCRIPT V104 */
         .guide-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
-            /* Nessun flex qui, posizionamento assoluto preciso */
         }
         
-        /* Rettangolo Giallo - Indirizzo (Centrale/Alto) */
+        /* Rettangolo Giallo - Indirizzo (Centrale - Coordinate V104) */
         .zone-residenza {
             position: absolute;
-            top: 48%; left: 50%; transform: translate(-50%, -50%);
-            width: 94%; height: 14%;
-            border: 2px solid #FFD60A; border-radius: 4px;
+            top: 48%; /* Abbassato per evitare l'intestazione */
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            width: 94%; 
+            height: 14%; /* Sottile solo per l'indirizzo */
+            border: 2px solid #FFD60A; 
+            border-radius: 4px;
             background: rgba(255, 214, 10, 0.1);
             z-index: 10;
         }
 
-        /* Rettangolo Azzurro - MRZ (Basso) */
+        /* Rettangolo Azzurro - MRZ (Basso - Coordinate V104) */
         .zone-mrz {
             position: absolute;
-            top: 82%; left: 50%; transform: translate(-50%, -50%);
-            width: 96%; height: 25%;
-            border: 3px solid #00E0FF; border-radius: 4px;
+            top: 82%; /* Spostato in basso per evitare barcode centrale */
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            width: 96%; 
+            height: 25%;
+            border: 3px solid #00E0FF; 
+            border-radius: 4px;
             background: rgba(0, 224, 255, 0.1);
             z-index: 10;
         }
@@ -154,11 +161,12 @@
         const TRANSLATIONS = {
             it: { 
                 welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
-                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento in orizzontale.", 
-                scan_help: "Inquadra il retro della C.I. (Indirizzo in alto, MRZ in basso).",
+                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", 
+                scan_rear: "SCANSIONA DOC", scan_info: "Posiziona il documento in orizzontale.", 
+                scan_help: "Inquadra il retro della C.I. (MRZ in basso, Indirizzo in alto).",
                 photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA E CONTINUA", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
                 warning_save: "Carica le foto e compila tutti i campi obbligatori per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
-                tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
+                tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti). Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
                 label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_prov: "Prov.", label_citizenship: "Cittadinanza", label_cit_ph: "Specifica...", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_address: "Via / Piazza", label_civic: "Civico", label_issued: "Rilasciato da", label_issued_ph: "Es. Milano...", label_docnum: "N. Documento", label_expiry: "Scadenza",
                 thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
@@ -167,7 +175,7 @@
                 ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla attentamente nella scheda successiva.",
                 ocr_success: "Dati rilevati! Verifica i campi compilati e inserisci quelli mancanti. Poi prosegui per caricare le foto.",
                 guest_count_q: "Quanti ospiti siete? (1+ anni)", 
-                guest_count_tip: "ℹ️ TIP: Se ognuno compila dal proprio telefono, scrivi 1 e poi condividi il link alla fine. Se compili tu per tutti, scrivi il numero totale.",
+                guest_count_tip: "⚠️ IMPORTANTE: Se ognuno compila dal proprio telefono, scrivi 1 e poi condividi il link alla fine. Se invece compili TU per tutti ora, scrivi il numero totale.",
                 continue: "CONTINUA",
                 share_link: "CONDIVIDI LINK CON AMICI", guests_missing: "Mancano ancora ospiti da registrare",
                 upload_docs_title: "Carica Documenti", upload_docs_desc: "Carica la foto fronte e retro del documento. È obbligatorio.",
@@ -189,7 +197,7 @@
                 ocr_warn: "WARNING: Lighting and shadows may affect data accuracy. Check next screen.",
                 ocr_success: "Data detected! Verify filled fields and complete missing ones. Then go back to upload document photos and complete check-in.",
                 guest_count_q: "How many guests? (1+ years)", 
-                guest_count_tip: "ℹ️ TIP: If everyone fills from their own phone, enter 1 and share link later. If you fill for everyone, enter total number.",
+                guest_count_tip: "⚠️ IMPORTANT: If everyone uses their own phone, enter 1 and share the link later. If YOU fill for everyone now, enter total number.",
                 continue: "CONTINUE",
                 share_link: "SHARE LINK WITH FRIENDS", guests_missing: "Guests missing",
                 upload_docs_title: "Upload Documents", upload_docs_desc: "Upload front and back photo. Mandatory.",
@@ -205,13 +213,13 @@
                 tax_info: "La taxe de séjour doit être payée sur place (espèces) si réservé via Booking.com. Inclus pour Airbnb.",
                 doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis de Conduire",
                 label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Lieu de naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_cit_ph: "Préciser...", label_res_city: "Ville de résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_issued: "Délivré par", label_issued_ph: "Ex. Paris...", label_docnum: "N° Document", label_expiry: "Expiration",
-                thanks: "Merci", success_msg: "Enregistrement terminé avec succès.", exit: "Sortie", guest_list: "Invités", cloud_save: "Sauvegarde...",
+                thanks: "Merci", success_msg: "Enregistrement terminé.", exit: "Sortie", guest_list: "Invités", cloud_save: "Sauvegarde...",
                 data_true_label: "Je déclare que les données sont réelles", clear_sign: "EFFACER", sign_title: "Signature",
                 ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "📁 FICHIER",
                 ocr_warn: "ATTENTION: L'éclairage peut affecter la précision. Vérifiez l'écran suivant.",
-                ocr_success: "Données détectées ! Vérifiez les champs et complétez les manquants. Ensuite, revenez en arrière pour charger les photos et terminer l'enregistrement.",
+                ocr_success: "Données détectées ! Vérifiez les champs et complétez les manquants. Ensuite, passez au téléchargement des photos.",
                 guest_count_q: "Combien d'invités ? (1+ ans)", 
-                guest_count_tip: "ℹ️ ASTUCE : Si chacun remplit depuis son téléphone, entrez 1 et partagez le lien. Si vous remplissez pour tout le monde, entrez le total.",
+                guest_count_tip: "⚠️ IMPORTANT : Si chacun remplit depuis son téléphone, entrez 1 et partagez le lien. Si VOUS remplissez pour tout le monde, entrez le total.",
                 continue: "CONTINUER",
                 share_link: "PARTAGER LE LIEN", guests_missing: "Invités manquants",
                 upload_docs_title: "Charger les documents", upload_docs_desc: "Chargez la photo recto et verso du document. Obligatoire.",
@@ -227,16 +235,16 @@
                 tax_info: "La tasa turística se paga en el lugar (efectivo) si reservó por Booking.com. Incluida en Airbnb.",
                 doc_type: "Tipo de Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia de Conducir",
                 label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Lugar de nacimiento", label_prov: "Prov.", label_citizenship: "Ciudadanía", label_cit_ph: "Especificar...", label_res_city: "Ciudad de residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Madrid...", label_docnum: "N° Documento", label_expiry: "Caducidad",
-                thanks: "Gracias", success_msg: "Registro completado con éxito.", exit: "Salir", guest_list: "Huéspedes", cloud_save: "Guardando...",
+                thanks: "Gracias", success_msg: "Registro completado.", exit: "Salir", guest_list: "Huéspedes", cloud_save: "Guardando...",
                 data_true_label: "Declaro que los datos son reales", clear_sign: "BORRAR", sign_title: "Firma",
                 ocr_btn: "ESCANEAR", ocr_processing: "PROCESANDO...", ocr_file_btn: "📁 ARCHIVO",
                 ocr_warn: "ATENCIÓN: La iluminación puede afectar los datos. Verifique en la siguiente pantalla.",
-                ocr_success: "¡Datos detectados! Verifique los campos y complete los que faltan. Luego regrese para cargar las fotos y completar el registro.",
+                ocr_success: "¡Datos detectados! Verifique los campos y complete los que faltan. Luego proceda a cargar las fotos.",
                 guest_count_q: "¿Cuántos huéspedes? (1+ años)", 
-                guest_count_tip: "ℹ️ CONSEJO: Si cada uno llena desde su teléfono, ingrese 1 y comparta el enlace. Si usted llena por todos, ingrese el total.",
+                guest_count_tip: "⚠️ IMPORTANTE: Si cada uno llena desde su teléfono, ingrese 1 y comparta el enlace. Si USTED llena por todos, ingrese el total.",
                 continue: "CONTINUAR",
                 share_link: "COMPARTIR ENLACE", guests_missing: "Faltan huéspedes",
-                upload_docs_title: "Subir Documentos", upload_docs_desc: "Suba foto del frente y dorso del documento. Obligatorio.",
+                upload_docs_title: "Subir Documentos", upload_docs_desc: "Suba foto del frente y dorso. Obligatorio.",
                 take_photo: "FOTO", upload_file: "ARCHIVO", proceed_docs: "IR A DOCUMENTOS",
                 label_res_zone: "DIRECCIÓN", label_mrz_zone: "CÓDIGOS MRZ"
             },
@@ -253,9 +261,9 @@
                 data_true_label: "Ich erkläre, dass die Daten echt sind", clear_sign: "LÖSCHEN", sign_title: "Unterschrift",
                 ocr_btn: "SCANNEN", ocr_processing: "VERARBEITUNG...", ocr_file_btn: "📁 DATEI",
                 ocr_warn: "WARNUNG: Beleuchtung kann Daten verfälschen. Bitte im nächsten Bildschirm überprüfen.",
-                ocr_success: "Daten erkannt! Überprüfen Sie die Felder und ergänzen Sie fehlende Daten. Gehen Sie dann zurück, um Fotos hochzuladen und den Check-in abzuschließen.",
+                ocr_success: "Daten erkannt! Überprüfen Sie die Felder und ergänzen Sie fehlende Daten. Fahren Sie dann mit dem Hochladen der Fotos fort.",
                 guest_count_q: "Wie viele Gäste? (1+ Jahre)", 
-                guest_count_tip: "ℹ️ TIPP: Wenn jeder sein eigenes Handy benutzt, geben Sie 1 ein und teilen Sie den Link. Wenn Sie für alle ausfüllen, geben Sie die Gesamtzahl ein.",
+                guest_count_tip: "⚠️ WICHTIG: Wenn jeder sein eigenes Handy benutzt, geben Sie 1 ein und teilen Sie den Link. Wenn SIE für alle ausfüllen, geben Sie die Gesamtzahl ein.",
                 continue: "WEITER",
                 share_link: "LINK TEILEN", guests_missing: "Gäste fehlen",
                 upload_docs_title: "Dokumente hochladen", upload_docs_desc: "Laden Sie Vorder- und Rückseite hoch. Obligatorisch.",
@@ -530,14 +538,23 @@
 
             const parseCIE = (raw) => {
                 const up = raw.toUpperCase();
-                const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+                const clean = up.replace(/\s/g, '');
                 let newForm = { ...formData };
                 let found = false;
 
-                const clean = up.replace(/\s/g, '');
+                // MRZ Parsing (Back of CIE)
+                // Line 1: I<ITA...
+                // Line 2: Birth... Sex... Expiry...
+                // Line 3: Name<<Surname
+                
+                // Typical MRZ Pattern for CIE (3 lines)
+                // C<ITA...
+                
+                // Simplified logic based on previous working version
                 let dc = clean.match(/ITA([A-Z0-9]{9})/); 
                 if(dc) { newForm.docNumber = dc[1]; found = true; }
 
+                // Attempt to find name in MRZ (Surname<<Name)
                 let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
                 if(nm) { 
                     let cog = fixOCRText(nm[1], 'L');
@@ -554,25 +571,15 @@
                     found = true;
                 }
 
+                // Address logic (Top part of Back)
+                // Look for VIA, PIAZZA, etc.
+                const lines = up.split('\n');
                 lines.forEach((l, i) => {
-                     if(l.match(/^(VIA|V\.|PIAZZA|P\.|CORSO|C\.|LARGO|VICOLO|STRADA)\s+/)) {
-                         let parts = l.match(/(.+?)\s+(\d+[A-Z]?)$/); 
-                         if(parts) {
-                             newForm.residenceAddress = parts[1].trim();
-                             newForm.houseNumber = parts[2];
-                         } else {
-                             newForm.residenceAddress = l; 
-                         }
+                     if(l.match(/(VIA|PIAZZA|CORSO|LARGO|VICOLO|STRADA)\s+/)) {
+                         newForm.residenceAddress = l.trim();
                          found = true;
-                         
-                         if(lines[i+1]) {
-                             let nextL = lines[i+1];
-                             let cityMatch = nextL.match(/(.+)\s+\(([A-Z]{2})\)/);
-                             if(cityMatch) {
-                                 newForm.residenceCity = cityMatch[1].trim();
-                                 newForm.residenceProvince = cityMatch[2];
-                             }
-                         }
+                         // Try to find City in next line or same line
+                         // Simplified: just taking the line as address
                      }
                 });
 
