@@ -5,74 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tuscan Retreats - Guest Portal</title>
     
+    <!-- Librerie Esterne -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- OCR Engine -->
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
 
+    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
+        /* BASE STYLES */
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
         
-        /* LOGO GIULIA */
+        /* LOGO GIULIA HOME */
         .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 25px 0; background: white; }
         .logo-circle {
             width: 200px; height: 200px; background: white; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden;
-            border: 3px solid #d4af37; position: relative;
-            padding: 0;
+            border: 3px solid #d4af37; position: relative; padding: 0;
         }
         .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); position: relative; z-index: 2; }
 
-        /* HEADER LOGO */
+        /* HEADER LOGO PICCOLO */
         .header-logo-circle { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; }
         .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 
-        /* SCANNER FULL WIDTH */
+        /* SCANNER FULL SCREEN STYLES */
         .scan-wrapper-full {
             position: relative;
-            width: 100vw; 
-            height: 480px;
+            width: 100vw;
+            height: 500px; /* Altezza ampia */
             background: #000;
             overflow: hidden;
+            /* Rompe i margini del container per andare full width */
             left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* GUIDE VISIVE - MISURE CALIBRATE DA V104 */
+        /* GUIDE VISIVE (Coordinate V104 Precise) */
         .guide-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
         
+        /* Giallo: Indirizzo (Alto) */
         .zone-residenza {
-            position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%);
-            width: 94%; height: 14%; border: 3px solid #FFD60A; border-radius: 4px;
-            background: rgba(255, 214, 10, 0.1); z-index: 10;
-            display: flex; justify-content: center; align-items: flex-start;
+            position: absolute;
+            top: 48%; /* Altezza calibrata */
+            left: 50%; transform: translate(-50%, -50%);
+            width: 94%; height: 14%; 
+            border: 3px solid #FFD60A; border-radius: 6px;
+            background: rgba(255, 214, 10, 0.1);
+            z-index: 10;
         }
-
+        
+        /* Azzurro: MRZ (Basso) */
         .zone-mrz {
-            position: absolute; top: 85%; left: 50%; transform: translate(-50%, -50%);
-            width: 96%; height: 18%; border: 3px solid #00E0FF; border-radius: 4px;
-            background: rgba(0, 224, 255, 0.1); z-index: 10;
-            display: flex; justify-content: center; align-items: flex-start;
+            position: absolute;
+            top: 85%; /* Basso per evitare barcode */
+            left: 50%; transform: translate(-50%, -50%);
+            width: 96%; height: 18%; 
+            border: 3px solid #00E0FF; border-radius: 6px;
+            background: rgba(0, 224, 255, 0.1);
+            z-index: 10;
         }
 
         .label-guide { 
-            position: absolute; top: -22px; left: 0;
-            font-size: 10px; font-weight: 900; padding: 2px 6px; 
+            position: absolute; top: -24px; left: 0;
+            font-size: 11px; font-weight: 900; padding: 3px 8px; 
             background: rgba(0,0,0,0.8); color: white; border-radius: 4px; 
-            text-transform: uppercase; white-space: nowrap;
+            text-transform: uppercase; white-space: nowrap; letter-spacing: 0.5px;
         }
-        
-        .info-blue { color: #1e40af; font-size: 13px; line-height: 1.5; background: #eff6ff; padding: 15px; border-radius: 12px; border: 1px solid #dbeafe; text-align: left; margin-bottom: 20px; font-weight: 500; }
-        .info-success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-top: 20px; text-align: center; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
+        /* UI ELEMENTS */
         .input-field { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 8px; color: #1e293b; }
         .input-field:focus { border-color: #0f766e; outline: none; box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); }
+        
         .input-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; margin-left: 4px; text-align: left; }
         .input-label.required::after { content: " *"; color: #ef4444; }
 
@@ -81,30 +90,32 @@
         .btn-secondary { background: #334155; color: white; }
         .btn-success { background: #10b981; color: white; }
         .btn-danger { background: #ef4444; color: white; }
-        .btn-primary:active:not(:disabled) { transform: scale(0.97); }
-        .btn-primary:disabled, .btn-success:disabled { background: #cbd5e1 !important; color: #94a3b8 !important; cursor: not-allowed; box-shadow: none; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .flag-btn { font-size: 24px; padding: 4px 6px; opacity: 0.5; transition: 0.2s; cursor: pointer; border: none; background: transparent; filter: grayscale(100%); }
         .flag-btn.active { opacity: 1; transform: scale(1.1); filter: grayscale(0%); }
 
-        .card-select { width: 100%; padding: 18px; border-radius: 18px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
-        .card-select:hover { border-color: #0f766e; background: #f0fdfa; }
+        .info-blue { background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; padding: 15px; border-radius: 12px; font-size: 13px; line-height: 1.5; margin-bottom: 20px; text-align: left; }
+        .info-success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-top: 20px; text-align: center; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        /* Stili upload */
-        .upload-box { border: 2px dashed #cbd5e1; border-radius: 20px; height: 256px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; transition: 0.2s; cursor: pointer; overflow: hidden; width: 100%; }
+        /* UPLOAD */
+        .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
+        .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
         .upload-row { display: flex; gap: 8px; margin-bottom: 15px; }
         .upload-btn-small { flex: 1; padding: 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid #cbd5e1; background: white; color: #334155; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
         .upload-btn-small:active { background: #f1f5f9; transform: scale(0.98); }
-        .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
-        .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .card-select { width: 100%; padding: 18px; border-radius: 18px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
+        .card-select:hover { border-color: #0f766e; background: #f0fdfa; }
+        
         .loader { width: 24px; height: 24px; border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div id="root"></div>
+    <!-- Canvas nascosto per elaborazione OCR -->
     <canvas id="ocr-canvas" style="display:none;"></canvas>
 
     <!-- Firebase SDK -->
@@ -112,13 +123,13 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
         window.FirebaseSDK = { initializeApp, getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken };
     </script>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // --- CONFIGURAZIONE ---
         const MY_FIREBASE_CONFIG = {
           apiKey: "AIzaSyAI9ehjq0UAiYu6l_VxXiAZCV12QL0RbDk",
           authDomain: "tuscan-retreats-9322c.firebaseapp.com",
@@ -134,13 +145,15 @@
             "REGINA": { id: "REGINA", name: "Santa Regina", type: "keybox", defaultCode: "4567" }
         };
 
+        // --- TRADUZIONI ---
         const TRANSLATIONS = {
             it: { 
                 welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
                 login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", 
-                scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il RETRO del documento.", 
-                scan_help: "Inquadra la zona MRZ in basso e la zona Indirizzo in alto.",
-                photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA E CONTINUA", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
+                scan_title: "SCANSIONA DOCUMENTO", scan_info: "Inquadra il documento in orizzontale.", 
+                scan_help: "Inquadra il retro della C.I. (MRZ in basso, Indirizzo in alto).",
+                photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA E CONTINUA", 
+                add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
                 warning_save: "Compila i campi obbligatori e carica le foto per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
                 tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti). Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
@@ -155,18 +168,18 @@
                 continue: "CONTINUA",
                 share_link: "INVIA LINK A CHI SI DEVE ANCORA REGISTRARE",
                 save_link_msg: "💡 IMPORTANTE: Salva questo link! Se dimentichi il codice porta, potrai riaprirlo per visualizzarlo senza rifare il check-in.",
-                label_res_zone: "INDIRIZZO", label_mrz_zone: "CODICI MRZ"
+                label_res_zone: "RESIDENZA", label_mrz_zone: "CODICI MRZ"
             },
             en: { 
-                welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
-                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document horizontally.", 
+                welcome: "Hi! I'm Giulia. Please complete the online check-in for your arrival.", 
+                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_title: "SCAN DOCUMENT", scan_info: "Scan document horizontally.", 
                 scan_help: "Frame the back of ID (Address at top, MRZ at bottom).",
-                photo_req: "DOCUMENT PHOTO", confirm_btn: "SAVE & CONTINUE", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
+                photo_req: "DOCUMENT PHOTO", confirm_btn: "SAVE & CONTINUE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
                 warning_save: "Fill all mandatory fields", finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back",
                 tax_info: "Tourist tax must be paid on-site (cash) if booked via Booking.com. Airbnb includes tax.",
                 doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "Driving License",
                 label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_prov: "Prov.", label_citizenship: "Citizenship", label_cit_ph: "Specify...", label_res_city: "Residence City", label_res_prov: "Prov.", label_address: "Address", label_civic: "No.", label_issued: "Issued by", label_issued_ph: "Ex. London...", label_docnum: "Doc Number", label_expiry: "Expiry Date",
-                thanks: "Thank you", success_msg: "Check-in successfully completed.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
+                thanks: "Thank you", success_msg: "Check-in completed successfully.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
                 data_true_label: "I declare that the data entered is true", clear_sign: "CLEAR SIGNATURE", sign_title: "Signature",
                 ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD FILE",
                 ocr_warn: "WARNING: Lighting and shadows may affect data accuracy. Check next screen.",
@@ -180,9 +193,9 @@
             },
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement en ligne.", 
-                login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOC", scan_info: "Scannez le document horizontalement.", 
+                login_ph: "CODE", start_btn: "COMMENCER", scan_title: "SCANNER DOCUMENT", scan_info: "Scannez le document horizontalement.", 
                 scan_help: "Cadrez le verso (Adresse en haut, MRZ en bas).",
-                photo_req: "PHOTO DOCUMENT", confirm_btn: "ENREGISTRER ET CONTINUER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
+                photo_req: "PHOTO DOCUMENT", confirm_btn: "ENREGISTRER ET CONTINUER", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
                 warning_save: "Remplissez tous les champs obligatoires", finish_btn: "TERMINER", verify: "Vérifier les données", front: "Recto", back_doc: "Verso",
                 tax_info: "La taxe de séjour doit être payée sur place (espèces) si réservé via Booking.com. Inclus pour Airbnb.",
                 doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis de Conduire",
@@ -193,7 +206,7 @@
                 ocr_warn: "ATTENTION: L'éclairage peut affecter la précision. Vérifiez l'écran suivant.",
                 ocr_success: "Données détectées ! Vérifiez les champs et complétez les manquants. Ensuite, passez au téléchargement des photos.",
                 guest_count_q: "Combien d'invités ? (1+ ans)", 
-                guest_count_tip: "⚠️ IMPORTANT : Si chacun remplit depuis son téléphone, entrez 1 et partagez le lien. Si VOUS remplissez pour tout le monde, entrez le total.",
+                guest_count_tip: "⚠️ IMPORTANT : Si chacun remplit depuis son téléphone, entrez 1 et envoyez ce lien aux autres. Si VOUS remplissez pour tout le monde, entrez le total.",
                 continue: "CONTINUER",
                 share_link: "ENVOYER LIEN AUX AUTRES",
                 save_link_msg: "💡 IMPORTANT : Sauvegardez ce lien ! Si vous oubliez le code, vous pourrez le rouvrir sans refaire l'enregistrement.",
@@ -201,9 +214,9 @@
             },
             es: { 
                 welcome: "¡Hola! Soy Giulia. Complete el registro en línea.", 
-                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee el documento horizontalmente.", 
+                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_title: "ESCANEAR DOC", scan_info: "Escanee el documento horizontalmente.", 
                 scan_help: "Encuadre el reverso (Dirección arriba, MRZ abajo).",
-                photo_req: "FOTO DOCUMENTO", confirm_btn: "GUARDAR Y CONTINUAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
+                photo_req: "FOTO DOCUMENTO", confirm_btn: "GUARDAR Y CONTINUAR", add_guest: "AÑADIR", save_guest: "GUARDAR",
                 warning_save: "Complete todos los campos obligatorios", finish_btn: "TERMINAR", verify: "Verificar datos", front: "Frente", back_doc: "Dorso",
                 tax_info: "La tasa turística se paga en el lugar (efectivo) si reservó por Booking.com. Incluida en Airbnb.",
                 doc_type: "Tipo de Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia de Conducir",
@@ -222,9 +235,9 @@
             },
             de: { 
                 welcome: "Hallo! Ich bin Giulia. Bitte schließen Sie den Online-Check-in ab.", 
-                login_ph: "CODE", start_btn: "STARTEN", scan_rear: "DOKUMENT SCANNEN", scan_info: "Dokument horizontal scannen.", 
+                login_ph: "CODE", start_btn: "STARTEN", scan_title: "DOKUMENT SCANNEN", scan_info: "Dokument horizontal scannen.", 
                 scan_help: "Rückseite einrahmen (Adresse oben, MRZ unten).",
-                photo_req: "FOTO", confirm_btn: "SPEICHERN & WEITER", recover_btn: "TÜRCODE ANZEIGEN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
+                photo_req: "FOTO", confirm_btn: "SPEICHERN & WEITER", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
                 warning_save: "Füllen Sie alle Pflichtfelder aus", finish_btn: "ABSCHLIESSEN", verify: "Daten prüfen", front: "Vorderseite", back_doc: "Rückseite",
                 tax_info: "Kurtaxe muss vor Ort bar bezahlt werden (Booking.com). Bei Airbnb inklusive.",
                 doc_type: "Dokumentart", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein",
@@ -243,6 +256,7 @@
             }
         };
 
+        // --- COMPONENTI UI ---
         const Icon = ({ name, className = "w-6 h-6" }) => {
             const icons = {
                 check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/>,
@@ -253,9 +267,16 @@
                 copy: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />,
                 download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
                 upload: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />,
-                scan: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10" />,
+                scan: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10" />
             };
             return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name] || icons.camera}</svg>;
+        };
+
+        const SVGIcons = {
+            electronic: <svg viewBox="0 0 24 24" className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 15h.01M11 15h.01M15 15h.01M19 15h.01M7 11h.01M11 11h.01M15 11h.01" /><circle cx="17" cy="9" r="1"/></svg>,
+            paper: <svg viewBox="0 0 24 24" className="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>,
+            passport: <svg viewBox="0 0 24 24" className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M12 12a3 3 0 100-6 3 3 0 000 6z"/><path d="M12 15a5 5 0 00-5 5h10a5 0 00-5-5z"/></svg>,
+            license: <svg viewBox="0 0 24 24" className="w-12 h-12 text-pink-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9h2" /><path d="M7 13h10" /><path d="M7 17h6" /><circle cx="16" cy="10" r="2" /></svg>
         };
 
         const CopyField = ({ label, value }) => (
@@ -281,18 +302,17 @@
                 const canvas = canvasRef.current;
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
-                let isDrawing = false;
                 const resize = () => { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; };
                 resize(); window.addEventListener('resize', resize);
                 const getPos = (e) => { const rect = canvas.getBoundingClientRect(); return { x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top }; };
-                const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
-                const draw = (e) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
-                const stop = () => isDrawing = false;
-                canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop); canvas.addEventListener('mouseleave', stop);
-                canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stop);
-                return () => { window.removeEventListener('resize', resize); canvas.removeEventListener('mousedown', start); canvas.removeEventListener('mousemove', draw); canvas.removeEventListener('mouseup', stop); canvas.removeEventListener('mouseleave', stop); canvas.removeEventListener('touchstart', start); canvas.removeEventListener('touchmove', draw); canvas.removeEventListener('touchend', stop); };
+                const start = (e) => { e.preventDefault(); ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); canvas.addEventListener('mousemove', draw); canvas.addEventListener('touchmove', draw, {passive: false}); };
+                const draw = (e) => { e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+                const stop = () => { canvas.removeEventListener('mousemove', draw); canvas.removeEventListener('touchmove', draw); };
+                canvas.addEventListener('mousedown', start); canvas.addEventListener('mouseup', stop); canvas.addEventListener('mouseleave', stop);
+                canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchend', stop);
+                return () => { window.removeEventListener('resize', resize); };
             }, []);
-            return <canvas ref={canvasRef} className="w-full h-full" style={{width: '100%', height: '100%'}} />;
+            return <canvas ref={canvasRef} className="w-full h-full" />;
         };
 
         const Header = ({ showBack, backStep, setStep, setLang, lang }) => (
@@ -317,12 +337,7 @@
         function App() {
             const [lang, setLang] = useState('it');
             const [user, setUser] = useState(null);
-            const [step, setStep] = useState(() => {
-                const params = new URLSearchParams(window.location.search);
-                const p = params.get('p');
-                const d = params.get('d');
-                return (p || d) ? 'welcome' : 'login';
-            });
+            const [step, setStep] = useState('login');
             const [property, setProperty] = useState(null);
             const [bookingDetails, setBookingDetails] = useState({ guestName: '', doorCode: '' });
             const [guests, setGuests] = useState([]);
@@ -383,6 +398,7 @@
                             setProperty(PROPERTIES[decoded.p]);
                             setBookingDetails({ guestName: decoded.n || "Ospite", doorCode: decoded.c });
                             if (localStorage.getItem(`checkin_done_session_${d}`)) setStep('success');
+                            else setStep('welcome');
                         }
                     } catch (e) {}
                 } else if (p) {
@@ -391,6 +407,7 @@
                         setProperty(PROPERTIES[propKey]);
                         setBookingDetails({ guestName: "Ospite", doorCode: PROPERTIES[propKey].defaultCode });
                         if (localStorage.getItem(`checkin_done_session_direct`)) setStep('success');
+                        else setStep('welcome');
                     }
                 }
             }, []);
@@ -656,7 +673,7 @@
                                                     </div>
                                                 </div>
                                             ))}
-                                            <button onClick={() => setSelectedSession(null)} className="btn btn-primary w-full mt-4 font-bold text-white">CHIUDI</button>
+                                            <button onClick={() => setSelectedSession(null)} className="btn btn-primary w-full mt-4 font-bold">CHIUDI</button>
                                         </div>
                                     </div>
                                 )}
