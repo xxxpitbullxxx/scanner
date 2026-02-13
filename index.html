@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tuscan Retreats - Guest Portal</title>
     
-    <!-- LIBRERIE ESTERNE (React, Tailwind, Tesseract) -->
+    <!-- LIBRERIE -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -17,22 +17,20 @@
 
     <style>
         /* STILI BASE */
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; position: relative; overflow-x: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         
-        /* LOGO GIULIA - Pagina Login/Benvenuto */
+        /* LOGHI */
         .logo-main-circle { width: 160px; height: 160px; border-radius: 50%; overflow: hidden; border: 4px solid #d4af37; background: white; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .logo-main-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
         
-        /* FOTO HOST - Pagina Benvenuto */
         .host-photo-circle { width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: 0 auto 15px; background: #eee; }
         .host-photo-circle img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* LOGO PICCOLO - Header */
         .header-logo-circle { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; }
         .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 
-        /* SCANNER FULL SCREEN REALE */
+        /* SCANNER FULL WIDTH */
         .scan-wrapper-full {
             position: relative; width: 100vw; height: 500px; background: #000; overflow: hidden;
             /* Rompe i margini del container per andare full width */
@@ -40,7 +38,7 @@
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* GUIDE VISIVE (Coordinate V104 per evitare barcode) */
+        /* GUIDE VISIVE (Coordinate precise V104 per evitare barcode) */
         .guide-overlay { position: absolute; inset: 0; pointer-events: none; }
         
         /* Giallo: Indirizzo (Alto) */
@@ -49,21 +47,22 @@
             width: 94%; height: 14%; 
             border: 2px dashed #FFD60A; border-radius: 6px; 
             background: rgba(255, 214, 10, 0.1);
+            box-shadow: 0 0 0 999px rgba(0,0,0,0.5); /* Oscura il resto per focus */
             z-index: 10;
         }
         
-        /* Azzurro: MRZ (Basso - Stretto) */
+        /* Azzurro: MRZ (Basso e Stretto) */
         .zone-mrz {
             position: absolute; top: 85%; left: 50%; transform: translate(-50%, -50%);
             width: 96%; height: 18%; 
-            border: 3px solid #00E0FF; border-radius: 6px;
+            border: 2px solid #00E0FF; border-radius: 6px;
             background: rgba(0, 224, 255, 0.1);
             z-index: 10;
         }
         
         .label-guide { 
             position: absolute; top: -25px; left: 0;
-            font-size: 11px; font-weight: 800; padding: 2px 8px; 
+            font-size: 11px; font-weight: 900; padding: 2px 8px; 
             background: rgba(0,0,0,0.8); color: white; border-radius: 4px; 
             text-transform: uppercase; white-space: nowrap;
         }
@@ -157,14 +156,14 @@
                 scan_title: "SCAN DOCUMENT", scan_info: "Scan document horizontally.", scan_help: "ID Back or Passport Data Page.",
                 ocr_btn: "SNAP & READ", ocr_file_btn: "📁 UPLOAD FILE", ocr_processing: "PROCESSING...", ocr_warn: "WARNING: Check data carefully.", ocr_success: "Data detected!",
                 verify: "Verify Data", photo_req: "PHOTO REQUIRED", save: "SAVE GUEST",
-                label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_prov: "Prov.", label_citizenship: "Citizenship", label_res_city: "Residence City", label_res_prov: "Prov.", label_address: "Address", label_civic: "No.", label_issued: "Issued by", label_issued_ph: "Ex. City of...",
+                label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_prov: "Prov.", label_citizenship: "Citizenship", label_res_city: "Residence City", label_res_prov: "Prov.", label_address: "Address", label_civic: "No.", label_issued: "Issued by", label_issued_ph: "Ex. City of...", label_docnum: "Doc Number", label_expiry: "Expiry Date",
                 front: "Front", back_doc: "Back", take_photo: "TAKE PHOTO", upload_file: "UPLOAD FILE",
                 sign_title: "Signature", tax_info: "City tax to be paid on site.", clear_sign: "CLEAR", confirm_btn: "CONFIRM & FINISH",
                 success_title: "Done!", success_msg: "Check-in completed.", save_link_msg: "💡 SAVE THIS LINK!", share_link: "COPY LINK FOR OTHERS", exit: "Exit", guests_missing: "Guests missing"
             },
-            fr: { welcome_title: "Bienvenue", welcome_text: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement.", start_btn: "COMMENCER", login_ph: "CODE", enter: "ENTRER", guest_q: "Combien d'invités ?", guest_tip: "⚠️ IMPORTANT : Entrez 1 si chacun remplit le sien.", continue: "CONTINUER", doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis", scan_title: "SCANNER", scan_info: "Horizontalement.", scan_help: "Verso C.I. ou Passeport.", ocr_btn: "SCANNER", ocr_file_btn: "📁 FICHIER", ocr_processing: "TRAITEMENT...", ocr_warn: "Attention aux reflets.", ocr_success: "Données trouvées !", verify: "Vérifier", photo_req: "PHOTO", save: "ENREGISTRER", label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Lieu de naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_cit_ph: "Préciser...", label_res_city: "Ville de résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_issued: "Délivré par", label_issued_ph: "Ex. Ville de...", front: "Recto", back_doc: "Verso", take_photo: "PHOTO", upload_file: "FICHIER", sign_title: "Signature", tax_info: "Taxe de séjour sur place.", clear_sign: "EFFACER", confirm_btn: "TERMINER", success_title: "Fini !", success_msg: "Enregistrement terminé.", save_link_msg: "💡 SAUVEGARDEZ CE LIEN !", share_link: "COPIER LIEN", exit: "Sortie", guests_missing: "Invités manquants" },
-            es: { welcome_title: "Bienvenido", welcome_text: "¡Hola! Soy Giulia. Complete el registro.", start_btn: "EMPEZAR", login_ph: "CÓDIGO", enter: "ENTRAR", guest_q: "¿Cuántos huéspedes?", guest_tip: "⚠️ IMPORTANTE: Ingrese 1 si cada uno llena el suyo.", continue: "CONTINUAR", doc_type: "Tipo Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia", scan_title: "ESCANEAR", scan_info: "Horizontalmente.", scan_help: "Dorso DNI o Pasaporte.", ocr_btn: "ESCANEAR", ocr_file_btn: "📁 ARCHIVO", ocr_processing: "PROCESANDO...", ocr_warn: "Cuidado con los reflejos.", ocr_success: "¡Datos encontrados!", verify: "Verificar", photo_req: "FOTO", save: "GUARDAR", label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Ciudad Nacimiento", label_prov: "Prov.", label_citizenship: "Nacionalidad", label_cit_ph: "Especificar...", label_res_city: "Ciudad de residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Ciudad de...", front: "Frente", back_doc: "Dorso", take_photo: "FOTO", upload_file: "ARCHIVO", sign_title: "Firma", tax_info: "Tasa turística en el lugar.", clear_sign: "BORRAR", confirm_btn: "TERMINAR", success_title: "¡Hecho!", success_msg: "Registro completado.", save_link_msg: "💡 ¡GUARDE ESTE ENLACE!", share_link: "COPIAR ENLACE", exit: "Salir", guests_missing: "Faltan huéspedes" },
-            de: { welcome_title: "Willkommen", welcome_text: "Hallo! Ich bin Giulia. Bitte Check-in abschließen.", start_btn: "STARTEN", login_ph: "CODE", enter: "EINGEBEN", guest_q: "Wie viele Gäste?", guest_tip: "⚠️ WICHTIG: Geben Sie 1 ein, wenn jeder selbst ausfüllt.", continue: "WEITER", doc_type: "Dokumentart", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein", scan_title: "SCANNEN", scan_info: "Horizontal.", scan_help: "Rückseite ID oder Reisepass.", ocr_btn: "SCANNEN", ocr_file_btn: "📁 DATEI", ocr_processing: "VERARBEITUNG...", ocr_warn: "Achten Sie auf Reflexionen.", ocr_success: "Daten gefunden!", verify: "Überprüfen", photo_req: "FOTO", save: "SPEICHERN", label_surname: "Nachname", label_name: "Vorname", label_sex: "Geschlecht", label_birth: "Geburtsdatum", label_city: "Geburtsort", label_prov: "Prov.", label_citizenship: "Nationalität", label_cit_ph: "Angeben...", label_res_city: "Wohnort", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "Nr.", label_issued: "Ausgestellt von", label_issued_ph: "Z.B. Stadt...", front: "Vorderseite", back_doc: "Rückseite", take_photo: "FOTO", upload_file: "DATEI", sign_title: "Unterschrift", tax_info: "Kurtaxe vor Ort.", clear_sign: "LÖSCHEN", confirm_btn: "FERTIGSTELLEN", success_title: "Fertig!", success_msg: "Check-in abgeschlossen.", save_link_msg: "💡 LINK SPEICHERN!", share_link: "LINK KOPIEREN", exit: "Beenden", guests_missing: "Gäste fehlen" }
+            fr: { welcome_title: "Bienvenue", welcome_text: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement.", start_btn: "COMMENCER", login_ph: "CODE", enter: "ENTRER", guest_q: "Combien d'invités ?", guest_tip: "⚠️ IMPORTANT : Entrez 1 si chacun remplit le sien.", continue: "CONTINUER", doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis", scan_title: "SCANNER", scan_info: "Horizontalement.", scan_help: "Verso C.I. ou Passeport.", ocr_btn: "SCANNER", ocr_file_btn: "📁 FICHIER", ocr_processing: "TRAITEMENT...", ocr_warn: "Attention aux reflets.", ocr_success: "Données trouvées !", verify: "Vérifier", photo_req: "PHOTO", save: "ENREGISTRER", label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Ville Naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_res_city: "Ville Résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_docnum: "N° Doc", label_expiry: "Expiration", label_issued: "Délivré par", label_issued_ph: "Ex. Ville de...", front: "Recto", back_doc: "Verso", take_photo: "PHOTO", upload_file: "FICHIER", sign_title: "Signature", tax_info: "Taxe de séjour sur place.", clear_sign: "EFFACER", confirm_btn: "TERMINER", success_title: "Fini !", success_msg: "Enregistrement terminé.", save_link_msg: "💡 SAUVEGARDEZ CE LIEN !", share_link: "COPIER LIEN", exit: "Sortie", guests_missing: "Invités manquants" },
+            es: { welcome_title: "Bienvenido", welcome_text: "¡Hola! Soy Giulia. Complete el registro.", start_btn: "EMPEZAR", login_ph: "CÓDIGO", enter: "ENTRAR", guest_q: "¿Cuántos huéspedes?", guest_tip: "⚠️ IMPORTANTE: Ingrese 1 si cada uno llena el suyo.", continue: "CONTINUAR", doc_type: "Tipo Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia", scan_title: "ESCANEAR", scan_info: "Horizontalmente.", scan_help: "Dorso DNI o Pasaporte.", ocr_btn: "ESCANEAR", ocr_file_btn: "📁 ARCHIVO", ocr_processing: "PROCESANDO...", ocr_warn: "Cuidado con los reflejos.", ocr_success: "¡Datos encontrados!", verify: "Verificar", photo_req: "FOTO", save: "GUARDAR", label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Ciudad Nacimiento", label_prov: "Prov.", label_citizenship: "Nacionalidad", label_res_city: "Ciudad Residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Ciudad de...", label_docnum: "N° Documento", label_expiry: "Caducidad", front: "Frente", back_doc: "Dorso", take_photo: "FOTO", upload_file: "ARCHIVO", sign_title: "Firma", tax_info: "Tasa turística en el lugar.", clear_sign: "BORRAR", confirm_btn: "TERMINAR", success_title: "¡Hecho!", success_msg: "Registro completado.", save_link_msg: "💡 ¡GUARDE ESTE ENLACE!", share_link: "COPIAR ENLACE", exit: "Salir", guests_missing: "Faltan huéspedes" },
+            de: { welcome_title: "Willkommen", welcome_text: "Hallo! Ich bin Giulia. Bitte Check-in abschließen.", start_btn: "STARTEN", login_ph: "CODE", enter: "EINGEBEN", guest_q: "Wie viele Gäste?", guest_tip: "⚠️ WICHTIG: Geben Sie 1 ein, wenn jeder selbst ausfüllt.", continue: "WEITER", doc_type: "Dokumentart", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein", scan_title: "SCANNEN", scan_info: "Horizontal.", scan_help: "Rückseite ID oder Reisepass.", ocr_btn: "SCANNEN", ocr_file_btn: "📁 DATEI", ocr_processing: "VERARBEITUNG...", ocr_warn: "Achten Sie auf Reflexionen.", ocr_success: "Daten gefunden!", verify: "Überprüfen", photo_req: "FOTO", save: "SPEICHERN", label_surname: "Nachname", label_name: "Vorname", label_sex: "Geschlecht", label_birth: "Geburtsdatum", label_city: "Geburtsort", label_prov: "Prov.", label_citizenship: "Nationalität", label_res_city: "Wohnort", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "Nr.", label_issued: "Ausgestellt von", label_issued_ph: "Z.B. Stadt...", label_docnum: "Dokumentnummer", label_expiry: "Ablaufdatum", front: "Vorderseite", back_doc: "Rückseite", take_photo: "FOTO", upload_file: "DATEI", sign_title: "Unterschrift", tax_info: "Kurtaxe vor Ort.", clear_sign: "LÖSCHEN", confirm_btn: "FERTIGSTELLEN", success_title: "Fertig!", success_msg: "Check-in abgeschlossen.", save_link_msg: "💡 LINK SPEICHERN!", share_link: "LINK KOPIEREN", exit: "Beenden", guests_missing: "Gäste fehlen" }
         };
 
         // --- ICONE SVG ---
@@ -467,8 +466,7 @@
 
             const startNewGuest = () => {
                 setFormData({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "", citizenship: "ITALIANA", residenceCity: "", residenceProvince: "", residenceAddress: "", houseNumber: "", issuedBy: "COMUNE DI", issuedManual: "", docNumber: "", expiryDate: "" });
-                setImages({ front: null, back: null }); setDataTrue(false);
-                setStep('type_select');
+                setImages({ front: null, back: null }); setDataTrue(false); setStep('type_select');
             };
 
             const addGuest = () => {
@@ -492,7 +490,7 @@
                 switch(step) {
                     case 'login': return (
                         <div className="app-container p-8 justify-center items-center text-center">
-                            <div className="logo-main-circle"><img src="logo.png" /></div>
+                            <div className="logo-main-circle"><img src="logo.png" className="logo-img" /></div>
                             <h1 className="text-3xl font-bold text-slate-800 mb-6 uppercase tracking-widest tracking-tight">Login</h1>
                             <input id="code" className="input-field text-center mb-4" placeholder={t.login_ph} />
                             <button onClick={() => { 
@@ -610,7 +608,7 @@
                             </div>
                             <div className="p-6 border-t shadow-lg text-center font-bold">
                                 {guests.length < expectedGuests && <p className="text-xs text-red-500 mb-2 uppercase tracking-widest">{t.guests_missing} ({expectedGuests - guests.length})</p>}
-                                <button onClick={() => setStep('sign')} disabled={guests.length < expectedGuests} className="btn btn-primary w-full uppercase font-bold disabled:opacity-50 text-white font-bold">FINISCI E PROCEDI</button>
+                                <button onClick={() => setStep('sign')} disabled={guests.length < expectedGuests} className="btn btn-primary w-full uppercase font-bold disabled:opacity-50">{t.finish_btn}</button>
                             </div>
                         </div>
                     );
