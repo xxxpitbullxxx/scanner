@@ -111,6 +111,7 @@
         .upload-box { border: 2px dashed #cbd5e1; border-radius: 20px; height: 256px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; transition: 0.2s; cursor: pointer; overflow: hidden; width: 100%; }
         .upload-row { display: flex; gap: 8px; margin-bottom: 15px; }
         .upload-btn-small { flex: 1; padding: 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid #cbd5e1; background: white; color: #334155; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
+        .upload-btn-small:active { background: #f1f5f9; transform: scale(0.98); }
         .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
         .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
 
@@ -153,18 +154,18 @@
         const TRANSLATIONS = {
             it: { 
                 welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
-                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", 
-                scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento in orizzontale.", 
+                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", scan_rear: "SCANSIONA DOC", scan_info: "Inquadra il documento in orizzontale.", 
+                scan_help: "Inquadra il retro della C.I. (Indirizzo in alto, MRZ in basso).",
                 photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA E CONTINUA", recover_btn: "VEDI IL TUO CODICE PORTA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
-                warning_save: "Compila tutti i campi obbligatori", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
-                tax_info: "La tassa di soggiorno si paga in loco all'arrivo (contanti) se prenotato via Booking.com. Airbnb è già inclusa.",
+                warning_save: "Carica le foto e compila tutti i campi obbligatori per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
+                tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
                 label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_prov: "Prov.", label_citizenship: "Cittadinanza", label_cit_ph: "Specifica...", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_address: "Via / Piazza", label_civic: "Civico", label_issued: "Rilasciato da", label_issued_ph: "Es. Milano...", label_docnum: "N. Documento", label_expiry: "Scadenza",
                 thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
                 data_true_label: "Dichiaro che i dati inseriti sono reali", clear_sign: "CANCELLA FIRMA", sign_title: "Firma e Tassa",
                 ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO",
                 ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla attentamente nella scheda successiva.",
-                ocr_success: "Dati rilevati! Verifica i campi compilati e inserisci quelli mancanti. Poi torna indietro per caricare le foto del documento e completare il check-in.",
+                ocr_success: "Dati rilevati! Verifica i campi compilati e inserisci quelli mancanti. Poi prosegui per caricare le foto.",
                 guest_count_q: "Quanti ospiti siete? (1+ anni)", 
                 guest_count_tip: "ℹ️ TIP: Se ognuno compila dal proprio telefono, scrivi 1 e poi condividi il link alla fine. Se compili tu per tutti, scrivi il numero totale.",
                 continue: "CONTINUA",
@@ -176,6 +177,7 @@
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
                 login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document horizontally.", 
+                scan_help: "Frame the back of ID (Address at top, MRZ at bottom).",
                 photo_req: "DOCUMENT PHOTO", confirm_btn: "SAVE & CONTINUE", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
                 warning_save: "Fill all mandatory fields", finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back",
                 tax_info: "Tourist tax must be paid on-site (cash) if booked via Booking.com. Airbnb includes tax.",
@@ -197,12 +199,13 @@
             fr: { 
                 welcome: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement en ligne.", 
                 login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOC", scan_info: "Scannez le document horizontalement.", 
+                scan_help: "Cadrez le verso (Adresse en haut, MRZ en bas).",
                 photo_req: "PHOTO DOCUMENT", confirm_btn: "ENREGISTRER ET CONTINUER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
                 warning_save: "Remplissez tous les champs obligatoires", finish_btn: "TERMINER", verify: "Vérifier les données", front: "Recto", back_doc: "Verso",
                 tax_info: "La taxe de séjour doit être payée sur place (espèces) si réservé via Booking.com. Inclus pour Airbnb.",
                 doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis de Conduire",
                 label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Lieu de naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_cit_ph: "Préciser...", label_res_city: "Ville de résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_issued: "Délivré par", label_issued_ph: "Ex. Paris...", label_docnum: "N° Document", label_expiry: "Expiration",
-                thanks: "Merci", success_msg: "Enregistrement terminé.", exit: "Sortie", guest_list: "Invités", cloud_save: "Sauvegarde...",
+                thanks: "Merci", success_msg: "Enregistrement terminé avec succès.", exit: "Sortie", guest_list: "Invités", cloud_save: "Sauvegarde...",
                 data_true_label: "Je déclare que les données sont réelles", clear_sign: "EFFACER", sign_title: "Signature",
                 ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "📁 FICHIER",
                 ocr_warn: "ATTENTION: L'éclairage peut affecter la précision. Vérifiez l'écran suivant.",
@@ -211,19 +214,20 @@
                 guest_count_tip: "ℹ️ ASTUCE : Si chacun remplit depuis son téléphone, entrez 1 et partagez le lien. Si vous remplissez pour tout le monde, entrez le total.",
                 continue: "CONTINUER",
                 share_link: "PARTAGER LE LIEN", guests_missing: "Invités manquants",
-                upload_docs_title: "Charger les documents", upload_docs_desc: "Chargez la photo recto et verso. Obligatoire.",
+                upload_docs_title: "Charger les documents", upload_docs_desc: "Chargez la photo recto et verso du document. Obligatoire.",
                 take_photo: "PHOTO", upload_file: "FICHIER", proceed_docs: "DOCUMENTS SUIVANTS",
                 label_res_zone: "ADRESSE", label_mrz_zone: "CODES MRZ"
             },
             es: { 
                 welcome: "¡Hola! Soy Giulia. Complete el registro en línea.", 
                 login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee el documento horizontalmente.", 
+                scan_help: "Encuadre el reverso (Dirección arriba, MRZ abajo).",
                 photo_req: "FOTO DOCUMENTO", confirm_btn: "GUARDAR Y CONTINUAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
                 warning_save: "Complete todos los campos obligatorios", finish_btn: "TERMINAR", verify: "Verificar datos", front: "Frente", back_doc: "Dorso",
                 tax_info: "La tasa turística se paga en el lugar (efectivo) si reservó por Booking.com. Incluida en Airbnb.",
                 doc_type: "Tipo de Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia de Conducir",
                 label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Lugar de nacimiento", label_prov: "Prov.", label_citizenship: "Ciudadanía", label_cit_ph: "Especificar...", label_res_city: "Ciudad de residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Madrid...", label_docnum: "N° Documento", label_expiry: "Caducidad",
-                thanks: "Gracias", success_msg: "Registro completado.", exit: "Salir", guest_list: "Huéspedes", cloud_save: "Guardando...",
+                thanks: "Gracias", success_msg: "Registro completado con éxito.", exit: "Salir", guest_list: "Huéspedes", cloud_save: "Guardando...",
                 data_true_label: "Declaro que los datos son reales", clear_sign: "BORRAR", sign_title: "Firma",
                 ocr_btn: "ESCANEAR", ocr_processing: "PROCESANDO...", ocr_file_btn: "📁 ARCHIVO",
                 ocr_warn: "ATENCIÓN: La iluminación puede afectar los datos. Verifique en la siguiente pantalla.",
@@ -232,13 +236,14 @@
                 guest_count_tip: "ℹ️ CONSEJO: Si cada uno llena desde su teléfono, ingrese 1 y comparta el enlace. Si usted llena por todos, ingrese el total.",
                 continue: "CONTINUAR",
                 share_link: "COMPARTIR ENLACE", guests_missing: "Faltan huéspedes",
-                upload_docs_title: "Subir Documentos", upload_docs_desc: "Suba foto del frente y dorso. Obligatorio.",
+                upload_docs_title: "Subir Documentos", upload_docs_desc: "Suba foto del frente y dorso del documento. Obligatorio.",
                 take_photo: "FOTO", upload_file: "ARCHIVO", proceed_docs: "IR A DOCUMENTOS",
                 label_res_zone: "DIRECCIÓN", label_mrz_zone: "CÓDIGOS MRZ"
             },
             de: { 
                 welcome: "Hallo! Ich bin Giulia. Bitte schließen Sie den Online-Check-in ab.", 
                 login_ph: "CODE", start_btn: "STARTEN", scan_rear: "DOKUMENT SCANNEN", scan_info: "Dokument horizontal scannen.", 
+                scan_help: "Rückseite einrahmen (Adresse oben, MRZ unten).",
                 photo_req: "FOTO", confirm_btn: "SPEICHERN & WEITER", recover_btn: "TÜRCODE ANZEIGEN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
                 warning_save: "Füllen Sie alle Pflichtfelder aus", finish_btn: "ABSCHLIESSEN", verify: "Daten prüfen", front: "Vorderseite", back_doc: "Rückseite",
                 tax_info: "Kurtaxe muss vor Ort bar bezahlt werden (Booking.com). Bei Airbnb inklusive.",
@@ -525,23 +530,14 @@
 
             const parseCIE = (raw) => {
                 const up = raw.toUpperCase();
-                const clean = up.replace(/\s/g, '');
+                const lines = up.split('\n').map(l => l.trim()).filter(l => l.length > 3);
                 let newForm = { ...formData };
                 let found = false;
 
-                // MRZ Parsing (Back of CIE)
-                // Line 1: I<ITA...
-                // Line 2: Birth... Sex... Expiry...
-                // Line 3: Name<<Surname
-                
-                // Typical MRZ Pattern for CIE (3 lines)
-                // C<ITA...
-                
-                // Simplified logic based on previous working version
+                const clean = up.replace(/\s/g, '');
                 let dc = clean.match(/ITA([A-Z0-9]{9})/); 
                 if(dc) { newForm.docNumber = dc[1]; found = true; }
 
-                // Attempt to find name in MRZ (Surname<<Name)
                 let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
                 if(nm) { 
                     let cog = fixOCRText(nm[1], 'L');
@@ -558,15 +554,25 @@
                     found = true;
                 }
 
-                // Address logic (Top part of Back)
-                // Look for VIA, PIAZZA, etc.
-                const lines = up.split('\n');
                 lines.forEach((l, i) => {
-                     if(l.match(/(VIA|PIAZZA|CORSO|LARGO|VICOLO|STRADA)\s+/)) {
-                         newForm.residenceAddress = l.trim();
+                     if(l.match(/^(VIA|V\.|PIAZZA|P\.|CORSO|C\.|LARGO|VICOLO|STRADA)\s+/)) {
+                         let parts = l.match(/(.+?)\s+(\d+[A-Z]?)$/); 
+                         if(parts) {
+                             newForm.residenceAddress = parts[1].trim();
+                             newForm.houseNumber = parts[2];
+                         } else {
+                             newForm.residenceAddress = l; 
+                         }
                          found = true;
-                         // Try to find City in next line or same line
-                         // Simplified: just taking the line as address
+                         
+                         if(lines[i+1]) {
+                             let nextL = lines[i+1];
+                             let cityMatch = nextL.match(/(.+)\s+\(([A-Z]{2})\)/);
+                             if(cityMatch) {
+                                 newForm.residenceCity = cityMatch[1].trim();
+                                 newForm.residenceProvince = cityMatch[2];
+                             }
+                         }
                      }
                 });
 
@@ -631,8 +637,8 @@
                 
                 try {
                     const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                    // Always parse as CIE/Passport logic since we are scanning back
-                    parseCIE(text); 
+                    if (docType === 'passport') parsePassport(text);
+                    else parseCIE(text);
                 } catch (e) { 
                     alert("Errore elaborazione immagine.");
                     setOcrProcessing(false);
