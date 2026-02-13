@@ -5,125 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tuscan Retreats - Guest Portal</title>
     
-    <!-- Librerie Esterne -->
+    <!-- Librerie -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 
     <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* BASE STYLES */
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; position: relative; overflow-x: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
         
-        /* LOGO GIULIA HOME */
-        .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 25px 0; background: white; }
-        .logo-circle {
-            width: 200px; height: 200px; background: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden;
-            border: 3px solid #d4af37; position: relative; padding: 0;
-        }
-        .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); position: relative; z-index: 2; }
-
-        /* HEADER LOGO PICCOLO */
+        /* LOGO STYLES */
+        .logo-main-circle { width: 180px; height: 180px; border-radius: 50%; overflow: hidden; border: 4px solid #d4af37; background: white; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .logo-main-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
         .header-logo-circle { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; }
         .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 
-        /* SCANNER FULL SCREEN STYLES */
-        .scan-wrapper-full {
-            position: relative;
-            width: 100vw;
-            height: 500px; /* Altezza ampia */
-            background: #000;
-            overflow: hidden;
-            /* Rompe i margini del container per andare full width */
-            left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw;
-        }
+        /* SCANNER STYLE */
+        .scan-wrapper { position: relative; width: 100%; background: #000; overflow: hidden; height: 60vh; max-height: 500px; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* GUIDE VISIVE (Coordinate V104 Precise) */
-        .guide-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+        /* GUIDE VISIVE (V104 STYLE) */
+        .guide-overlay { position: absolute; inset: 0; pointer-events: none; }
         
-        /* Giallo: Indirizzo (Alto) */
-        .zone-residenza {
-            position: absolute;
-            top: 48%; /* Altezza calibrata */
-            left: 50%; transform: translate(-50%, -50%);
-            width: 94%; height: 14%; 
-            border: 3px solid #FFD60A; border-radius: 6px;
+        /* Zona Indirizzo (Gialla) */
+        .guide-address {
+            position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%);
+            width: 94%; height: 14%;
+            border: 2px dashed #FFD60A; border-radius: 4px;
             background: rgba(255, 214, 10, 0.1);
-            z-index: 10;
         }
-        
-        /* Azzurro: MRZ (Basso) */
-        .zone-mrz {
-            position: absolute;
-            top: 85%; /* Basso per evitare barcode */
-            left: 50%; transform: translate(-50%, -50%);
-            width: 96%; height: 18%; 
-            border: 3px solid #00E0FF; border-radius: 6px;
+        /* Zona MRZ (Azzurra - Bassa e stretta per evitare barcode) */
+        .guide-mrz {
+            position: absolute; top: 85%; left: 50%; transform: translate(-50%, -50%);
+            width: 96%; height: 18%;
+            border: 2px solid #00E0FF; border-radius: 4px;
             background: rgba(0, 224, 255, 0.1);
-            z-index: 10;
         }
-
-        .label-guide { 
-            position: absolute; top: -24px; left: 0;
-            font-size: 11px; font-weight: 900; padding: 3px 8px; 
-            background: rgba(0,0,0,0.8); color: white; border-radius: 4px; 
-            text-transform: uppercase; white-space: nowrap; letter-spacing: 0.5px;
+        .guide-label {
+            position: absolute; top: -22px; left: 0;
+            background: rgba(0,0,0,0.8); color: white; font-size: 10px; font-weight: bold;
+            padding: 2px 6px; border-radius: 4px; white-space: nowrap;
         }
 
         /* UI ELEMENTS */
-        .input-field { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 8px; color: #1e293b; }
-        .input-field:focus { border-color: #0f766e; outline: none; box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); }
-        
-        .input-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; margin-left: 4px; text-align: left; }
-        .input-label.required::after { content: " *"; color: #ef4444; }
-
-        .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; transition: all 0.1s; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; border: none; }
-        .btn-primary { background: #0f766e; color: white; }
-        .btn-secondary { background: #334155; color: white; }
-        .btn-success { background: #10b981; color: white; }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; font-weight: 700; font-size: 15px; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #0f766e; color: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-secondary { background: #fff; color: #334155; border: 2px solid #e2e8f0; }
         .btn-danger { background: #ef4444; color: white; }
+        .btn-success { background: #10b981; color: white; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .flag-btn { font-size: 24px; padding: 4px 6px; opacity: 0.5; transition: 0.2s; cursor: pointer; border: none; background: transparent; filter: grayscale(100%); }
+
+        .input-group { margin-bottom: 12px; }
+        .input-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .input-label.required::after { content: " *"; color: #ef4444; }
+        .input-field { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; background: #fff; color: #1e293b; }
+        .input-field:focus { border-color: #0f766e; outline: none; }
+
+        .flag-btn { font-size: 24px; padding: 4px; opacity: 0.5; transition: 0.2s; cursor: pointer; background: transparent; border: none; filter: grayscale(100%); }
         .flag-btn.active { opacity: 1; transform: scale(1.1); filter: grayscale(0%); }
 
-        .info-blue { background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; padding: 15px; border-radius: 12px; font-size: 13px; line-height: 1.5; margin-bottom: 20px; text-align: left; }
-        .info-success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-top: 20px; text-align: center; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .info-box { background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; padding: 12px; border-radius: 10px; font-size: 13px; line-height: 1.4; margin-bottom: 20px; text-align: left; }
+        .success-box { background: #f0fdf4; border: 1px solid #86efac; color: #166534; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-top: 15px; text-align: center; }
 
-        /* UPLOAD */
-        .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
-        .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
-        .upload-row { display: flex; gap: 8px; margin-bottom: 15px; }
-        .upload-btn-small { flex: 1; padding: 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid #cbd5e1; background: white; color: #334155; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
-        .upload-btn-small:active { background: #f1f5f9; transform: scale(0.98); }
-
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .card-select { width: 100%; padding: 18px; border-radius: 18px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
+        .card-select { width: 100%; padding: 16px; border: 2px solid #f1f5f9; border-radius: 16px; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
         .card-select:hover { border-color: #0f766e; background: #f0fdfa; }
+
+        .upload-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .upload-preview { width: 100%; height: 180px; border: 2px dashed #cbd5e1; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; margin-bottom: 8px; }
+        .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
         
-        .loader { width: 24px; height: 24px; border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 50; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: white; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 20px; padding: 20px; }
+
+        .loader { width: 20px; height: 20px; border: 3px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div id="root"></div>
-    <!-- Canvas nascosto per elaborazione OCR -->
     <canvas id="ocr-canvas" style="display:none;"></canvas>
 
-    <!-- Firebase SDK -->
+    <!-- FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        window.FirebaseSDK = { initializeApp, getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken };
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        window.FirebaseSDK = { initializeApp, getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getAuth, signInAnonymously, onAuthStateChanged };
     </script>
 
     <script type="text/babel">
@@ -140,181 +114,70 @@
         };
 
         const PROPERTIES = {
-            "LOVE": { id: "LOVE", name: "Love Nest", type: "electronic", defaultCode: "123456#" },
-            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", type: "keybox", defaultCode: "9988" },
-            "REGINA": { id: "REGINA", name: "Santa Regina", type: "keybox", defaultCode: "4567" }
+            "LOVE": { id: "LOVE", name: "Love Nest", code: "123456#" },
+            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", code: "9988" },
+            "REGINA": { id: "REGINA", name: "Santa Regina", code: "4567" }
         };
 
-        // --- TRADUZIONI ---
         const TRANSLATIONS = {
             it: { 
-                welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
-                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", 
+                welcome: "Benvenuto! Completa il check-in online.", login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", 
                 scan_title: "SCANSIONA DOCUMENTO", scan_info: "Inquadra il documento in orizzontale.", 
-                scan_help: "Inquadra il retro della C.I. (MRZ in basso, Indirizzo in alto).",
+                scan_help: "Inquadra il RETRO: Indirizzo in alto, codici MRZ in basso.",
                 photo_req: "FOTO OBBLIGATORIA", confirm_btn: "CONFERMA E CONTINUA", 
                 add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
-                warning_save: "Compila i campi obbligatori e carica le foto per salvare", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
-                tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti). Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
+                warning_save: "Compila i campi obbligatori", finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", 
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
-                label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_prov: "Prov.", label_citizenship: "Cittadinanza", label_cit_ph: "Specifica...", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_address: "Via / Piazza", label_civic: "Civico", label_issued: "Rilasciato da", label_issued_ph: "Es. Milano...", label_docnum: "N. Documento", label_expiry: "Scadenza",
-                thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
-                data_true_label: "Dichiaro che i dati inseriti sono reali", clear_sign: "CANCELLA FIRMA", sign_title: "Firma e Tassa",
+                thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", 
                 ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO",
-                ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla attentamente nella scheda successiva.",
-                ocr_success: "Dati rilevati! Verifica i campi compilati e inserisci quelli mancanti. Poi prosegui per caricare le foto.",
+                ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla nella scheda successiva.",
                 guest_count_q: "Quanti ospiti siete? (1+ anni)", 
-                guest_count_tip: "⚠️ IMPORTANTE: Se ognuno compila dal proprio telefono, scrivi 1 e poi invia questo link agli altri. Se invece compili TU per tutti ora, scrivi il numero totale di ospiti.",
+                guest_count_tip: "⚠️ IMPORTANTE: Se ognuno compila dal proprio telefono, scrivi 1 e poi invia questo link agli altri. Se invece compili TU per tutti ora, scrivi il numero totale.",
                 continue: "CONTINUA",
-                share_link: "INVIA LINK A CHI SI DEVE ANCORA REGISTRARE",
-                save_link_msg: "💡 IMPORTANTE: Salva questo link! Se dimentichi il codice porta, potrai riaprirlo per visualizzarlo senza rifare il check-in.",
-                label_res_zone: "RESIDENZA", label_mrz_zone: "CODICI MRZ"
+                share_link: "COPIA LINK PER ALTRI OSPITI", guests_missing: "Mancano ancora ospiti da registrare",
+                upload_docs_title: "Carica Documenti", upload_docs_desc: "Carica la foto fronte e retro del documento. È obbligatorio.",
+                take_photo: "SCATTA", upload_file: "CARICA", proceed_docs: "PROCEDI AI DOCUMENTI",
+                label_res_zone: "RESIDENZA", label_mrz_zone: "CODICI MRZ",
+                save_link_msg: "💡 SALVA QUESTO LINK! Ti servirà per rivedere il codice porta senza rifare il check-in.",
+                front: "Fronte", back_doc: "Retro"
             },
             en: { 
-                welcome: "Hi! I'm Giulia. Please complete the online check-in for your arrival.", 
-                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_title: "SCAN DOCUMENT", scan_info: "Scan document horizontally.", 
-                scan_help: "Frame the back of ID (Address at top, MRZ at bottom).",
-                photo_req: "DOCUMENT PHOTO", confirm_btn: "SAVE & CONTINUE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
-                warning_save: "Fill all mandatory fields", finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back",
-                tax_info: "Tourist tax must be paid on-site (cash) if booked via Booking.com. Airbnb includes tax.",
+                welcome: "Welcome! Please complete online check-in.", login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", 
+                scan_title: "SCAN DOCUMENT", scan_info: "Scan document horizontally.", 
+                scan_help: "Frame the BACK: Address top, MRZ codes bottom.",
+                photo_req: "DOCUMENT PHOTO", confirm_btn: "SAVE & CONTINUE", 
+                add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
+                warning_save: "Fill mandatory fields", finish_btn: "FINISH AND PROCEED", verify: "Verify Data",
                 doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "Driving License",
-                label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_prov: "Prov.", label_citizenship: "Citizenship", label_cit_ph: "Specify...", label_res_city: "Residence City", label_res_prov: "Prov.", label_address: "Address", label_civic: "No.", label_issued: "Issued by", label_issued_ph: "Ex. London...", label_docnum: "Doc Number", label_expiry: "Expiry Date",
-                thanks: "Thank you", success_msg: "Check-in completed successfully.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
-                data_true_label: "I declare that the data entered is true", clear_sign: "CLEAR SIGNATURE", sign_title: "Signature",
+                thanks: "Thank you", success_msg: "Check-in completed successfully.", exit: "Exit", guest_list: "Guests", 
                 ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD FILE",
-                ocr_warn: "WARNING: Lighting and shadows may affect data accuracy. Check next screen.",
-                ocr_success: "Data detected! Verify filled fields and complete missing ones. Then go back to upload document photos and complete check-in.",
+                ocr_warn: "WARNING: Check data in next screen.",
                 guest_count_q: "How many guests? (1+ years)", 
-                guest_count_tip: "⚠️ IMPORTANT: If everyone fills from their own phone, enter 1 and send this link to others. If YOU fill for everyone now, enter total number.",
+                guest_count_tip: "⚠️ IMPORTANT: If everyone fills from their own phone, enter 1. If YOU fill for everyone now, enter total number.",
                 continue: "CONTINUE",
-                share_link: "SEND LINK TO OTHER GUESTS",
-                save_link_msg: "💡 IMPORTANT: Save this link! If you forget the door code, you can reopen it to view without re-doing check-in.",
-                label_res_zone: "ADDRESS", label_mrz_zone: "MRZ CODES"
-            },
-            fr: { 
-                welcome: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement en ligne.", 
-                login_ph: "CODE", start_btn: "COMMENCER", scan_title: "SCANNER DOCUMENT", scan_info: "Scannez le document horizontalement.", 
-                scan_help: "Cadrez le verso (Adresse en haut, MRZ en bas).",
-                photo_req: "PHOTO DOCUMENT", confirm_btn: "ENREGISTRER ET CONTINUER", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
-                warning_save: "Remplissez tous les champs obligatoires", finish_btn: "TERMINER", verify: "Vérifier les données", front: "Recto", back_doc: "Verso",
-                tax_info: "La taxe de séjour doit être payée sur place (espèces) si réservé via Booking.com. Inclus pour Airbnb.",
-                doc_type: "Type de document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis de Conduire",
-                label_surname: "Nom", label_name: "Prénom", label_sex: "Sexe", label_birth: "Né le", label_city: "Lieu de naissance", label_prov: "Prov.", label_citizenship: "Nationalité", label_cit_ph: "Préciser...", label_res_city: "Ville de résidence", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "N°", label_issued: "Délivré par", label_issued_ph: "Ex. Paris...", label_docnum: "N° Document", label_expiry: "Expiration",
-                thanks: "Merci", success_msg: "Enregistrement terminé.", exit: "Sortie", guest_list: "Invités", cloud_save: "Sauvegarde...",
-                data_true_label: "Je déclare que les données sont réelles", clear_sign: "EFFACER", sign_title: "Signature",
-                ocr_btn: "SCANNER", ocr_processing: "TRAITEMENT...", ocr_file_btn: "📁 FICHIER",
-                ocr_warn: "ATTENTION: L'éclairage peut affecter la précision. Vérifiez l'écran suivant.",
-                ocr_success: "Données détectées ! Vérifiez les champs et complétez les manquants. Ensuite, passez au téléchargement des photos.",
-                guest_count_q: "Combien d'invités ? (1+ ans)", 
-                guest_count_tip: "⚠️ IMPORTANT : Si chacun remplit depuis son téléphone, entrez 1 et envoyez ce lien aux autres. Si VOUS remplissez pour tout le monde, entrez le total.",
-                continue: "CONTINUER",
-                share_link: "ENVOYER LIEN AUX AUTRES",
-                save_link_msg: "💡 IMPORTANT : Sauvegardez ce lien ! Si vous oubliez le code, vous pourrez le rouvrir sans refaire l'enregistrement.",
-                label_res_zone: "ADRESSE", label_mrz_zone: "CODES MRZ"
-            },
-            es: { 
-                welcome: "¡Hola! Soy Giulia. Complete el registro en línea.", 
-                login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_title: "ESCANEAR DOC", scan_info: "Escanee el documento horizontalmente.", 
-                scan_help: "Encuadre el reverso (Dirección arriba, MRZ abajo).",
-                photo_req: "FOTO DOCUMENTO", confirm_btn: "GUARDAR Y CONTINUAR", add_guest: "AÑADIR", save_guest: "GUARDAR",
-                warning_save: "Complete todos los campos obligatorios", finish_btn: "TERMINAR", verify: "Verificar datos", front: "Frente", back_doc: "Dorso",
-                tax_info: "La tasa turística se paga en el lugar (efectivo) si reservó por Booking.com. Incluida en Airbnb.",
-                doc_type: "Tipo de Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia de Conducir",
-                label_surname: "Apellido", label_name: "Nombre", label_sex: "Sexo", label_birth: "Nacido el", label_city: "Lugar de nacimiento", label_prov: "Prov.", label_citizenship: "Ciudadanía", label_cit_ph: "Especificar...", label_res_city: "Ciudad de residencia", label_res_prov: "Prov.", label_address: "Dirección", label_civic: "N°", label_issued: "Expedido por", label_issued_ph: "Ej. Madrid...", label_docnum: "N° Documento", label_expiry: "Caducidad",
-                thanks: "Gracias", success_msg: "Registro completado.", exit: "Salir", guest_list: "Huéspedes", cloud_save: "Guardando...",
-                data_true_label: "Declaro que los datos son reales", clear_sign: "BORRAR", sign_title: "Firma",
-                ocr_btn: "ESCANEAR", ocr_processing: "PROCESANDO...", ocr_file_btn: "📁 ARCHIVO",
-                ocr_warn: "ATENCIÓN: La iluminación puede afectar los datos. Verifique en la siguiente pantalla.",
-                ocr_success: "¡Datos detectados! Verifique los campos y complete los que faltan. Luego proceda a cargar las fotos.",
-                guest_count_q: "¿Cuántos huéspedes? (1+ años)", 
-                guest_count_tip: "⚠️ IMPORTANTE: Si cada uno llena desde su teléfono, ingrese 1 y comparta el enlace. Si USTED llena por todos, ingrese el total.",
-                continue: "CONTINUAR",
-                share_link: "ENVIAR ENLACE A LOS QUE FALTAN",
-                save_link_msg: "💡 IMPORTANTE: ¡Guarde este enlace! Si olvida el código, ábralo de nuevo sin repetir el registro.",
-                label_res_zone: "DIRECCIÓN", label_mrz_zone: "CÓDIGOS MRZ"
-            },
-            de: { 
-                welcome: "Hallo! Ich bin Giulia. Bitte schließen Sie den Online-Check-in ab.", 
-                login_ph: "CODE", start_btn: "STARTEN", scan_title: "DOKUMENT SCANNEN", scan_info: "Dokument horizontal scannen.", 
-                scan_help: "Rückseite einrahmen (Adresse oben, MRZ unten).",
-                photo_req: "FOTO", confirm_btn: "SPEICHERN & WEITER", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
-                warning_save: "Füllen Sie alle Pflichtfelder aus", finish_btn: "ABSCHLIESSEN", verify: "Daten prüfen", front: "Vorderseite", back_doc: "Rückseite",
-                tax_info: "Kurtaxe muss vor Ort bar bezahlt werden (Booking.com). Bei Airbnb inklusive.",
-                doc_type: "Dokumentart", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein",
-                label_surname: "Nachname", label_name: "Vorname", label_sex: "Geschlecht", label_birth: "Geburtsdatum", label_city: "Geburtsort", label_prov: "Prov.", label_citizenship: "Staatsangehörigkeit", label_cit_ph: "Angeben...", label_res_city: "Wohnort", label_res_prov: "Prov.", label_address: "Adresse", label_civic: "Nr.", label_issued: "Ausgestellt von", label_issued_ph: "Z.B. Berlin...", label_docnum: "Dokumentnummer", label_expiry: "Ablaufdatum",
-                thanks: "Danke", success_msg: "Check-in erfolgreich abgeschlossen.", exit: "Beenden", guest_list: "Gäste", cloud_save: "Speichern...",
-                data_true_label: "Ich erkläre, dass die Daten echt sind", clear_sign: "LÖSCHEN", sign_title: "Unterschrift",
-                ocr_btn: "SCANNEN", ocr_processing: "VERARBEITUNG...", ocr_file_btn: "📁 DATEI",
-                ocr_warn: "WARNUNG: Beleuchtung kann Daten verfälschen. Bitte im nächsten Bildschirm überprüfen.",
-                ocr_success: "Daten erkannt! Überprüfen Sie die Felder und ergänzen Sie fehlende Daten. Fahren Sie dann mit dem Hochladen der Fotos fort.",
-                guest_count_q: "Wie viele Gäste? (1+ Jahre)", 
-                guest_count_tip: "⚠️ WICHTIG: Wenn jeder sein eigenes Handy benutzt, geben Sie 1 ein und teilen Sie den Link. Wenn SIE für alle ausfüllen, geben Sie die Gesamtzahl ein.",
-                continue: "WEITER",
-                share_link: "LINK AN ANDERE SENDEN",
-                save_link_msg: "💡 WICHTIG: Speichern Sie diesen Link! Se dimentichi il codice, potrai riaprirlo per visualizzarlo senza rifare il check-in.",
-                label_res_zone: "ADRESSE", label_mrz_zone: "MRZ CODES"
+                share_link: "COPY LINK FOR OTHERS", guests_missing: "Guests missing",
+                upload_docs_title: "Upload Documents", upload_docs_desc: "Upload front and back photo. Mandatory.",
+                take_photo: "TAKE", upload_file: "UPLOAD", proceed_docs: "PROCEED TO DOCS",
+                label_res_zone: "ADDRESS", label_mrz_zone: "MRZ CODES",
+                save_link_msg: "💡 SAVE THIS LINK! You'll need it to see the door code again.",
+                front: "Front", back_doc: "Back"
             }
         };
 
-        // --- COMPONENTI UI ---
-        const Icon = ({ name, className = "w-6 h-6" }) => {
-            const icons = {
-                check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/>,
-                trash: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>,
-                camera: <React.Fragment><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/></React.Fragment>,
-                chevronLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />,
-                lock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />,
-                copy: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />,
-                download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
-                upload: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />,
-                scan: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10" />
-            };
-            return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name] || icons.camera}</svg>;
+        // --- ICONS ---
+        const Icon = ({ name }) => {
+            if(name==='scan') return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10"/></svg>;
+            if(name==='check') return <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>;
+            if(name==='trash') return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>;
+            if(name==='camera') return <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/></svg>;
+            if(name==='chevronLeft') return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>;
+            if(name==='lock') return <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>;
+            if(name==='copy') return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>;
+            if(name==='upload') return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>;
+            return null;
         };
 
-        const SVGIcons = {
-            electronic: <svg viewBox="0 0 24 24" className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 15h.01M11 15h.01M15 15h.01M19 15h.01M7 11h.01M11 11h.01M15 11h.01" /><circle cx="17" cy="9" r="1"/></svg>,
-            paper: <svg viewBox="0 0 24 24" className="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>,
-            passport: <svg viewBox="0 0 24 24" className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M12 12a3 3 0 100-6 3 3 0 000 6z"/><path d="M12 15a5 5 0 00-5 5h10a5 0 00-5-5z"/></svg>,
-            license: <svg viewBox="0 0 24 24" className="w-12 h-12 text-pink-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9h2" /><path d="M7 13h10" /><path d="M7 17h6" /><circle cx="16" cy="10" r="2" /></svg>
-        };
-
-        const CopyField = ({ label, value }) => (
-            <div className="flex flex-col bg-slate-50 p-2 rounded-lg border border-slate-200 relative group text-left mb-2">
-                <span className="text-[9px] text-slate-400 uppercase font-bold">{label}</span>
-                <div className="flex justify-between items-center">
-                    <span className="font-bold text-slate-800 text-sm truncate mr-2">{value || "-"}</span>
-                    {value && <button onClick={(e) => {
-                        e.stopPropagation();
-                        const el = document.createElement('textarea');
-                        el.value = value; document.body.appendChild(el); el.select();
-                        try { document.execCommand('copy'); } catch(e){}
-                        document.body.removeChild(el);
-                        e.currentTarget.style.color = '#10b981';
-                        setTimeout(() => e.currentTarget.style.color = '', 500);
-                    }} className="p-1 hover:bg-white rounded transition text-slate-400 hover:text-blue-600"><Icon name="copy" className="w-4 h-4" /></button>}
-                </div>
-            </div>
-        );
-
-        const SignaturePad = ({ canvasRef }) => {
-            useEffect(() => {
-                const canvas = canvasRef.current;
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const resize = () => { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; };
-                resize(); window.addEventListener('resize', resize);
-                const getPos = (e) => { const rect = canvas.getBoundingClientRect(); return { x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top }; };
-                const start = (e) => { e.preventDefault(); ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); canvas.addEventListener('mousemove', draw); canvas.addEventListener('touchmove', draw, {passive: false}); };
-                const draw = (e) => { e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
-                const stop = () => { canvas.removeEventListener('mousemove', draw); canvas.removeEventListener('touchmove', draw); };
-                canvas.addEventListener('mousedown', start); canvas.addEventListener('mouseup', stop); canvas.addEventListener('mouseleave', stop);
-                canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchend', stop);
-                return () => { window.removeEventListener('resize', resize); };
-            }, []);
-            return <canvas ref={canvasRef} className="w-full h-full" />;
-        };
-
+        // --- COMPONENTS ---
         const Header = ({ showBack, backStep, setStep, setLang, lang }) => (
             <div className="flex flex-col bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
                 <div className="flex justify-end p-2 pb-0">
@@ -334,543 +197,377 @@
             </div>
         );
 
+        const SignaturePad = ({ canvasRef }) => {
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const resize = () => { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; };
+                resize(); window.addEventListener('resize', resize);
+                let isDrawing = false;
+                const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const rect = canvas.getBoundingClientRect(); const x = (e.touches?e.touches[0].clientX:e.clientX)-rect.left; const y = (e.touches?e.touches[0].clientY:e.clientY)-rect.top; ctx.moveTo(x,y); };
+                const draw = (e) => { if(!isDrawing) return; e.preventDefault(); const rect = canvas.getBoundingClientRect(); const x = (e.touches?e.touches[0].clientX:e.clientX)-rect.left; const y = (e.touches?e.touches[0].clientY:e.clientY)-rect.top; ctx.lineTo(x,y); ctx.stroke(); };
+                const stop = () => isDrawing = false;
+                canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
+                canvas.addEventListener('touchstart', start); canvas.addEventListener('touchmove', draw); canvas.addEventListener('touchend', stop);
+            }, []);
+            return <canvas ref={canvasRef} className="w-full h-full" />;
+        };
+
+        const CopyField = ({ label, value }) => (
+            <div className="flex flex-col bg-slate-50 p-2 rounded-lg border border-slate-200 relative group text-left mb-2">
+                <span className="text-[9px] text-slate-400 uppercase font-bold">{label}</span>
+                <div className="flex justify-between items-center">
+                    <span className="font-bold text-slate-800 text-sm truncate mr-2">{value || "-"}</span>
+                    {value && <button onClick={(e) => {
+                        e.stopPropagation(); navigator.clipboard.writeText(value);
+                        alert("Copiato: " + value);
+                    }} className="p-1 hover:bg-white rounded text-blue-600"><Icon name="copy"/></button>}
+                </div>
+            </div>
+        );
+
+        // --- MAIN APP ---
         function App() {
             const [lang, setLang] = useState('it');
-            const [user, setUser] = useState(null);
             const [step, setStep] = useState('login');
             const [property, setProperty] = useState(null);
-            const [bookingDetails, setBookingDetails] = useState({ guestName: '', doorCode: '' });
             const [guests, setGuests] = useState([]);
-            const [docType, setDocType] = useState('electronic');
-            const [images, setImages] = useState({ front: null, back: null });
+            const [formData, setFormData] = useState({});
             const [isScanning, setIsScanning] = useState(false);
-            const [isSaving, setIsSaving] = useState(false);
+            const [videoStream, setVideoStream] = useState(null);
+            const [images, setImages] = useState({front:null, back:null});
+            const [docType, setDocType] = useState('electronic');
+            const [expectedGuests, setExpectedGuests] = useState(1);
             const [adminData, setAdminData] = useState([]);
             const [selectedSession, setSelectedSession] = useState(null);
-            const [moturistCode, setMoturistCode] = useState("");
-            const [dates, setDates] = useState({ arrival: new Date().toISOString().split('T')[0], departure: "" });
-            const [adminLink, setAdminLink] = useState("");
-            const [searchTerm, setSearchTerm] = useState("");
+            const [user, setUser] = useState(null);
             const [ocrProcessing, setOcrProcessing] = useState(false);
-            const [expectedGuests, setExpectedGuests] = useState(1);
-
-            const [formData, setFormData] = useState({
-                surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "",
-                citizenship: "ITALIANA", residenceCity: "", residenceProvince: "",
-                residenceAddress: "", houseNumber: "", issuedBy: "COMUNE DI", issuedManual: "", docNumber: "", expiryDate: ""
-            });
             
-            const [dataTrue, setDataTrue] = useState(false);
+            const videoRef = useRef(null);
+            const canvasRef = useRef(null);
+            const fileInputRef = useRef(null);
             const sigCanvasRef = useRef(null);
-            const videoRef = useRef(null); 
-            const fileInputRef = useRef(null); 
 
             const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'tuscan-retreats-portal';
 
-            // Firebase Boot logic
+            // INIT & ROUTING
             useEffect(() => {
-                const checkFB = setInterval(() => {
+                const init = async () => {
                     if (window.FirebaseSDK) {
-                        clearInterval(checkFB);
                         try {
-                             const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
-                             const auth = window.FirebaseSDK.getAuth(app);
-                             const db = window.FirebaseSDK.getFirestore(app);
-                             window.db = db;
-                             const initAuth = async () => { await window.FirebaseSDK.signInAnonymously(auth); window.FirebaseSDK.onAuthStateChanged(auth, setUser); };
-                             initAuth();
-                        } catch(e) { console.log("Firebase init error", e); }
+                            const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
+                            const auth = window.FirebaseSDK.getAuth(app);
+                            window.db = window.FirebaseSDK.getFirestore(app);
+                            await window.FirebaseSDK.signInAnonymously(auth);
+                            window.FirebaseSDK.onAuthStateChanged(auth, setUser);
+                        } catch(e) { console.error("FB Init", e); }
                     }
-                }, 100);
+                    // URL Check
+                    const params = new URLSearchParams(window.location.search);
+                    const p = params.get('p');
+                    if (p && PROPERTIES[p.toUpperCase()]) {
+                        setProperty(PROPERTIES[p.toUpperCase()]);
+                        setStep('welcome');
+                    }
+                };
+                init();
             }, []);
 
-            // Link Analysis (?p= or ?d=)
+            // CAMERA LOGIC
+            const startCamera = async () => {
+                setIsScanning(true);
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+                    });
+                    setVideoStream(stream);
+                } catch(e) { 
+                    alert("Errore fotocamera. Usa il caricamento file."); 
+                    setIsScanning(false); 
+                }
+            };
+
             useEffect(() => {
-                const params = new URLSearchParams(window.location.search);
-                const d = params.get('d');
-                const p = params.get('p');
-                
-                if (d) {
-                    try {
-                        const decoded = JSON.parse(atob(d)); 
-                        if (PROPERTIES[decoded.p]) {
-                            setProperty(PROPERTIES[decoded.p]);
-                            setBookingDetails({ guestName: decoded.n || "Ospite", doorCode: decoded.c });
-                            if (localStorage.getItem(`checkin_done_session_${d}`)) setStep('success');
-                            else setStep('welcome');
-                        }
-                    } catch (e) {}
-                } else if (p) {
-                    const propKey = p.toUpperCase();
-                    if (PROPERTIES[propKey]) {
-                        setProperty(PROPERTIES[propKey]);
-                        setBookingDetails({ guestName: "Ospite", doorCode: PROPERTIES[propKey].defaultCode });
-                        if (localStorage.getItem(`checkin_done_session_direct`)) setStep('success');
-                        else setStep('welcome');
-                    }
+                if(isScanning && videoRef.current && videoStream) {
+                    videoRef.current.srcObject = videoStream;
+                    videoRef.current.onloadedmetadata = () => videoRef.current.play();
                 }
-            }, []);
+            }, [isScanning, videoStream]);
 
-            const handleExit = () => {
-                sessionStorage.clear();
-                window.history.replaceState({}, document.title, window.location.pathname);
-                window.location.reload();
+            const stopCamera = () => {
+                if(videoStream) videoStream.getTracks().forEach(t => t.stop());
+                setVideoStream(null);
+                setIsScanning(false);
             };
 
-            const shareLink = () => {
-                 if (navigator.share) { navigator.share({ title: 'Tuscan Retreats Check-in', url: window.location.href }).catch(console.error); } else { copyToClipboard(window.location.href); }
-            };
-
-            const copyToClipboard = (text) => {
-                const textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select();
-                try { document.execCommand('copy'); alert("Link copiato!"); } catch (err) {} document.body.removeChild(textArea);
-            };
-
-            const downloadImage = (dataUrl, filename) => {
-                const link = document.createElement('a'); link.href = dataUrl; link.download = filename; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            };
-
-            const compress = async (url) => {
-                return new Promise(res => {
-                    const img = new Image(); img.src = url;
-                    img.onload = () => {
-                        const c = document.createElement('canvas'); const ctx = c.getContext('2d');
-                        const s = Math.min(800 / img.width, 1); c.width = img.width * s; c.height = img.height * s;
-                        ctx.drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.6));
-                    }
-                });
-            };
-
-            const saveToCloud = async () => {
-                setIsSaving(true);
-                let signatureData = sigCanvasRef.current?.toDataURL();
-                try {
-                    const id = `${property?.id || 'TEST'}_${Date.now()}`;
-                    const processed = await Promise.all(guests.map(async g => ({ ...g, imgFront: g.imgFront ? await compress(g.imgFront) : null, imgBack: g.imgBack ? await compress(g.imgBack) : null })));
-                    const payload = { guests: processed, signature: signatureData, booking: property?.id || "", timestamp: new Date().toISOString(), checkinDate: new Date().toISOString().split('T')[0], guestName: bookingDetails.guestName, property: property?.name || "" };
-                    if (user && window.db) {
-                         const path = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id);
-                         await window.FirebaseSDK.setDoc(path, payload);
-                    }
-                    localStorage.setItem(`checkin_done_session_direct`, 'true');
-                } catch(e) { console.log("Save error", e); }
-                setIsSaving(false); setStep('success');
-            };
-
-            const fetchCloud = async () => {
-                if (!user || !window.db) return;
-                try {
-                    const col = window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'checkins');
-                    const snap = await window.FirebaseSDK.getDocs(col);
-                    let list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-                    list.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    setAdminData(list);
-                } catch (e) { console.error("Cloud fetch error", e); }
-            };
-
-            const deleteSession = async (sessionId) => {
-                if(!confirm("Sicuro di voler cancellare questo check-in?")) return;
-                const localData = JSON.parse(localStorage.getItem('local_checkins') || '[]');
-                const newLocal = localData.filter(i => i.id !== sessionId);
-                localStorage.setItem('local_checkins', JSON.stringify(newLocal));
-                if (user && window.db) { try { const docRef = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', sessionId); await window.FirebaseSDK.deleteDoc(docRef); } catch(e) {} }
-                fetchCloud();
-                if (selectedSession && selectedSession.id === sessionId) setSelectedSession(null);
-            };
-
-            const deleteAll = async () => {
-                if(!confirm("ATTENZIONE: Cancellare TUTTO lo storico?")) return;
-                localStorage.removeItem('local_checkins');
-                if (user && window.db) { adminData.forEach(async (item) => { try { const docRef = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', item.id); await window.FirebaseSDK.deleteDoc(docRef); } catch(e) {} }); }
-                setAdminData([]);
-            };
-
-            const fixOCRText = (s, type) => {
-                if(!s) return "";
-                if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
-                if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B').replace(/4/g,'A');
-                return s;
-            };
-
-            const cleanDoubleStart = (s) => (s && s.length > 2 && s[0] === s[1]) ? s.substring(1) : s;
-            
-            const formatDateOCR = (d) => { 
-                if(!d || d.length<6) return ""; 
-                let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6);
-                return (parseInt(y) > 40 ? "19" : "20") + y + "-" + m + "-" + day; 
-            };
-
-            const parseCIE = (raw) => {
-                const up = raw.toUpperCase(); const clean = up.replace(/\s/g, '');
-                let newForm = { ...formData }; let found = false;
-
-                let dc = clean.match(/ITA([A-Z0-9]{9})/); if(dc) { newForm.docNumber = dc[1]; found = true; }
-                let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
-                if(nm) { 
-                    newForm.surname = cleanDoubleStart(fixOCRText(nm[1], 'L'));
-                    newForm.name = fixOCRText(nm[2], 'L').replace(/</g, ' '); 
-                    found = true;
-                }
-                let bioMatch = clean.match(/([0-9OIZSB]{6,7})([MF])([0-9OIZSB]{6,7})([A-Z0-9]{3})/);
-                if(bioMatch) {
-                    newForm.birthDate = formatDateOCR(fixOCRText(bioMatch[1].substr(0,6), 'N'));
-                    newForm.sex = bioMatch[2];
-                    newForm.expiryDate = formatDateOCR(fixOCRText(bioMatch[3].substr(0,6), 'N'));
-                    found = true;
-                }
-                up.split('\n').forEach(l => {
-                     if(l.match(/^(VIA|V\.|PIAZZA|P\.|CORSO|C\.|LARGO|VICOLO|STRADA)\s+/)) {
-                         let parts = l.match(/(.+?)\s+(\d+[A-Z]?)$/); 
-                         if(parts) { newForm.residenceAddress = parts[1].trim(); newForm.houseNumber = parts[2]; } else { newForm.residenceAddress = l.trim(); }
-                         found = true;
-                     }
-                });
-                if(found) { setFormData(newForm); alert(t.ocr_success); setStep('manual_entry'); } 
-                else { alert("Nessun dato rilevato. Riprova o inserisci manualmente."); }
-                setOcrProcessing(false); setIsScanning(false);
-            };
-
-            const parsePassport = (raw) => {
-                const up = raw.toUpperCase(); const clean = up.replace(/\s/g, '');
-                let newForm = { ...formData }; let found = false;
-                let r1 = clean.match(/P<([A-Z]{3})([A-Z<]+)/);
-                if(r1) {
-                    let namePart = r1[2].split('<<');
-                    newForm.surname = fixOCRText(namePart[0], 'L').replace(/</g, ' ');
-                    if(namePart[1]) newForm.name = fixOCRText(namePart[1], 'L').replace(/</g, ' ');
-                    found = true;
-                }
-                let r2 = clean.match(/([A-Z0-9]{9})[0-9]([A-Z]{3})([0-9OIZSB]{6})[0-9]([MF])([0-9OIZSB]{6})/);
-                if(r2) {
-                    newForm.docNumber = r2[1];
-                    newForm.birthDate = formatDateOCR(fixOCRText(r2[3], 'N'));
-                    newForm.sex = r2[4];
-                    newForm.expiryDate = formatDateOCR(fixOCRText(r2[5], 'N'));
-                    found = true;
-                }
-                if(found) { setFormData(newForm); alert(t.ocr_success); setStep('manual_entry'); } 
-                else { alert("Nessun dato rilevato. Riprova o inserisci manualmente."); }
-                setOcrProcessing(false); setIsScanning(false);
-            };
-
+            // OCR LOGIC
             const runOCR = async (source) => {
                 setOcrProcessing(true);
-                const canvas = document.getElementById('ocr-canvas'); const ctx = canvas.getContext('2d');
-                canvas.width = 1280; const scale = 1280 / (source.videoWidth || source.width);
-                canvas.height = (source.videoHeight || source.height) * scale;
-                ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+                const canvas = document.getElementById('ocr-canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1000; canvas.height = 600; // High Res
+                ctx.drawImage(source, 0, 0, 1000, 600);
                 ctx.filter = 'grayscale(100%) contrast(150%)'; 
+                
                 try {
                     const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                    if(docType === 'passport') parsePassport(text);
-                    else parseCIE(text);
-                } catch (e) { alert("Errore OCR."); setOcrProcessing(false); setIsScanning(false); }
+                    const clean = text.toUpperCase().replace(/\s/g, '');
+                    let newData = {...formData};
+                    let found = false;
+
+                    if (docType === 'passport') {
+                        // Logic Passaporto
+                        let r1 = clean.match(/P<([A-Z]{3})([A-Z<]+)/);
+                        if(r1) { 
+                            newData.surname = r1[2].split('<<')[0].replace(/</g, ' '); 
+                            newData.name = r1[2].split('<<')[1].replace(/</g, ' ');
+                            found = true; 
+                        }
+                    } else {
+                        // Logic CIE V104 (Retro)
+                        let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/);
+                        if(nm) { 
+                             newData.surname = nm[1].replace(/\d/g,'').replace(/</g,' ');
+                             newData.name = nm[2].replace(/\d/g,'').replace(/</g,' ');
+                             found = true;
+                        }
+                        // Address from visual zone
+                        const lines = text.toUpperCase().split('\n');
+                        lines.forEach(l => {
+                            if(l.match(/(VIA|PIAZZA|CORSO|V\.|P\.)/)) { newData.residenceAddress = l.trim(); }
+                        });
+                    }
+
+                    if(found) { setFormData(newData); alert("Dati trovati!"); setStep('manual_entry'); } 
+                    else { alert("Dati non chiari. Inserisci manualmente."); }
+                } catch(e) { alert("Errore lettura OCR"); }
+                
+                setOcrProcessing(false);
+                stopCamera();
             };
 
-            const startCamera = async () => { setIsScanning(true); };
-
-            useEffect(() => {
-                if (isScanning && videoRef.current) {
-                    (async () => {
-                        try {
-                            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } });
-                            if (videoRef.current) videoRef.current.srcObject = stream;
-                        } catch (err) { alert("Attiva permessi fotocamera."); setIsScanning(false); }
-                    })();
-                }
-                return () => { videoRef.current?.srcObject?.getTracks().forEach(t => t.stop()); };
-            }, [isScanning]);
-
-            const startNewGuest = () => {
-                setFormData({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "", citizenship: "ITALIANA", residenceCity: "", residenceProvince: "", residenceAddress: "", houseNumber: "", issuedBy: "COMUNE DI", issuedManual: "", docNumber: "", expiryDate: "" });
-                setImages({ front: null, back: null }); setDataTrue(false); setStep('type_select');
-            };
-
-            const isFormComplete = () => {
-                const isItalian = formData.citizenship === 'ITALIANA';
-                let base = formData.surname && formData.name && formData.birthDate && formData.docNumber && dataTrue;
-                if (isItalian) { if (!formData.birthCity || !formData.birthProvince || !formData.residenceCity || !formData.residenceProvince || !formData.residenceAddress) base = false; }
-                return base;
-            };
-
-            const formatDateIT = (d) => d ? d.split('-').reverse().join('/') : "";
-
-            // RENDER LOGIC
-            const renderStep = () => {
-                switch(step) {
-                    case 'login':
-                        return (
-                            <div className="app-container p-8 justify-center items-center text-center">
-                                <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img" /></div></div>
-                                <h1 className="text-3xl font-bold text-slate-800 mb-8 uppercase tracking-widest tracking-tight">Login</h1>
-                                <form onSubmit={e => { e.preventDefault(); const c = e.target.code.value.toUpperCase(); if(c==='ADMIN') setStep('admin_pass'); else if(PROPERTIES[c]){ setProperty(PROPERTIES[c]); setBookingDetails({ guestName: "Ospite", doorCode: PROPERTIES[c].defaultCode }); setStep('welcome'); } else alert('Err'); }} className="space-y-4 w-full px-4">
-                                    <input name="code" type="text" className="input-field text-center uppercase font-bold tracking-widest" placeholder={t.login_ph} required />
-                                    <button type="submit" className="btn btn-primary shadow-xl uppercase font-bold text-white">ENTRA</button>
-                                </form>
-                                <button onClick={() => setStep('admin_pass')} className="mt-20 text-xs text-slate-300 underline uppercase tracking-widest font-bold">Area Proprietario</button>
-                            </div>
-                        );
-                    case 'admin_pass':
-                        return (
-                            <div className="app-container p-8 justify-center items-center flex-col text-center">
-                                <h2 className="text-xl font-bold mb-6 text-teal-800 uppercase tracking-widest">Sblocca</h2>
-                                <form onSubmit={e => { e.preventDefault(); if (e.target.pass.value === 'W0d@w0d@') setStep('admin_panel'); else alert('Err'); }} className="w-full space-y-4 px-4">
-                                    <input name="pass" type="password" className="input-field text-center font-bold" placeholder="Password" autoFocus required />
-                                    <button type="submit" className="btn btn-primary font-bold shadow-lg text-white">SBLOCCA</button>
-                                </form>
-                                <button onClick={()=>setStep('login')} className="mt-8 text-sm text-slate-400 underline">Indietro</button>
-                            </div>
-                        );
-                    case 'admin_panel':
-                        return (
-                            <div className="app-container p-6 overflow-y-auto space-y-8">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="login" />
-                                <div className="bg-slate-50 p-6 rounded-2xl border space-y-4 mt-4 text-center">
-                                    <h2 className="text-xl font-bold text-teal-800 uppercase tracking-widest">Generatore Link</h2>
-                                    <select id="adm_prop" className="input-field">{Object.keys(PROPERTIES).map(k => <option key={k} value={k}>{PROPERTIES[k].name}</option>)}</select>
-                                    <input id="adm_name" className="input-field" placeholder="Nome Ospite" />
-                                    <input id="adm_code" className="input-field" placeholder="Codice Porta" />
-                                    <button onClick={() => {
-                                        const p = document.getElementById('adm_prop').value; const n = document.getElementById('adm_name').value; const c = document.getElementById('adm_code').value;
-                                        const data = btoa(JSON.stringify({ p, n, c }));
-                                        copyToClipboard(`${window.location.origin}${window.location.pathname}?d=${data}`);
-                                    }} className="btn btn-primary w-full text-white font-bold uppercase shadow-lg">COPIA LINK WHATSAPP</button>
-                                </div>
-                                <div className="border-t pt-8 mt-8 text-center">
-                                    <button onClick={fetchCloud} className="btn bg-blue-600 text-white font-bold uppercase w-full">Aggiorna Cloud</button>
-                                    <input type="text" placeholder="Cerca ospite..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-field text-center font-bold text-slate-600 mb-2 mt-4" />
-                                    <div className="space-y-3 max-h-60 overflow-y-auto mt-4">
-                                        {adminData.filter(item => item.guestName?.toLowerCase().includes(searchTerm.toLowerCase())).map((s, idx) => (
-                                            <div key={idx} className="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm" onClick={() => setSelectedSession(s)}>
-                                                <div className="flex-1 text-left"><div className="font-bold text-sm">{s.guestName}</div><div className="text-[9px] text-slate-400 uppercase">{s.property} - {formatDateIT(s.checkinDate)}</div></div>
-                                                <button onClick={(e) => { e.stopPropagation(); if(confirm('Eliminare?')) { const dr = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', s.id); window.FirebaseSDK.deleteDoc(dr); fetchCloud(); } }} className="ml-3 p-2 bg-red-100 rounded-full text-red-500 hover:bg-red-200"><Icon name="trash" className="w-4 h-4" /></button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                {selectedSession && (
-                                    <div className="modal" onClick={() => setSelectedSession(null)}>
-                                        <div className="bg-white w-full max-h-[85vh] rounded-3xl p-6 overflow-y-auto" onClick={e=>e.stopPropagation()}>
-                                            <h3 className="font-bold text-center mb-4 uppercase">{selectedSession.guestName}</h3>
-                                            {selectedSession.guests.map((g, i) => (
-                                                <div key={i} className="mb-6 border-b pb-4">
-                                                    <div className="bg-slate-50 p-4 rounded-xl border mb-4">
-                                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3 border-b pb-2">Smart Copy</h4>
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            <CopyField label="Cognome" value={g.surname} /><CopyField label="Nome" value={g.name} />
-                                                            <CopyField label="Sesso" value={g.sex} /><CopyField label="Data Nascita" value={formatDateIT(g.birthDate)} />
-                                                            <CopyField label="Comune Nascita" value={g.birthCity} /><CopyField label="Prov. Nascita" value={g.birthProvince} />
-                                                            <div className="col-span-2"><CopyField label="Indirizzo" value={g.residenceAddress} /></div>
-                                                            <CopyField label="N. Civico" value={g.houseNumber} />
-                                                            <CopyField label="Città" value={g.residenceCity} /><CopyField label="Prov." value={g.residenceProvince} />
-                                                            <CopyField label="Numero Doc" value={g.docNumber} /><CopyField label="Scadenza" value={formatDateIT(g.expiryDate)} />
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-2 text-center">
-                                                        <div><span className="text-[8px] font-bold text-slate-400">FRONTE</span><img src={g.imgFront} className="rounded border shadow-sm"/></div>
-                                                        <div><span className="text-[8px] font-bold text-slate-400">RETRO</span><img src={g.imgBack} className="rounded border shadow-sm"/></div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            <button onClick={() => setSelectedSession(null)} className="btn btn-primary w-full mt-4 font-bold">CHIUDI</button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    case 'welcome':
-                        return (
-                            <div className="app-container">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="login" />
-                                <div className="p-8 text-center flex-1 flex flex-col justify-center text-slate-800">
-                                    <h1 className="text-2xl font-bold mb-6 uppercase tracking-tight">{property?.name || "Benvenuto"}</h1>
-                                    <div className="bg-teal-50 border-l-4 border-teal-600 p-8 rounded-r-3xl shadow-sm mb-10 flex flex-col items-center">
-                                        <div className="w-32 h-32 rounded-full bg-white mb-4 mt-20 border-4 border-white shadow-xl overflow-hidden"><img src="foto.jpg" className="w-full h-full object-cover" /></div>
-                                        <p className="text-lg italic leading-relaxed mt-6">"{t.welcome}"</p>
-                                        <p className="font-bold text-teal-800 mt-4">- Giulia</p>
-                                    </div>
-                                    <button onClick={() => setStep('ask_guests')} className="btn btn-primary uppercase font-bold shadow-xl text-white">INIZIA IL CHECK-IN</button>
-                                </div>
-                            </div>
-                        );
-                    case 'ask_guests':
-                        return (
-                            <div className="app-container p-8 flex flex-col justify-center items-center text-center">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="welcome" />
-                                <h2 className="text-2xl font-bold mb-4 mt-8">{t.guest_count_q}</h2>
-                                <div className="info-blue">{t.guest_count_tip}</div>
-                                <div className="flex items-center justify-center gap-6 mb-10">
-                                    <button onClick={() => setExpectedGuests(Math.max(1, expectedGuests - 1))} className="w-12 h-12 rounded-full bg-slate-100 text-2xl font-bold text-slate-600">-</button>
-                                    <span className="text-5xl font-bold text-teal-700">{expectedGuests}</span>
-                                    <button onClick={() => setExpectedGuests(expectedGuests + 1)} className="w-12 h-12 rounded-full bg-teal-100 text-2xl font-bold text-teal-700">+</button>
-                                </div>
-                                <button onClick={() => { setGuests([]); setStep('guest_list'); }} className="btn btn-primary uppercase font-bold shadow-xl text-white">CONTINUA</button>
-                            </div>
-                        );
-                    case 'guest_list':
-                        return (
-                            <div className="app-container flex flex-col text-slate-800">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="ask_guests" />
-                                <div className="p-6 bg-white border-b flex justify-between items-center shadow-sm font-bold uppercase">
-                                    <span>{t.guest_list}</span><div className="text-teal-600 bg-teal-50 px-4 py-1 rounded-full text-sm border border-teal-100">{guests.length} / {expectedGuests}</div>
-                                </div>
-                                <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-                                    {guests.map((g, i) => (
-                                        <div key={i} className="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm">
-                                            <div className="font-bold uppercase">{g.surname} {g.name}</div>
-                                            <button onClick={() => setGuests(guests.filter((_, idx) => idx !== i))} className="text-red-400 p-2"><Icon name="trash" /></button> 
-                                        </div>
-                                    ))}
-                                    {guests.length < expectedGuests ? <button onClick={startNewGuest} className="w-full py-6 border-2 border-dashed border-teal-700 rounded-2xl font-bold text-lg hover:bg-teal-50 transition uppercase text-teal-700">+ {t.add_guest}</button> : <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-center font-bold text-sm">Tutti gli ospiti registrati!</div>}
-                                </div>
-                                <div className="p-6 bg-white border-t shadow-lg text-center font-bold">
-                                    {guests.length < expectedGuests && <p className="text-xs text-red-500 mb-2 uppercase tracking-widest">{t.guests_missing} ({expectedGuests - guests.length})</p>}
-                                    <button onClick={() => setStep('sign')} disabled={guests.length < expectedGuests} className="btn btn-primary w-full uppercase font-bold disabled:opacity-50 text-white font-bold">FINISCI E PROCEDI</button>
-                                </div>
-                            </div>
-                        );
-                    case 'type_select':
-                        return (
-                            <div className="app-container p-6 flex flex-col text-center text-slate-800">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="guest_list" />
-                                <h2 className="text-2xl font-bold mb-8 uppercase tracking-tight">{t.doc_type}</h2>
-                                <div className="space-y-4">
-                                    <div onClick={() => { setDocType('electronic'); setStep('scan'); }} className="card-select shadow-sm flex items-center p-4 border rounded-xl">{SVGIcons.electronic}<h3 className="font-bold text-lg uppercase ml-4">{t.doc_e}</h3></div>
-                                    <div onClick={() => { setDocType('paper'); setStep('scan'); }} className="card-select shadow-sm flex items-center p-4 border rounded-xl">{SVGIcons.paper}<h3 className="font-bold text-lg uppercase ml-4">{t.doc_p}</h3></div>
-                                    <div onClick={() => { setDocType('passport'); setStep('scan'); }} className="card-select shadow-sm flex items-center p-4 border rounded-xl">{SVGIcons.passport}<h3 className="font-bold text-lg uppercase ml-4">{t.doc_pass}</h3></div>
-                                </div>
-                            </div>
-                        );
-                    case 'scan':
-                        return (
-                            <div className="app-container flex flex-col text-center">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="type_select" />
-                                {isScanning ? (
-                                    <div className="flex-1 flex flex-col bg-black">
-                                        <div className="scan-wrapper-full">
-                                            <video ref={videoRef} autoPlay playsInline muted></video>
-                                            <div className="guide-overlay">
-                                                <div className="zone-residenza"><span className="label-guide">{t.label_res_zone}</span></div>
-                                                <div className="zone-mrz"><span className="label-guide">{t.label_mrz_zone}</span></div>
-                                            </div>
-                                        </div>
-                                        <div className="p-4 bg-white flex justify-center gap-4">
-                                            <button onClick={() => { setIsScanning(false); }} className="btn bg-red-600 text-white w-1/3 text-xs uppercase font-bold">Annulla</button>
-                                            <button id="snap-btn" onClick={() => runOCR(videoRef.current)} className="btn btn-primary w-1/3 text-xs uppercase font-bold shadow-lg">SCATTA</button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="p-6 flex-1">
-                                        <h2 className="text-2xl font-bold mb-4 uppercase tracking-tight">{t.scan_title}</h2>
-                                        <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl text-xs text-blue-900 mb-6 italic">{t.scan_help}</div>
-                                        <button onClick={startCamera} className="btn bg-teal-600 text-white w-full py-4 uppercase font-bold flex items-center justify-center gap-2 rounded-xl shadow-lg mt-4"><Icon name="scan" /> {t.ocr_btn}</button>
-                                        <button onClick={() => setStep('manual_entry')} className="btn btn-secondary w-full mt-4 uppercase font-bold">SALTA SCANSIONE</button>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    case 'manual_entry':
-                        return (
-                            <div className="app-container flex flex-col text-slate-800">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="scan" />
-                                <div className="flex-1 p-6 overflow-y-auto">
-                                    <h2 className="text-xl font-bold mb-6 uppercase tracking-tight text-center">{t.verify}</h2>
-                                    <form onSubmit={(e) => { e.preventDefault(); setStep('upload_docs'); }} className="space-y-4 pb-20">
-                                        <div><label className="input-label required">{t.label_surname}</label><input className="input-field" value={formData.surname} onChange={e=>setFormData({...formData, surname: e.target.value.toUpperCase()})} required /></div>
-                                        <div><label className="input-label required">{t.label_name}</label><input className="input-field" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value.toUpperCase()})} required /></div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div><label className="input-label">{t.label_sex}</label><select className="input-field bg-white" value={formData.sex} onChange={e=>setFormData({...formData, sex: e.target.value})}><option value="M">M</option><option value="F">F</option></select></div>
-                                            <div><label className="input-label required">{t.label_birth}</label><input type="date" className="input-field text-center font-bold" value={formData.birthDate} onChange={e=>setFormData({...formData, birthDate: e.target.value})} required /></div>
-                                        </div>
-                                        <div className="grid grid-cols-4 gap-2">
-                                            <div className="col-span-3"><label className={`input-label ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_city}</label><input className="input-field" value={formData.birthCity} onChange={e=>setFormData({...formData,birthCity: e.target.value.toUpperCase()})} required={formData.citizenship==='ITALIANA'} /></div>
-                                            <div><label className={`input-label ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_prov}</label><input className="input-field text-center uppercase" maxLength="2" value={formData.birthProvince} onChange={e=>setFormData({...formData, birthProvince: e.target.value.toUpperCase()})} placeholder="PR" required={formData.citizenship==='ITALIANA'} /></div>
-                                        </div>
-                                        <div><label className="input-label">{t.label_citizenship}</label><select className="input-field bg-white" value={formData.citizenship} onChange={e=>setFormData({...formData, citizenship: e.target.value.toUpperCase()})}><option value="ITALIANA">ITALIANA</option><option value="FRANCESE">FRANCESE</option><option value="INGLESE">INGLESE</option><option value="SPAGNOLA">SPAGNOLA</option><option value="TEDESCA">TEDESCA</option><option value="ALTRO">ALTRO</option></select></div>
-                                        <div className="border-t pt-4 grid grid-cols-4 gap-2">
-                                            <div className="col-span-3"><label className={`input-label ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_res_city}</label><input className="input-field" value={formData.residenceCity} onChange={e=>setFormData({...formData, residenceCity: e.target.value.toUpperCase()})} required={formData.citizenship==='ITALIANA'} /></div>
-                                            <div><label className={`input-label ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_res_prov}</label><input className="input-field uppercase text-center" maxLength="2" value={formData.residenceProvince} onChange={e=>setFormData({...formData, residenceProvince: e.target.value.toUpperCase()})} placeholder="PR" required={formData.citizenship==='ITALIANA'} /></div>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div className="col-span-2"><label className={`input-label ${formData.citizenship==='ITALIANA'?'required':''}`}>{t.label_address}</label><input className="input-field" value={formData.residenceAddress} onChange={e=>setFormData({...formData, residenceAddress: e.target.value.toUpperCase()})} required={formData.citizenship==='ITALIANA'} /></div>
-                                            <div><label className="input-label">{t.label_civic}</label><input className="input-field text-center" value={formData.houseNumber} onChange={e=>setFormData({...formData, houseNumber: e.target.value})} /></div>
-                                        </div>
-                                        <div className="pt-4 border-t-2 border-teal-100">
-                                            <div className="grid grid-cols-2 gap-4 mt-2">
-                                                <div><label className="input-label required">{t.label_docnum}</label><input className="input-field font-mono uppercase bg-blue-50 text-center font-bold" value={formData.docNumber} onChange={e=>setFormData({...formData, docNumber: e.target.value.toUpperCase()})} required /></div>
-                                                <div><label className="input-label required">{t.label_expiry}</label><input type="date" className="input-field bg-slate-50 text-center font-bold" value={formData.expiryDate} onChange={e=>setFormData({...formData, expiryDate: e.target.value})} required /></div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mt-4 flex items-center">
-                                            <input type="checkbox" id="dataTrue" checked={dataTrue} onChange={e => setDataTrue(e.target.checked)} className="w-5 h-5 text-teal-600 mr-3" />
-                                            <label htmlFor="dataTrue" className="text-xs font-bold text-yellow-900 uppercase text-left">{t.data_true_label}</label>
-                                        </div>
-                                        <button type="submit" disabled={!isFormComplete()} className="btn btn-success w-full mt-6 uppercase tracking-widest font-bold shadow-lg text-white font-bold">PROCEDI AI DOCUMENTI</button>
-                                    </form>
-                                </div>
-                            </div>
-                        );
-                    case 'upload_docs':
-                        return (
-                            <div className="app-container flex flex-col text-slate-800">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="manual_entry" />
-                                <div className="flex-1 p-6 text-center">
-                                    <h2 className="text-xl font-bold mb-4 uppercase tracking-tight text-center">{t.upload_docs_title}</h2>
-                                    <p className="text-sm text-gray-500 mb-6">{t.upload_docs_desc}</p>
-                                    <div className="mb-6"><span className="input-label mb-2 text-center block w-full">{t.front}</span><div className="upload-preview mb-2">{images.front ? <img src={images.front} /> : <Icon name="camera" className="w-12 h-12 text-slate-300" />}</div><div className="upload-row"><button className="upload-btn-small" onClick={() => document.getElementById('cam-front').click()}><Icon name="camera" className="w-4 h-4"/> {t.take_photo}</button><button className="upload-btn-small" onClick={() => document.getElementById('file-front').click()}><Icon name="upload" className="w-4 h-4"/> {t.upload_file}</button></div><input id="cam-front" type="file" accept="image/*" capture="environment" onChange={e => e.target.files[0] && setImages({...images, front: URL.createObjectURL(e.target.files[0])})} className="hidden" /><input id="file-front" type="file" accept="image/*" onChange={e => e.target.files[0] && setImages({...images, front: URL.createObjectURL(e.target.files[0])})} className="hidden" /></div>
-                                    {docType !== 'passport' && <div className="mb-6"><span className="input-label mb-2 text-center block w-full">{t.back_doc}</span><div className="upload-preview mb-2">{images.back ? <img src={images.back} /> : <Icon name="camera" className="w-12 h-12 text-slate-300" />}</div><div className="upload-row"><button className="upload-btn-small" onClick={() => document.getElementById('cam-back').click()}><Icon name="camera" className="w-4 h-4"/> {t.take_photo}</button><button className="upload-btn-small" onClick={() => document.getElementById('file-back').click()}><Icon name="upload" className="w-4 h-4"/> {t.upload_file}</button></div><input id="cam-back" type="file" accept="image/*" capture="environment" onChange={e => e.target.files[0] && setImages({...images, back: URL.createObjectURL(e.target.files[0])})} className="hidden" /><input id="file-back" type="file" accept="image/*" onChange={e => e.target.files[0] && setImages({...images, back: URL.createObjectURL(e.target.files[0])})} className="hidden" /></div>}
-                                    <button onClick={() => { setGuests([...guests, {...formData, imgFront: images.front, imgBack: images.back, docType}]); setImages({front:null, back:null}); setStep('guest_list'); }} disabled={!checkPhotos()} className="btn btn-success w-full mt-4 uppercase tracking-widest font-bold shadow-lg text-white font-bold">{t.save_guest}</button>
-                                </div>
-                            </div>
-                        );
-                    case 'sign':
-                        return (
-                            <div className="app-container p-6 flex flex-col text-center text-slate-800">
-                                <Header lang={lang} setLang={setLang} setStep={setStep} showBack={true} backStep="guest_list" />
-                                <h2 className="text-2xl font-bold mb-6 uppercase tracking-tight font-bold tracking-widest text-center">{t.sign_title}</h2>
-                                <div className="p-4 rounded-3xl text-[12px] mb-6 border-2 bg-orange-50 border-orange-100 text-orange-900 italic text-center leading-relaxed font-medium">{t.tax_info}</div>
-                                <div className="flex-1 border-2 border-slate-200 rounded-3xl bg-slate-50 relative overflow-hidden mb-6 h-80 shadow-inner">
-                                    <div className="absolute inset-0 flex items-center justify-center text-slate-200 pointer-events-none uppercase font-bold opacity-30 text-2xl text-center">Firma Qui</div>
-                                    <SignaturePad canvasRef={sigCanvasRef} />
-                                </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => { const ctx = sigCanvasRef.current.getContext('2d'); ctx.clearRect(0,0,999,999); }} className="btn bg-red-100 text-red-500 border border-red-200 w-1/3 font-bold uppercase shadow-sm">CANCELLA</button>
-                                    <button onClick={saveToCloud} disabled={isSaving} className="btn btn-primary w-2/3 uppercase font-bold shadow-xl text-white font-bold">
-                                        {isSaving ? <span className="loader mr-2"></span> : "CONFERMA E FINE"}
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    case 'success':
-                        return (
-                            <div className="app-container bg-teal-800 text-white items-center p-10 text-center relative overflow-hidden flex flex-col justify-center min-h-screen">
-                                <div className="w-24 h-24 bg-white text-teal-700 rounded-full flex items-center justify-center mb-8 shadow-2xl animate-bounce"><Icon name="check" className="w-12 h-12" /></div>
-                                <h1 className="text-3xl font-bold mb-2 uppercase tracking-tight">{t.thanks}, {guests[0]?.name || "Ospite"}!</h1>
-                                <p className="opacity-80 text-xl mb-12 uppercase font-bold tracking-wide">{t.success_msg}</p>
-                                <div className="bg-white text-slate-900 rounded-3xl p-10 w-full shadow-2xl relative z-10 border border-teal-500 text-center">
-                                    <p className="input-label text-slate-400 text-center mb-6 tracking-widest font-bold uppercase">{property?.type === 'electronic' ? "CODICE TASTIERINO" : "CODICE KEYBOX"}</p>
-                                    <div className="flex flex-col items-center">
-                                        <div className="p-6 bg-slate-50 rounded-2xl mb-4 text-teal-600 border border-teal-100 shadow-inner"><Icon name="lock" className="w-16 h-16"/></div>
-                                        <div className="text-5xl font-mono font-bold tracking-widest text-slate-800 uppercase">{bookingDetails.doorCode || "9988"}</div>
-                                    </div>
-                                </div>
-                                <div className="info-success">
-                                    {t.save_link_msg}
-                                </div>
-                                <div className="mt-8 pt-8 border-t border-teal-700/50 w-full">
-                                     <button onClick={shareLink} className="btn bg-teal-900 text-teal-100 font-bold uppercase text-sm border border-teal-700/50">
-                                        <Icon name="copy" className="w-4 h-4 mr-2" /> {t.share_link}
-                                     </button>
-                                 </div>
-                                <button onClick={handleExit} className="mt-6 text-teal-200 font-bold uppercase tracking-widest text-sm hover:text-white transition underline opacity-60">{t.exit}</button>
-                            </div>
-                        );
-                    default: return null;
+            const handleFileUpload = (e) => {
+                if(e.target.files[0]) {
+                    const img = new Image();
+                    img.onload = () => runOCR(img);
+                    img.src = URL.createObjectURL(e.target.files[0]);
                 }
             };
 
-            return renderStep();
+            const addGuest = () => {
+                setGuests([...guests, formData]);
+                setFormData({});
+                setImages({front:null, back:null});
+                setStep('guest_list');
+            };
+
+            const saveAll = async () => {
+                const id = `${property?.id}_${Date.now()}`;
+                if (window.db) {
+                     await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id), {
+                         guests, 
+                         signature: sigCanvasRef.current?.toDataURL(),
+                         property: property.name,
+                         date: new Date().toISOString()
+                     });
+                }
+                setStep('success');
+            };
+
+            const fetchAdmin = async () => {
+                if(!window.db) return;
+                const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'checkins'));
+                let d = []; snap.forEach(doc => d.push({id: doc.id, ...doc.data()}));
+                setAdminData(d);
+            };
+
+            // RENDER
+            if (step === 'login') return (
+                <div className="app-container p-8 justify-center text-center">
+                    <div className="logo-main-circle"><img src="logo.png" /></div>
+                    <h1 className="text-2xl font-bold mb-6">LOGIN</h1>
+                    <button onClick={() => setStep('admin_pass')} className="text-slate-400 text-sm underline">Admin</button>
+                </div>
+            );
+
+            if (step === 'admin_pass') return (
+                <div className="app-container p-8 justify-center text-center">
+                    <input id="pwd" type="password" className="input-field mb-4 text-center" placeholder="Password" />
+                    <button onClick={() => { if(document.getElementById('pwd').value==='W0d@w0d@') { fetchAdmin(); setStep('admin_panel'); } }} className="btn btn-primary">ENTRA</button>
+                </div>
+            );
+
+            if (step === 'admin_panel') return (
+                <div className="app-container p-6 overflow-y-auto">
+                    <Header showBack={true} backStep="login" setStep={setStep} setLang={setLang} lang={lang} />
+                    <h2 className="text-xl font-bold text-center my-4">Pannello Admin</h2>
+                    {adminData.map((s, i) => (
+                        <div key={i} className="p-4 border rounded-xl mb-2 shadow-sm bg-slate-50" onClick={() => setSelectedSession(s)}>
+                            <div className="font-bold">{s.guests[0]?.surname} {s.guests[0]?.name}</div>
+                            <div className="text-xs text-gray-500">{s.property} - {new Date(s.date).toLocaleDateString()}</div>
+                        </div>
+                    ))}
+                    {selectedSession && (
+                        <div className="modal" onClick={() => setSelectedSession(null)}>
+                            <div className="bg-white w-full rounded-2xl p-6 max-h-[85vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+                                {selectedSession.guests.map((g, idx) => (
+                                    <div key={idx} className="mb-6 border-b pb-4">
+                                        <h3 className="font-bold mb-2">Ospite {idx+1}</h3>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <CopyField label="Cognome" value={g.surname} />
+                                            <CopyField label="Nome" value={g.name} />
+                                            <CopyField label="Nato il" value={g.birthDate} />
+                                            <CopyField label="Cittadinanza" value={g.citizenship} />
+                                            <div className="col-span-2"><CopyField label="Indirizzo" value={g.residenceAddress} /></div>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button className="btn btn-primary mt-4" onClick={() => setSelectedSession(null)}>Chiudi</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+
+            if (step === 'welcome') return (
+                <div className="app-container p-8 justify-center text-center">
+                    <div className="logo-main-circle"><img src="logo.png"/></div>
+                    <h1 className="text-2xl font-bold mb-2">Benvenuto a {property?.name}</h1>
+                    <button onClick={() => setStep('guests_count')} className="btn btn-primary mt-8">{t.start_btn}</button>
+                </div>
+            );
+
+            if (step === 'guests_count') return (
+                <div className="app-container p-8 justify-center text-center">
+                    <h2 className="text-xl font-bold mb-4">{t.guest_count_q}</h2>
+                    <div className="info-blue">{t.guest_count_tip}</div>
+                    <div className="flex items-center justify-center gap-6 mb-8">
+                        <button onClick={()=>setExpectedGuests(Math.max(1, expectedGuests-1))} className="btn btn-secondary w-12">-</button>
+                        <span className="text-3xl font-bold">{expectedGuests}</span>
+                        <button onClick={()=>setExpectedGuests(expectedGuests+1)} className="btn btn-secondary w-12">+</button>
+                    </div>
+                    <button onClick={() => { setGuests([]); setStep('guest_list'); }} className="btn btn-primary">{t.continue}</button>
+                </div>
+            );
+
+            if (step === 'guest_list') return (
+                <div className="app-container p-6">
+                    <Header setStep={setStep} setLang={setLang} lang={lang} />
+                    <h2 className="text-xl font-bold mb-4">Ospiti {guests.length}/{expectedGuests}</h2>
+                    {guests.map((g, i) => (
+                        <div key={i} className="p-3 border rounded-lg mb-2 flex justify-between">
+                            <span>{g.name} {g.surname}</span> <span className="text-green-600">✓</span>
+                        </div>
+                    ))}
+                    {guests.length < expectedGuests ? 
+                        <button onClick={() => { setFormData({}); setStep('type_select'); }} className="btn btn-secondary mt-4">+ {t.add_guest}</button> :
+                        <button onClick={() => setStep('sign')} className="btn btn-primary mt-4">{t.finish_btn}</button>
+                    }
+                </div>
+            );
+
+            if (step === 'type_select') return (
+                <div className="app-container p-6 text-center">
+                    <Header showBack={true} backStep="guest_list" setStep={setStep} setLang={setLang} lang={lang} />
+                    <h2 className="text-xl font-bold my-6">{t.doc_type}</h2>
+                    <div className="space-y-3">
+                        <div onClick={()=>{setDocType('electronic'); setStep('scan')}} className="card-select">C.I. Elettronica</div>
+                        <div onClick={()=>{setDocType('paper'); setStep('scan')}} className="card-select">C.I. Cartacea</div>
+                        <div onClick={()=>{setDocType('passport'); setStep('scan')}} className="card-select">Passaporto</div>
+                    </div>
+                </div>
+            );
+
+            if (step === 'scan') return (
+                <div className="app-container flex flex-col bg-black text-white">
+                    {isScanning ? (
+                        <div className="flex-1 relative">
+                            <div className="scan-wrapper-full">
+                                <video ref={videoRef} autoPlay playsInline></video>
+                                <div className="guide-overlay">
+                                    <div className="zone-residenza"><span className="label-guide">{t.label_res_zone}</span></div>
+                                    <div className="zone-mrz"><span className="label-guide">{t.label_mrz_zone}</span></div>
+                                </div>
+                            </div>
+                            <div className="p-4 flex gap-4 justify-center bg-white">
+                                <button onClick={stopCamera} className="btn btn-danger w-1/3">Stop</button>
+                                <button onClick={() => { 
+                                    const cvs = document.createElement('canvas'); 
+                                    cvs.width=1000; cvs.height=600; 
+                                    cvs.getContext('2d').drawImage(videoRef.current,0,0,1000,600); 
+                                    runOCR(cvs); 
+                                }} className="btn btn-primary w-1/3">SCATTA</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-6 bg-white text-slate-800 flex-1 flex flex-col justify-center">
+                            <h2 className="text-xl font-bold mb-4">{t.scan_title}</h2>
+                            <p className="mb-6 text-sm">{t.scan_help}</p>
+                            <button onClick={startCamera} className="btn btn-primary mb-4">{t.ocr_btn}</button>
+                            <button onClick={() => fileInputRef.current.click()} className="btn btn-secondary mb-4">{t.ocr_file_btn}</button>
+                            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+                            <button onClick={() => setStep('manual_entry')} className="text-xs underline text-gray-500">Salta Scansione</button>
+                            {ocrProcessing && <p className="text-blue-600 font-bold mt-4 animate-pulse">Analisi in corso...</p>}
+                        </div>
+                    )}
+                </div>
+            );
+
+            if (step === 'manual_entry') return (
+                <div className="app-container p-6 overflow-y-auto">
+                    <Header showBack={true} backStep="scan" setStep={setStep} setLang={setLang} lang={lang} />
+                    <h2 className="text-xl font-bold my-4 text-center">{t.verify}</h2>
+                    <div className="space-y-4 pb-20">
+                        <input className="input-field" placeholder="Cognome" value={formData.surname || ''} onChange={e=>setFormData({...formData, surname:e.target.value.toUpperCase()})} />
+                        <input className="input-field" placeholder="Nome" value={formData.name || ''} onChange={e=>setFormData({...formData, name:e.target.value.toUpperCase()})} />
+                        <select className="input-field" value={formData.citizenship || 'ITALIANA'} onChange={e=>setFormData({...formData, citizenship:e.target.value})}>
+                            <option value="ITALIANA">ITALIANA</option><option value="ESTERA">ESTERA</option>
+                        </select>
+                        <input className="input-field" placeholder="Indirizzo" value={formData.residenceAddress || ''} onChange={e=>setFormData({...formData, residenceAddress:e.target.value})} />
+                        <button onClick={() => setStep('upload_docs')} className="btn btn-success mt-4">AVANTI</button>
+                    </div>
+                </div>
+            );
+
+            if (step === 'upload_docs') return (
+                <div className="app-container p-6 text-center">
+                    <h2 className="text-xl font-bold mb-4">{t.photo_req}</h2>
+                    <div className="mb-4">
+                        <div className="upload-preview mb-2">{images.front ? <img src={images.front}/> : <span className="text-gray-300">Fronte</span>}</div>
+                        <div className="upload-row">
+                             <button className="upload-btn-small" onClick={()=>document.getElementById('f-cam').click()}>Scatta</button>
+                             <button className="upload-btn-small" onClick={()=>document.getElementById('f-up').click()}>Carica</button>
+                             <input type="file" id="f-cam" capture="environment" className="hidden" onChange={e=>setImages({...images, front:URL.createObjectURL(e.target.files[0])})} />
+                             <input type="file" id="f-up" className="hidden" onChange={e=>setImages({...images, front:URL.createObjectURL(e.target.files[0])})} />
+                        </div>
+                    </div>
+                    <button onClick={addGuest} disabled={!images.front} className="btn btn-primary">SALVA OSPITE</button>
+                </div>
+            );
+
+            if (step === 'sign') return (
+                <div className="app-container p-6 text-center">
+                    <h2 className="text-xl font-bold mb-4">{t.sign_title}</h2>
+                    <div className="border-2 border-dashed h-40 mb-4 rounded-xl overflow-hidden"><SignaturePad canvasRef={sigCanvasRef} /></div>
+                    <button onClick={saveAll} className="btn btn-primary">{t.confirm_btn}</button>
+                </div>
+            );
+
+            if (step === 'success') return (
+                <div className="app-container p-8 justify-center text-center">
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><Icon name="check" /></div>
+                    <h2 className="text-2xl font-bold mb-2">Fatto!</h2>
+                    <div className="bg-slate-100 p-6 rounded-xl my-6">
+                        <p className="text-xs text-gray-500 mb-1">CODICE PORTA</p>
+                        <p className="text-4xl font-mono font-bold tracking-widest">{property?.code}</p>
+                    </div>
+                    <div className="info-success mb-6">{t.save_link_msg}</div>
+                    <button onClick={() => { navigator.clipboard.writeText(window.location.href); alert("Link copiato!"); }} className="btn btn-secondary border-green-200 text-green-700">{t.share_link}</button>
+                </div>
+            );
+
+            return null;
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
