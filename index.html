@@ -10,91 +10,271 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* BASE */
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
+        /* --- STILI CSS COMPLETI --- */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+            color: #1e293b; 
+            touch-action: manipulation; 
+            overflow-x: hidden; 
+        }
+
+        .app-container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            min-height: 100vh; 
+            background: white; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.05); 
+            position: relative; 
+            overflow-x: hidden; 
+        }
         
-        /* LOGO PRINCIPALE (FIX SFONDO NERO) */
-        .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 30px 0; background: white; }
+        /* LOGHI E HEADER */
+        .logo-wrapper { 
+            width: 100%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 30px 0; 
+            background: white; 
+        }
+
         .logo-circle {
-            width: 125px; height: 125px; 
-            background-color: white; /* Forza sfondo bianco */
+            width: 125px; 
+            height: 125px; 
+            background: white; 
             border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-            border: 3px solid #d4af37; /* Bordo ORO */
-            padding: 2px; margin: 0 auto;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
             overflow: hidden;
-        }
-        .logo-img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-
-        /* HEADER & NAVBAR */
-        .header-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: white; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 50; }
-        .header-logo-circle { width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; padding: 1px; }
-        .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-
-        /* FOTO HOST (FIX LAYOUT) */
-        .host-photo-wrapper {
-            position: relative; width: 120px; height: 120px; margin: 0 auto;
-            border-radius: 50%; border: 4px solid white; box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            overflow: hidden; z-index: 10; margin-bottom: -60px;
-        }
-        .welcome-box {
-            background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 24px;
-            padding: 20px; padding-top: 70px; margin: 0 10px; margin-bottom: 30px;
-            text-align: center; position: relative; z-index: 1;
+            border: 3px solid #d4af37; /* ORO */
+            position: relative;
+            padding: 0;
+            margin: 0 auto;
         }
 
-        /* INPUTS & FORMS */
-        .input-field { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 10px; color: #1e293b; }
-        .input-field:focus { border-color: #0f766e; outline: none; box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); }
-        .input-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; margin-left: 4px; }
-        .input-label.required::after { content: " *"; color: #ef4444; }
+        .logo-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; /* Adatta senza tagliare */
+            transform: scale(1.0); 
+        }
 
-        /* BUTTONS */
-        .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 0.5px; }
-        .btn-primary { background: #0f766e; color: white; box-shadow: 0 4px 10px rgba(15, 118, 110, 0.3); }
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-logo-circle { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            overflow: hidden; 
+            border: 2px solid #d4af37; 
+            background: white; 
+            flex-shrink: 0; 
+        }
+        
+        .header-logo-circle img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transform: scale(1.15); 
+        }
+
+        /* FOTO GIULIA */
+        .giulia-photo-container {
+            width: 130px; 
+            height: 130px; 
+            border-radius: 50%; 
+            border: 5px solid white; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+            overflow: hidden; 
+            margin: 0 auto; 
+            position: relative; 
+            z-index: 10; 
+            margin-bottom: -65px; 
+            background: white;
+        }
+
+        .welcome-card {
+            background: #f0fdfa; 
+            border: 1px solid #ccfbf1; 
+            border-radius: 24px;
+            padding: 20px; 
+            padding-top: 80px; /* Spazio per la foto */
+            position: relative; 
+            z-index: 1; 
+            margin-bottom: 30px; 
+            box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* INPUTS */
+        .input-field { 
+            width: 100%; 
+            padding: 16px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 14px; 
+            font-size: 16px; 
+            background: #fff; 
+            transition: all 0.2s; 
+            margin-bottom: 12px; 
+            color: #1e293b;
+        }
+
+        .input-field:focus { 
+            border-color: #0f766e; 
+            outline: none; 
+            box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); 
+        }
+
+        .input-label { 
+            font-size: 11px; 
+            font-weight: 800; 
+            color: #64748b; 
+            text-transform: uppercase; 
+            margin-bottom: 6px; 
+            display: block; 
+            margin-left: 4px; 
+            text-align: left; 
+            letter-spacing: 0.5px;
+        }
+
+        .input-label.required::after { 
+            content: " *"; 
+            color: #ef4444; 
+        }
+
+        /* BOTTONI */
+        .btn { 
+            width: 100%; 
+            padding: 18px; 
+            border-radius: 16px; 
+            font-weight: 700; 
+            transition: all 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 15px; 
+            cursor: pointer; 
+            border: none; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+
+        .btn-primary { background: #0f766e; color: white; box-shadow: 0 10px 20px -5px rgba(15, 118, 110, 0.4); }
         .btn-secondary { background: #fff; border: 2px solid #cbd5e1; color: #334155; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-danger { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
-        .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
+        .btn-success { background: #10b981; color: white; box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4); }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 10px 20px -5px rgba(37, 211, 102, 0.4); }
+        
+        .btn:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+            filter: grayscale(100%); 
+        }
+        
         .btn:active { transform: scale(0.98); }
 
-        /* SCANNER & CAMERA */
-        .scan-container { position: relative; width: 100vw; height: 450px; background: black; overflow: hidden; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; }
+        /* SCANNER AREA */
+        .scan-wrapper-full {
+            position: relative; 
+            width: 100vw; 
+            height: 500px; 
+            background: #000;
+            overflow: hidden; 
+            left: 50%; right: 50%; 
+            margin-left: -50vw; margin-right: -50vw;
+        }
+        
         video { width: 100%; height: 100%; object-fit: cover; }
-        .guide-layer { position: absolute; inset: 0; pointer-events: none; }
-        .guide-box { position: absolute; border: 2px solid #00E0FF; border-radius: 8px; left: 10%; right: 10%; top: 20%; bottom: 30%; box-shadow: 0 0 0 100vmax rgba(0,0,0,0.6); }
-
-        /* CARDS */
-        .card-option { width: 100%; padding: 18px; border-radius: 16px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
-        .card-option:hover { border-color: #0f766e; background: #f0fdfa; transform: translateY(-2px); }
         
-        .upload-area { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
-        .upload-area img { width: 100%; height: 100%; object-fit: contain; }
-
-        /* ADMIN & MODALS */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; overflow-y: auto; display: flex; flex-direction: column; }
-        .modal-body { background: #f8fafc; min-height: 100%; padding: 20px; padding-bottom: 100px; }
-        .admin-field-row { display: flex; flex-direction: column; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
-        .admin-field-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .admin-field-val { font-size: 14px; font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center; word-break: break-word; }
+        .guide-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
         
-        /* FLAGS */
-        .lang-btn { font-size: 24px; padding: 0 5px; opacity: 0.4; transition: 0.2s; filter: grayscale(100%); background: none; border: none; cursor: pointer; }
-        .lang-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
+        .zone-residenza {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            width: 90%; height: 15%; border: 2px solid #FFD60A; border-radius: 6px;
+            background: rgba(255, 214, 10, 0.15); z-index: 10;
+        }
+        
+        .zone-mrz {
+            position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%);
+            width: 95%; height: 22%; border: 3px solid #00E0FF; border-radius: 6px;
+            background: rgba(0, 224, 255, 0.15); z-index: 10;
+        }
+
+        /* CARD OPZIONI */
+        .card-select { 
+            width: 100%; padding: 22px; border-radius: 20px; border: 2px solid #f1f5f9; 
+            background: white; margin-bottom: 12px; display: flex; align-items: center; 
+            cursor: pointer; transition: 0.2s; 
+        }
+        .card-select:hover { border-color: #0f766e; background: #f0fdfa; transform: translateY(-2px); }
+
+        /* UPLOAD */
+        .upload-preview { 
+            width: 100%; height: 220px; border: 2px dashed #cbd5e1; border-radius: 16px; 
+            display: flex; align-items: center; justify-content: center; background: #f8fafc; 
+            overflow: hidden; position: relative; margin-bottom: 10px; 
+        }
+        .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
+
+        /* MODALE ADMIN */
+        .modal { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; 
+            overflow-y: auto; display: flex; flex-direction: column; 
+        }
+        .modal-content { 
+            background: #f8fafc; min-height: 100%; padding: 25px; padding-bottom: 100px; 
+        }
+        
+        /* ADMIN DATA ROW */
+        .admin-row { 
+            display: flex; flex-direction: column; margin-bottom: 15px; 
+            border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; 
+        }
+        .admin-label { 
+            font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; 
+        }
+        .admin-val { 
+            font-size: 15px; font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center; 
+        }
 
         /* LOADING */
-        .spinner { width: 30px; height: 30px; border: 4px solid #0f766e; border-bottom-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loader { width: 40px; height: 40px; border: 4px solid #0f766e; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; margin: 0 auto; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* BANDIERE */
+        .flag-btn { 
+            font-size: 28px; padding: 0 8px; opacity: 0.4; transition: 0.2s; 
+            filter: grayscale(100%); background: none; border: none; cursor: pointer; 
+        }
+        .flag-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div style="height: 100vh; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+            <div class="loader"></div>
+            <p style="margin-top: 20px; font-family: sans-serif; color: #666; font-weight: bold;">CARICAMENTO SISTEMA...</p>
+        </div>
+    </div>
     <canvas id="ocr-canvas" style="display:none;"></canvas>
 
     <script type="module">
@@ -117,78 +297,169 @@
         };
 
         const PROPERTIES = {
-            "LOVE": { id: "LOVE", name: "Love Nest", wb: "https://welcomebooklovenest.netlify.app", type: "electronic" },
-            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", wb: "https://welcomebooklatartaruga.netlify.app", type: "keybox" },
-            "REGINA": { id: "REGINA", name: "Santa Regina", wb: "#", type: "keybox" }
+            "LOVE": { id: "LOVE", name: "Love Nest", type: "electronic", wb: "https://welcomebooklovenest.netlify.app" },
+            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", type: "keybox", wb: "https://welcomebooklatartaruga.netlify.app" },
+            "REGINA": { id: "REGINA", name: "Santa Regina", type: "keybox", wb: "#" }
         };
 
+        // --- TRADUZIONI ESPANSE AL MASSIMO ---
         const TRANSLATIONS = {
             it: { 
-                welcome: "Benvenuto a", thanks: "Grazie per averci scelto!",
-                intro: "Ciao {name}! Sono Giulia. Completa il check-in online.",
-                start: "INIZIA ORA", guest_q: "Chi è il capogruppo?", guest_tip: "Inserisci nome e numero ospiti.",
+                welcome_header: "Benvenuto a", thanks_choice: "Grazie per averci scelto!",
+                intro_giulia: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, completa il check-in online.",
+                start_btn: "INIZIA IL CHECK-IN", 
+                guest_q: "Chi è il capogruppo?", 
+                guest_tip: "Inserisci il tuo nome e quanti ospiti siete in totale.",
                 name_ph: "Nome e Cognome", count_ph: "Numero Ospiti",
-                doc_t: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente",
-                scan_i: "Scansiona", scan_h: "In orizzontale.", scan_b: "SCATTA", file_b: "CARICA FILE", manual_b: "INSERISCI A MANO",
+                doc_type: "Seleziona Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente",
+                scan_info: "Scansiona Documento", scan_help: "Posiziona il documento in orizzontale. Evita riflessi.",
+                scan_btn: "SCATTA E LEGGI", file_btn: "CARICA FILE", manual_btn: "INSERISCI A MANO",
+                ocr_processing: "Analisi in corso...", ocr_error: "Dati non letti. Riprova.", ocr_success: "Dati rilevati! Verifica.",
                 verify: "Verifica Dati", 
-                l_sur: "Cognome", l_name: "Nome", l_born: "Nato il", l_sex: "Sesso",
-                l_bcity: "Comune Nascita", l_bprov: "Prov. Nascita", l_cit: "Cittadinanza",
-                l_res_st: "Indirizzo (Via/Piazza)", l_res_civ: "N. Civico", l_res_city: "Comune Residenza", l_res_prov: "Prov. Residenza",
-                l_doc: "N. Documento", l_exp: "Scadenza", l_iss: "Ente Rilascio (Es. Comune di Roma)",
+                label_surname: "Cognome", label_name: "Nome", label_born: "Nato il", label_sex: "Sesso",
+                label_city: "Comune Nascita", label_prov: "Prov. Nascita", label_cit: "Cittadinanza",
+                label_res: "Residenza (Via/Piazza)", label_civic: "N. Civico", 
+                label_res_city: "Comune Residenza", label_res_prov: "Prov. Residenza",
+                label_doc: "N. Documento", label_exp: "Scadenza", label_issue: "Ente Rilascio (Es. Comune di Roma)",
                 photo_req: "FOTO OBBLIGATORIE", front: "Fronte", back: "Retro", take: "SCATTA",
-                sign: "Firma", tax: "Tassa soggiorno in loco.", clear: "Cancella",
-                save: "SALVA OSPITE", saving: "Salvataggio...",
-                success: "Check-in Completato!", code: "IL TUO CODICE:",
-                locked: "CHECK-IN INCOMPLETO", locked_msg: "Codice BLOCCATO 🔒",
+                sign_title: "Firma", tax_info: "Tassa di soggiorno da pagare in loco (se non inclusa).", clear: "Cancella",
+                save_guest: "SALVA OSPITE", cloud_save: "Salvataggio...",
+                success_title: "Check-in Completato!", code_label: "IL TUO CODICE:",
+                locked_title: "CHECK-IN INCOMPLETO", locked_msg: "Il codice è BLOCCATO 🔒",
+                locked_desc: "Tutti gli ospiti devono essere registrati per vedere il codice.",
                 missing: "Mancano", guests: "ospiti",
-                share: "Invia link agli altri:", wb: "LEGGI WELCOME BOOK", wa: "AVVISA GIULIA (WHATSAPP)",
-                vip: "Genera Link VIP", copy_ok: "LINK COPIATO!", emerg: "🆘 Aggiungi Manuale",
-                req_err: "Tutti i campi sono obbligatori", list: "Lista Ospiti", finish: "CONFERMA E PROCEDI", add_btn: "AGGIUNGI OSPITE"
+                share_link: "Invia questo link agli altri:",
+                wb_btn: "LEGGI WELCOME BOOK", wa_btn: "AVVISA GIULIA (WHATSAPP)",
+                admin_vip: "Genera Link VIP (Sbloccato)", vip_success: "LINK COPIATO!",
+                emergency_add: "🆘 Aggiungi Manuale (Emergenza)",
+                required: "Tutti i campi sono obbligatori", guest_list: "Lista Ospiti", finish: "CONFERMA E PROCEDI",
+                add_guest_btn: "AGGIUNGI OSPITE", back_btn: "Indietro"
             },
             en: { 
-                welcome: "Welcome to", thanks: "Thanks for choosing us!",
-                intro: "Hi {name}! I'm Giulia. Please complete online check-in.",
-                start: "START NOW", guest_q: "Lead Guest?", guest_tip: "Name and total guests.",
+                welcome_header: "Welcome to", thanks_choice: "Thanks for choosing us!",
+                intro_giulia: "Hi! I'm Giulia. Please complete online check-in.",
+                start_btn: "START CHECK-IN", 
+                guest_q: "Who is the lead guest?", 
+                guest_tip: "Enter full name and total number of guests.",
                 name_ph: "Full Name", count_ph: "Total Guests",
-                doc_t: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "License",
-                scan_i: "Scan", scan_h: "Horizontal.", scan_b: "SNAP", file_b: "UPLOAD FILE", manual_b: "MANUAL ENTRY",
+                doc_type: "Select Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "License",
+                scan_info: "Scan Document", scan_help: "Place document horizontally. Avoid glare.",
+                scan_btn: "SNAP & READ", file_btn: "UPLOAD FILE", manual_btn: "MANUAL ENTRY",
+                ocr_processing: "Processing...", ocr_error: "Read error. Retry.", ocr_success: "Data detected!",
                 verify: "Verify Data", 
-                l_sur: "Surname", l_name: "Name", l_born: "Birth Date", l_sex: "Sex",
-                l_bcity: "Birth City", l_bprov: "Birth Prov", l_cit: "Citizenship",
-                l_res_st: "Street Address", l_res_civ: "Civic No.", l_res_city: "City", l_res_prov: "Prov",
-                l_doc: "Doc Number", l_exp: "Expiry", l_iss: "Issued By",
+                label_surname: "Surname", label_name: "Name", label_born: "Birth Date", label_sex: "Sex",
+                label_city: "Birth City", label_prov: "Birth Prov", label_cit: "Citizenship",
+                label_res: "Street Address", label_civic: "Civic No.", 
+                label_res_city: "City", label_res_prov: "Prov",
+                label_doc: "Doc Number", label_exp: "Expiry", label_issue: "Issued By",
                 photo_req: "MANDATORY PHOTOS", front: "Front", back: "Back", take: "TAKE",
-                sign: "Signature", tax: "City tax on site.", clear: "Clear",
-                save: "SAVE GUEST", saving: "Saving...",
-                success: "Check-in Complete!", code: "YOUR CODE:",
-                locked: "INCOMPLETE", locked_msg: "Code LOCKED 🔒",
+                sign_title: "Signature", tax_info: "City tax to be paid on site.", clear: "Clear",
+                save_guest: "SAVE GUEST", cloud_save: "Saving...",
+                success_title: "Check-in Complete!", code_label: "YOUR CODE:",
+                locked_title: "CHECK-IN INCOMPLETE", locked_msg: "Code is LOCKED 🔒",
+                locked_desc: "All guests must complete registration to see the code.",
                 missing: "Missing", guests: "guests",
-                share: "Send link:", wb: "READ WELCOME BOOK", wa: "NOTIFY GIULIA (WHATSAPP)",
-                vip: "Generate VIP Link", copy_ok: "COPIED!", emerg: "🆘 Manual Add",
-                req_err: "Required", list: "Guest List", finish: "CONFIRM", add_btn: "ADD GUEST"
+                share_link: "Send link to others:",
+                wb_btn: "READ WELCOME BOOK", wa_btn: "NOTIFY GIULIA (WHATSAPP)",
+                admin_vip: "Generate VIP Link", vip_success: "LINK COPIED!",
+                emergency_add: "🆘 Manual Add (Emergency)",
+                required: "Required", guest_list: "Guest List", finish: "CONFIRM & PROCEED",
+                add_guest_btn: "ADD GUEST", back_btn: "Back"
             },
-            // Aggiungi altre lingue se necessario (FR, ES, DE) copiano struttura EN
+            fr: { 
+                welcome_header: "Bienvenue à", thanks_choice: "Merci de nous avoir choisis !",
+                intro_giulia: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement.",
+                start_btn: "COMMENCER", guest_q: "Qui est l'invité principal ?",
+                guest_tip: "Nom complet et nombre total d'invités.", name_ph: "Nom Complet", count_ph: "Nombre",
+                doc_type: "Type de Document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis",
+                scan_info: "Scanner", scan_help: "Horizontalement.", scan_btn: "SCANNER", file_btn: "FICHIER", manual_btn: "MANUEL",
+                ocr_processing: "Traitement...", ocr_error: "Erreur.", ocr_success: "Détecté !",
+                verify: "Vérifier", label_surname: "Nom", label_name: "Prénom", label_born: "Né le", label_sex: "Sexe",
+                label_city: "Ville Naissance", label_prov: "Prov.", label_cit: "Nationalité", 
+                label_res: "Adresse", label_civic: "N°", label_res_city: "Ville", label_res_prov: "Prov.", 
+                label_doc: "N° Doc", label_exp: "Expiration", label_issue: "Délivré par",
+                photo_req: "PHOTOS OBLIGATOIRES", front: "Recto", back: "Verso", take: "PHOTO",
+                sign_title: "Signature", tax_info: "Taxe de séjour sur place.", clear: "Effacer",
+                save_guest: "ENREGISTRER", cloud_save: "Sauvegarde...",
+                success_title: "Terminé !", code_label: "VOTRE CODE :",
+                locked_title: "INCOMPLET", locked_msg: "Code VERROUILLÉ 🔒",
+                locked_desc: "Tous les invités doivent s'enregistrer.",
+                missing: "Manque", guests: "invités",
+                share_link: "Envoyer lien aux autres :",
+                wb_btn: "LIVRET D'ACCUEIL", wa_btn: "AVISER HÔTE (WHATSAPP)",
+                admin_vip: "Générer lien VIP", vip_success: "COPIÉ !", emergency_add: "🆘 Urgence",
+                required: "Requis", guest_list: "Invités", finish: "TERMINER",
+                add_guest_btn: "AJOUTER INVITÉ", back_btn: "Retour"
+            },
+            es: { 
+                welcome_header: "Bienvenido a", thanks_choice: "¡Gracias por elegirnos!",
+                intro_giulia: "¡Hola! Soy Giulia. Complete el registro en línea.",
+                start_btn: "EMPEZAR", guest_q: "¿Huésped principal?",
+                guest_tip: "Nombre y total de huéspedes.", name_ph: "Nombre", count_ph: "Total",
+                doc_type: "Tipo de Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia",
+                scan_info: "Escanear", scan_help: "Horizontal.", scan_btn: "ESCANEAR", file_btn: "ARCHIVO", manual_btn: "MANUAL",
+                ocr_processing: "Procesando...", ocr_error: "Error.", ocr_success: "¡Detectado!",
+                verify: "Verificar", label_surname: "Apellido", label_name: "Nombre", label_born: "Nacido el", label_sex: "Sexo",
+                label_city: "Ciudad Nac.", label_prov: "Prov.", label_cit: "Ciudadanía", 
+                label_res: "Dirección", label_civic: "N°", label_res_city: "Ciudad", label_res_prov: "Prov.", 
+                label_doc: "N° Doc", label_exp: "Caducidad", label_issue: "Emisor",
+                photo_req: "FOTOS OBLIGATORIAS", front: "Frente", back: "Dorso", take: "FOTO",
+                sign_title: "Firma", tax_info: "Tasa turística en el lugar.", clear: "Borrar",
+                save_guest: "GUARDAR", cloud_save: "Guardando...",
+                success_title: "¡Completado!", code_label: "SU CÓDIGO:",
+                locked_title: "INCOMPLETO", locked_msg: "Código BLOQUEADO 🔒",
+                locked_desc: "Faltan huéspedes por registrar.",
+                missing: "Faltan", guests: "huéspedes",
+                share_link: "Enviar enlace:", wb_btn: "LIBRO BIENVENIDA", wa_btn: "WHATSAPP",
+                admin_vip: "Enlace VIP", vip_success: "¡COPIADO!", emergency_add: "🆘 Emergencia",
+                required: "Requerido", guest_list: "Huéspedes", finish: "TERMINAR",
+                add_guest_btn: "AÑADIR HUÉSPED", back_btn: "Atrás"
+            },
+            de: { 
+                welcome_header: "Willkommen bei", thanks_choice: "Danke für Ihre Wahl!",
+                intro_giulia: "Hallo! Ich bin Giulia. Bitte Check-in abschließen.",
+                start_btn: "STARTEN", guest_q: "Hauptgast?",
+                guest_tip: "Name und Gästeanzahl.", name_ph: "Name", count_ph: "Anzahl",
+                doc_type: "Dokument", doc_e: "Elek. ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein",
+                scan_info: "Scannen", scan_help: "Horizontal.", scan_btn: "SCANNEN", file_btn: "DATEI", manual_btn: "MANUELL",
+                ocr_processing: "Verarbeitung...", ocr_error: "Fehler.", ocr_success: "Erkannt!",
+                verify: "Prüfen", label_surname: "Nachname", label_name: "Vorname", label_born: "Geboren", label_sex: "Geschlecht",
+                label_city: "Geburtsort", label_prov: "Prov.", label_cit: "Nationalität", 
+                label_res: "Adresse", label_civic: "Nr.", label_res_city: "Stadt", label_res_prov: "Prov.", 
+                label_doc: "Dokument Nr.", label_exp: "Ablauf", label_issue: "Aussteller",
+                photo_req: "PFLICHTFOTOS", front: "Vorn", back: "Hinten", take: "FOTO",
+                sign_title: "Unterschrift", tax_info: "Kurtaxe vor Ort.", clear: "Löschen",
+                save_guest: "SPEICHERN", cloud_save: "Speichern...",
+                success_title: "Fertig!", code_label: "IHR CODE:",
+                locked_title: "UNVOLLSTÄNDIG", locked_msg: "Code GESPERRT 🔒",
+                locked_desc: "Alle Gäste müssen sich registrieren.",
+                missing: "Fehlen", guests: "Gäste",
+                share_link: "Link senden:", wb_btn: "WILLKOMMENSBUCH", wa_btn: "WHATSAPP",
+                admin_vip: "VIP Link", vip_success: "KOPIERT!", emergency_add: "🆘 Notfall",
+                required: "Pflichtfeld", guest_list: "Gäste", finish: "ABSCHLIESSEN",
+                add_guest_btn: "GAST HINZUFÜGEN", back_btn: "Zurück"
+            }
         };
 
-        const Icon = ({ name }) => {
+        const Icon = ({ name, className = "w-6 h-6" }) => {
             const icons = {
-                trash: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
-                check: "M5 13l4 4L19 7",
-                chevronLeft: "M15 19l-7-7 7-7",
-                copy: "M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3",
-                pencil: "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z",
-                camera: "M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z",
-                lock: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
+                trash: <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
+                check: <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
+                chevronLeft: <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
+                copy: <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
+                pencil: <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
+                camera: <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/>,
+                lock: <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
                 close: "M6 18L18 6M6 6l12 12"
             };
-            return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={icons[name]}/></svg>;
+            return <svg className={className} viewBox="0 0 24 24">{icons[name]}</svg>;
         };
 
         const SVGIcons = {
-            electronic: <svg viewBox="0 0 24 24" className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 15h.01M11 15h.01M15 15h.01M19 15h.01M7 11h.01M11 11h.01M15 11h.01" /><circle cx="17" cy="9" r="1"/></svg>,
-            paper: <svg viewBox="0 0 24 24" className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>,
-            passport: <svg viewBox="0 0 24 24" className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M12 12a3 3 0 100-6 3 3 0 000 6z"/><path d="M12 15a5 5 0 00-5 5h10a5 0 00-5-5z"/></svg>,
-            license: <svg viewBox="0 0 24 24" className="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9h2" /><path d="M7 13h10" /><path d="M7 17h6" /><circle cx="16" cy="10" r="2" /></svg>
+            electronic: <svg viewBox="0 0 24 24" className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 15h.01M11 15h.01M15 15h.01M19 15h.01M7 11h.01M11 11h.01M15 11h.01" /><circle cx="17" cy="9" r="1"/></svg>,
+            paper: <svg viewBox="0 0 24 24" className="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>,
+            passport: <svg viewBox="0 0 24 24" className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M12 12a3 3 0 100-6 3 3 0 000 6z"/><path d="M12 15a5 5 0 00-5 5h10a5 0 00-5-5z"/></svg>,
+            license: <svg viewBox="0 0 24 24" className="w-12 h-12 text-pink-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9h2" /><path d="M7 13h10" /><path d="M7 17h6" /><circle cx="16" cy="10" r="2" /></svg>
         };
 
         const CopyRow = ({ label, value }) => (
@@ -196,7 +467,7 @@
                 <span className="admin-field-label">{label}</span>
                 <div className="admin-field-val">
                     <span className="truncate mr-2 select-all">{value || "-"}</span>
-                    {value && <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(value); alert("Copiato!"); }} className="p-1 bg-slate-100 rounded text-blue-600"><Icon name="copy"/></button>}
+                    {value && <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(value); alert("Copiato!"); }} className="p-1 bg-slate-100 rounded text-blue-600"><Icon name="copy" className="w-4 h-4"/></button>}
                 </div>
             </div>
         );
@@ -228,27 +499,32 @@
         const Header = ({ setStep, backStep, setLang, lang }) => (
             <div className="header-bar">
                 <div className="flex items-center gap-2">
-                    {backStep && <button onClick={() => setStep(backStep)} className="text-slate-500"><Icon name="chevronLeft"/></button>}
+                    {backStep && <button onClick={() => setStep(backStep)} className="text-slate-500"><Icon name="chevronLeft" className="w-8 h-8"/></button>}
                     <div className="header-logo-circle"><img src="logo.png"/></div>
                     <span className="font-bold text-xs uppercase tracking-wider text-slate-700 ml-2">Tuscan Retreats</span>
                 </div>
                 <div className="flex gap-1">
-                     {['it','en'].map(l => <button key={l} onClick={()=>setLang(l)} className={`lang-btn ${lang===l?'active':''}`}>{l==='it'?'🇮🇹':'🇬🇧'}</button>)}
+                     {['it','en','fr','es','de'].map(l => (
+                         <button key={l} onClick={()=>setLang(l)} className={`flag-btn ${lang===l?'active':''}`}>
+                             {l==='it'?'🇮🇹':l==='en'?'🇬🇧':l==='fr'?'🇫🇷':l==='es'?'🇪🇸':'🇩🇪'}
+                         </button>
+                     ))}
                 </div>
             </div>
         );
 
         function App() {
             const [lang, setLang] = useState('it');
-            const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
             const [user, setUser] = useState(null);
             const [step, setStep] = useState('loading'); 
             const [property, setProperty] = useState(null);
-            const [session, setSession] = useState(null);
             
+            // SESSION
+            const [session, setSession] = useState(null);
             const [localGuests, setLocalGuests] = useState([]); 
             const [dbGuests, setDbGuests] = useState([]); 
             
+            // FORM
             const [formData, setFormData] = useState({});
             const [docType, setDocType] = useState('electronic');
             const [images, setImages] = useState({ front: null, back: null });
@@ -258,18 +534,21 @@
             const [selectedSession, setSelectedSession] = useState(null);
             const [propertyCodes, setPropertyCodes] = useState({});
             const [doorCode, setDoorCode] = useState("...");
+            const [vipLinkCopied, setVipLinkCopied] = useState(false);
             const [zoomImg, setZoomImg] = useState(null);
             const [searchTerm, setSearchTerm] = useState("");
             
+            // UTILS
             const [isScanning, setIsScanning] = useState(false);
             const [isSaving, setIsSaving] = useState(false);
             const [ocrProcessing, setOcrProcessing] = useState(false);
             const [dataTrue, setDataTrue] = useState(false);
             
+            const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
+            const appId = 'tuscan-retreats-portal';
             const sigRef = useRef(null);
             const videoRef = useRef(null);
-            const fileRef = useRef(null); // FIX BUG FILE UPLOAD
-            const appId = 'tuscan-retreats-portal';
+            const fileRef = useRef(null);
 
             useEffect(() => {
                 const init = async () => {
@@ -279,7 +558,7 @@
                     await window.FirebaseSDK.signInAnonymously(auth);
                     window.FirebaseSDK.onAuthStateChanged(auth, u => { if(u) handleRouting(); });
                 };
-                setTimeout(init, 500);
+                setTimeout(init, 1000);
             }, []);
 
             const handleRouting = async () => {
@@ -297,8 +576,9 @@
                             setSession({ id: s, ...data });
                             setProperty(PROPERTIES[data.booking]);
                             setDbGuests(data.guests || []);
+                            
                             if (data.direct || data.verified || localStorage.getItem(`done_${s}`)) setStep('success'); 
-                            else setStep('welcome');
+                            else setStep('welcome_personal');
                             return;
                         }
                     } catch(e) {}
@@ -309,7 +589,7 @@
                         const dec = JSON.parse(atob(d));
                         if (PROPERTIES[dec.p]) {
                             setProperty(PROPERTIES[dec.p]);
-                            setStep('init');
+                            setStep('init_landing');
                             return;
                         }
                     } catch(e) {}
@@ -318,7 +598,7 @@
             };
 
             const createSession = async (name, count, isDirect=false) => {
-                if(!name || !count) return alert(t.req_err);
+                if(!name || !count) return alert(t.required);
                 const id = `${property.id}_${Date.now()}`;
                 const payload = {
                     booking: property.id,
@@ -327,12 +607,13 @@
                     totalGuests: parseInt(count),
                     timestamp: new Date().toISOString(),
                     guests: [],
+                    verified: isDirect, 
                     direct: isDirect
                 };
                 await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id), payload);
                 setSession({ id, ...payload });
                 if(isDirect) return id; 
-                setStep('welcome');
+                setStep('welcome_personal');
             };
 
             const compress = (url) => new Promise(resolve => {
@@ -366,12 +647,7 @@
                 const c = document.getElementById('ocr-canvas'); const ctx = c.getContext('2d');
                 c.width = 1000; let w=src.videoWidth||src.width; let h=src.videoHeight||src.height;
                 ctx.drawImage(src,0,0,c.width,c.width*(h/w));
-                try { 
-                    const { data: { text } } = await Tesseract.recognize(c, 'ita'); 
-                    alert(t.ocr_success); 
-                    // Simulazione estrazione per demo, qui andrebbe il parser completo
-                    setStep('manual_form');
-                } catch(e) { alert(t.ocr_error); }
+                try { const { data: { text } } = await Tesseract.recognize(c, 'ita'); alert(t.ocr_success); } catch(e) { alert(t.ocr_error); }
                 setOcrProcessing(false); setIsScanning(false);
             };
 
@@ -382,19 +658,32 @@
                 reader.readAsDataURL(file);
             };
 
+            // ADMIN
             const fetchAdmin = async () => {
                 const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'checkins'));
                 let list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
                 list.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                 setAdminData(list);
             };
-
+            const fetchCodes = async () => {
+                const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'properties'));
+                let codes = {}; snap.forEach(d => codes[d.id] = d.data().currentCode);
+                setPropertyCodes(codes);
+            };
             const saveCode = async (pid) => {
                 let val = document.getElementById(`c_${pid}`).value;
                 if(pid === 'LOVE' && !val.endsWith('#')) val += '#';
                 await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'properties', pid), { currentCode: val }, { merge: true });
-                alert('Codice Salvato');
+                alert('OK!');
             };
+            const addEmergency = async () => {
+                if(!selectedSession) return;
+                const dummy = { surname: "MANUALE", name: "EMERGENZA", docNumber: "MANUAL", birthDate: "2000-01-01", citizenship: "ITA", sex: "M", issuedBy: "HOST" };
+                await window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', selectedSession.id), { guests: window.FirebaseSDK.arrayUnion(dummy) });
+                alert("Ospite aggiunto."); setSelectedSession(null); fetchAdmin();
+            };
+            const deleteSession = async (id) => { if(confirm("ELIMINARE?")) { await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id)); fetchAdmin(); setSelectedSession(null); } };
+            const clearHistory = async () => { if(confirm("CANCELLARE TUTTO?")) { adminData.forEach(async s => await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', s.id))); setAdminData([]); } };
 
             useEffect(() => {
                 if (step === 'success' && property && window.db) {
@@ -406,22 +695,22 @@
             const checkPhotos = () => images.front && (docType === 'passport' || images.back);
             const isFormComplete = () => formData.surname && formData.name && formData.birthDate && formData.docNumber && dataTrue;
 
-            // RENDER START
-            if (step === 'loading') return <div className="h-screen flex items-center justify-center"><div className="spinner"></div></div>;
+            // RENDER
+            if (step === 'loading') return <div className="h-screen flex items-center justify-center flex-col"><div className="loader"></div><p className="mt-4 text-slate-500 font-bold">CARICAMENTO...</p></div>;
 
             // LOGIN
             if (step === 'login') return (
                 <div className="app-container p-8 text-center flex flex-col justify-center">
                     <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img"/></div></div>
                     <form onSubmit={(e) => { e.preventDefault(); const val = e.target.elements.c.value.toUpperCase().trim(); if (val === 'ADMIN') setStep('admin_pass'); else alert('Link invalido'); }} className="w-full">
-                        <input name="c" autoFocus className="input-field text-center uppercase font-bold tracking-widest mt-8" placeholder="CODICE" />
+                        <input name="c" autoFocus className="input-field text-center font-bold tracking-widest mt-8" placeholder="CODICE" />
                         <button type="submit" className="btn btn-primary mt-4 w-full">ENTRA</button>
                     </form>
                 </div>
             );
 
-            // INIT (Capogruppo)
-            if (step === 'init') return (
+            // INIT
+            if (step === 'init_landing') return (
                 <div className="app-container p-8 pt-20 text-center">
                     <Header setStep={()=>{}} setLang={setLang} lang={lang} />
                     <h2 className="text-xl font-bold text-slate-400 uppercase mt-10">{t.welcome}</h2>
@@ -437,13 +726,12 @@
             );
 
             // WELCOME
-            if (step === 'welcome') return (
+            if (step === 'welcome_personal') return (
                 <div className="app-container">
-                    <Header setStep={()=>{}} setLang={setLang} lang={lang} />
                     <div className="p-8 text-center flex-1 flex flex-col justify-center">
-                        <div className="host-photo-wrapper"><img src="foto.jpg" className="w-full h-full object-cover"/></div>
-                        <div className="welcome-box">
-                            <h2 className="text-xl font-bold text-teal-800 mb-2">{t.thanks}</h2>
+                        <div className="giulia-photo-container"><img src="foto.jpg" className="w-full h-full object-cover"/></div>
+                        <div className="welcome-card">
+                            <h2 className="text-xl font-bold text-teal-800 mb-2">{t.thanks_choice}</h2>
                             <p className="italic text-slate-600 mb-4">{t.intro.replace('{name}', session?.guestName)}</p>
                             <p className="font-bold text-teal-800 text-xs uppercase tracking-widest">- Giulia</p>
                         </div>
@@ -455,7 +743,7 @@
             // GUEST LIST
             if (step === 'guest_list') return (
                 <div className="app-container flex flex-col">
-                    <Header setStep={()=>setStep('welcome')} backStep="welcome" setLang={setLang} lang={lang} />
+                    <Header setStep={()=>setStep('welcome_personal')} backStep="welcome_personal" setLang={setLang} lang={lang} />
                     <div className="p-6 bg-white border-b shadow-sm font-bold flex justify-between uppercase">
                         <span>{t.guest_list}</span>
                         <div className="bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-bold">{dbGuests.length + localGuests.length} / {session.totalGuests}</div>
@@ -465,13 +753,11 @@
                         {localGuests.map((g,i) => <div key={'loc'+i} className="bg-white border border-teal-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-teal-900">{g.surname} {g.name}</span><button onClick={()=>setLocalGuests(localGuests.filter((_,x)=>x!==i))} className="text-red-500"><Icon name="trash"/></button></div>)}
                         
                         {(dbGuests.length + localGuests.length) < session.totalGuests ? 
-                            <button onClick={()=>{ setFormData({ surname: "", name: "", sex: "M", birthDate: "", citizenship: "ITALIANA", issuedBy: "COMUNE DI" }); setStep('doc_select'); }} className="btn w-full py-4 border-2 border-dashed border-teal-600 bg-white text-teal-600 font-bold uppercase shadow-sm flex items-center justify-center gap-2 hover:bg-teal-50">{t.add_btn}</button> :
+                            <button onClick={()=>{ setFormData({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "", citizenship: "ITALIANA", citizenshipManual: "", residenceCity: "", residenceProvince: "", residenceAddress: "", houseNumber: "", issuedBy: "COMUNE DI", issuedManual: "", docNumber: "", expiryDate: "" }); setStep('doc_select'); }} className="btn w-full py-4 border-2 border-dashed border-teal-600 bg-white text-teal-600 font-bold uppercase shadow-sm flex items-center justify-center gap-2 hover:bg-teal-50">{t.add_guest_btn}</button> :
                             <div className="bg-green-100 p-4 rounded-xl text-center text-green-800 font-bold uppercase shadow-inner">Tutti inseriti!</div>
                         }
                     </div>
-                    <div className="p-6 border-t bg-white">
-                        <button onClick={()=>setStep('sign')} disabled={localGuests.length===0} className="btn btn-primary w-full uppercase font-bold shadow-lg">{t.finish}</button>
-                    </div>
+                    <div className="p-6 border-t"><button onClick={()=>setStep('sign')} disabled={localGuests.length===0} className="btn btn-primary w-full uppercase font-bold shadow-lg">{t.finish}</button></div>
                 </div>
             );
 
@@ -479,12 +765,12 @@
             if (step === 'doc_select') return (
                 <div className="app-container p-6 text-center">
                     <Header setStep={setStep} backStep="guest_list" setLang={setLang} lang={lang} />
-                    <h2 className="text-xl font-bold mb-6 mt-10 uppercase text-slate-800">{t.doc_t}</h2>
+                    <h2 className="text-xl font-bold mb-6 mt-10 uppercase text-slate-800">{t.doc_type}</h2>
                     <div className="space-y-4">
-                        <div onClick={()=>{setDocType('electronic'); setStep('scan');}} className="card-option">{SVGIcons.electronic} <span className="ml-4 font-bold">{t.doc_e}</span></div>
-                        <div onClick={()=>{setDocType('paper'); setStep('manual_form');}} className="card-option">{SVGIcons.paper} <span className="ml-4 font-bold">{t.doc_p}</span></div>
-                        <div onClick={()=>{setDocType('passport'); setStep('scan');}} className="card-option">{SVGIcons.passport} <span className="ml-4 font-bold">{t.doc_pass}</span></div>
-                        <div onClick={()=>{setDocType('license'); setStep('scan');}} className="card-option">{SVGIcons.license} <span className="ml-4 font-bold">{t.doc_l}</span></div>
+                        <div onClick={()=>{setDocType('electronic'); setStep('scan');}} className="card-select">{SVGIcons.electronic} <span className="ml-4 font-bold">{t.doc_e}</span></div>
+                        <div onClick={()=>{setDocType('paper'); setStep('manual_form');}} className="card-select">{SVGIcons.paper} <span className="ml-4 font-bold">{t.doc_p}</span></div>
+                        <div onClick={()=>{setDocType('passport'); setStep('scan');}} className="card-select">{SVGIcons.passport} <span className="ml-4 font-bold">{t.doc_pass}</span></div>
+                        <div onClick={()=>{setDocType('license'); setStep('scan');}} className="card-select">{SVGIcons.license} <span className="ml-4 font-bold">{t.doc_l}</span></div>
                     </div>
                 </div>
             );
@@ -493,68 +779,54 @@
             if (step === 'scan') return (
                 <div className="app-container flex flex-col text-center">
                      {isScanning ? (
-                         <div className="scan-container">
-                             <video ref={videoRef} autoPlay playsInline muted />
-                             <div className="guide-layer"><div className="guide-box"></div></div>
-                             <div className="absolute bottom-10 left-0 right-0 flex justify-center gap-4">
-                                 <button onClick={()=>setIsScanning(false)} className="btn btn-danger w-1/3">STOP</button>
-                                 <button onClick={()=>runOCR(videoRef.current)} className="btn btn-primary w-1/3">{t.scan_b}</button>
-                             </div>
+                         <div className="flex-1 bg-black flex flex-col">
+                             <div className="scan-wrapper-full"><video ref={videoRef} autoPlay playsInline muted /><div className="guide-overlay"><div className="zone-residenza"></div><div className="zone-mrz"></div></div></div>
+                             <div className="p-4 bg-white flex justify-center gap-4"><button onClick={()=>setIsScanning(false)} className="btn btn-danger w-1/3">STOP</button><button onClick={()=>runOCR(videoRef.current)} className="btn btn-primary w-1/3">SCATTA</button></div>
                          </div>
                      ) : (
                          <div className="p-6 pt-10">
-                             <Header setStep={setStep} backStep="doc_select" setLang={setLang} lang={lang} />
-                             <h2 className="text-xl font-bold mb-4 uppercase mt-10">{t.scan_i}</h2>
-                             <div className="alert-blue mb-6">{t.scan_h}</div>
-                             <button onClick={()=>{setIsScanning(true); navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(s=>videoRef.current.srcObject=s);}} className="btn btn-primary w-full mb-4 flex justify-center gap-2 uppercase"><Icon name="camera"/> {t.scan_b}</button>
-                             
-                             <div className="relative">
-                                 <button onClick={()=>fileRef.current.click()} className="btn btn-secondary w-full mb-4 uppercase">{t.file_b}</button>
-                                 <input type="file" className="hidden" ref={fileRef} onChange={handleFileUpload} />
-                             </div>
-                             
+                             <h2 className="text-xl font-bold mb-4 uppercase">{t.scan_info}</h2>
+                             <div className="alert-blue">{t.scan_help}</div>
+                             <button onClick={()=>{setIsScanning(true); navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(s=>videoRef.current.srcObject=s);}} className="btn btn-primary w-full mb-4 flex justify-center gap-2 uppercase font-bold"><Icon name="camera"/> {t.scan_btn}</button>
+                             <button onClick={()=>fileRef.current.click()} className="btn btn-secondary w-full mb-4 uppercase font-bold">{t.file_btn}</button>
+                             <input type="file" className="hidden" ref={fileRef} onChange={handleFileUpload} />
                              {ocrProcessing && <p className="text-teal-600 font-bold animate-pulse">{t.ocr_processing}</p>}
-                             <button onClick={()=>setStep('manual_form')} className="underline mt-4 text-sm font-bold uppercase text-slate-400">{t.manual_b}</button>
+                             <button onClick={()=>setStep('manual_form')} className="underline mt-4 text-sm font-bold uppercase text-slate-400">{t.manual_btn}</button>
                          </div>
                      )}
                 </div>
             );
 
-            // MANUAL FORM (4 ADDRESS FIELDS)
+            // MANUAL FORM
             if (step === 'manual_form') return (
                 <div className="app-container flex flex-col">
-                    <Header setStep={setStep} backStep="doc_select" setLang={setLang} lang={lang} />
+                    <div className="p-4 border-b flex items-center bg-white"><button onClick={()=>setStep('guest_list')}><Icon name="chevronLeft"/></button><span className="ml-4 font-bold uppercase">{t.verify}</span></div>
                     <div className="p-6 overflow-y-auto pb-20">
-                        <h2 className="text-xl font-bold mb-4 uppercase text-slate-800">{t.verify}</h2>
-                        
-                        <input className="input-field uppercase" placeholder={t.l_sur} value={formData.surname || ''} onChange={e=>setFormData({...formData, surname:e.target.value.toUpperCase()})} />
-                        <input className="input-field uppercase" placeholder={t.l_name} value={formData.name || ''} onChange={e=>setFormData({...formData, name:e.target.value.toUpperCase()})} />
-                        
+                        <input className="input-field uppercase" placeholder={t.label_surname} value={formData.surname || ''} onChange={e=>setFormData({...formData, surname:e.target.value.toUpperCase()})} />
+                        <input className="input-field uppercase" placeholder={t.label_name} value={formData.name || ''} onChange={e=>setFormData({...formData, name:e.target.value.toUpperCase()})} />
                         <div className="grid grid-cols-2 gap-2">
                             <input type="date" className="input-field" onChange={e=>setFormData({...formData, birthDate:e.target.value})} />
                             <select className="input-field bg-white" onChange={e=>setFormData({...formData, sex:e.target.value})}><option value="M">M</option><option value="F">F</option></select>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <input className="input-field uppercase" placeholder={t.l_bcity} onChange={e=>setFormData({...formData, birthCity:e.target.value.toUpperCase()})} />
-                            <input className="input-field uppercase" placeholder={t.l_bprov} maxLength="2" onChange={e=>setFormData({...formData, birthProvince:e.target.value.toUpperCase()})} />
+                            <input className="input-field uppercase" placeholder={t.label_city} onChange={e=>setFormData({...formData, birthCity:e.target.value.toUpperCase()})} />
+                            <input className="input-field uppercase" placeholder={t.label_prov} maxLength="2" onChange={e=>setFormData({...formData, birthProvince:e.target.value.toUpperCase()})} />
                         </div>
-                        <input className="input-field uppercase" placeholder={t.l_cit} value={formData.citizenship || 'ITALIANA'} onChange={e=>setFormData({...formData, citizenship:e.target.value.toUpperCase()})} />
-                        
+                        <input className="input-field uppercase" placeholder={t.label_cit} value={formData.citizenship || 'ITALIANA'} onChange={e=>setFormData({...formData, citizenship:e.target.value.toUpperCase()})} />
                         <hr className="my-4"/>
-                        <p className="text-xs font-bold text-slate-400 mb-2 uppercase">Indirizzo Residenza</p>
-                        
-                        <input className="input-field uppercase" placeholder={t.l_res_st} onChange={e=>setFormData({...formData, residenceStreet:e.target.value.toUpperCase()})} />
+                        <input className="input-field uppercase" placeholder={t.label_res} onChange={e=>setFormData({...formData, residenceAddress:e.target.value.toUpperCase()})} />
                         <div className="grid grid-cols-3 gap-2">
-                            <input className="input-field uppercase" placeholder={t.l_res_civ} onChange={e=>setFormData({...formData, residenceCivic:e.target.value.toUpperCase()})} />
-                            <input className="input-field uppercase" placeholder={t.l_res_city} onChange={e=>setFormData({...formData, residenceCity:e.target.value.toUpperCase()})} />
-                            <input className="input-field uppercase" placeholder={t.l_res_prov} maxLength="2" onChange={e=>setFormData({...formData, residenceProvince:e.target.value.toUpperCase()})} />
+                            <input className="input-field uppercase" placeholder={t.label_civic} onChange={e=>setFormData({...formData, houseNumber:e.target.value.toUpperCase()})} />
+                            <input className="input-field uppercase" placeholder={t.label_res_city} onChange={e=>setFormData({...formData, residenceCity:e.target.value.toUpperCase()})} />
+                            <input className="input-field uppercase" placeholder={t.label_res_prov} maxLength="2" onChange={e=>setFormData({...formData, residenceProvince:e.target.value.toUpperCase()})} />
                         </div>
-                        
                         <hr className="my-4"/>
-                        <input className="input-field uppercase" placeholder={t.l_iss} value={formData.issuedBy || ''} onChange={e=>setFormData({...formData, issuedBy:e.target.value.toUpperCase()})} />
-                        
                         <div className="grid grid-cols-2 gap-2">
-                            <input className="input-field uppercase font-bold" placeholder={t.l_doc} value={formData.docNumber || ''} onChange={e=>setFormData({...formData, docNumber:e.target.value.toUpperCase()})} />
+                            <select className="input-field bg-white" onChange={e=>setFormData({...formData, issuedBy:e.target.value})}><option value="COMUNE DI">COMUNE</option><option value="QUESTURA DI">QUESTURA</option><option value="MOTORIZZAZIONE">MOTORIZZ.</option></select>
+                            <input className="input-field uppercase" placeholder="Città Rilascio" onChange={e=>setFormData({...formData, issuedCity:e.target.value.toUpperCase()})} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <input className="input-field uppercase font-bold" placeholder={t.label_doc} value={formData.docNumber || ''} onChange={e=>setFormData({...formData, docNumber:e.target.value.toUpperCase()})} />
                             <input type="date" className="input-field" onChange={e=>setFormData({...formData, expiryDate:e.target.value})} />
                         </div>
 
@@ -575,7 +847,7 @@
                             <label className="text-xs font-bold uppercase text-yellow-900">{t.data_true_label}</label>
                         </div>
 
-                        <button onClick={()=>{ setLocalGuests([...localGuests, {...formData, imgFront:images.front, imgBack:images.back, docType}]); setStep('guest_list'); }} disabled={!isFormComplete() || !checkPhotos()} className="btn btn-success w-full mt-6 shadow-lg">{t.save}</button>
+                        <button onClick={()=>{ setLocalGuests([...localGuests, {...formData, imgFront:images.front, imgBack:images.back, docType}]); setStep('guest_list'); }} disabled={!isFormComplete() || !checkPhotos()} className="btn btn-success w-full mt-6 shadow-lg">{t.save_guest}</button>
                     </div>
                 </div>
             );
@@ -584,8 +856,8 @@
             if (step === 'sign') return (
                 <div className="app-container p-6 text-center">
                     <Header setStep={setStep} backStep="guest_list" setLang={setLang} lang={lang} />
-                    <h2 className="text-xl font-bold mb-4 uppercase mt-10">{t.sign}</h2>
-                    <p className="text-xs mb-4 italic p-3 bg-blue-50 text-blue-900 rounded-xl border border-blue-100">{t.tax}</p>
+                    <h2 className="text-xl font-bold mb-4 uppercase mt-10">{t.sign_title}</h2>
+                    <p className="text-xs mb-4 italic p-3 bg-blue-50 text-blue-900 rounded-xl border border-blue-100">{t.tax_info}</p>
                     <div className="h-60 bg-white border-2 border-slate-200 rounded-2xl mb-6 shadow-inner"><SignaturePad canvasRef={sigRef}/></div>
                     <div className="flex gap-2">
                         <button onClick={()=>{const ctx=sigRef.current.getContext('2d'); ctx.clearRect(0,0,500,500);}} className="btn btn-secondary w-1/3">{t.clear}</button>
@@ -594,7 +866,7 @@
                 </div>
             );
 
-            // 9. SUCCESS
+            // 9. SUCCESS / LOCKED
             if (step === 'success') {
                 const totalReg = (session?.guests?.length || 0) + localGuests.length;
                 const isComplete = totalReg >= session.totalGuests;
@@ -606,29 +878,29 @@
                         {showCode ? (
                             <>
                                 <div className="w-24 h-24 bg-white text-teal-900 rounded-full flex items-center justify-center mb-6 shadow-2xl animate-bounce"><Icon name="check"/></div>
-                                <h1 className="text-3xl font-bold mb-4 uppercase">{t.success}</h1>
+                                <h1 className="text-3xl font-bold mb-4 uppercase">{t.success_title}</h1>
                                 <div className="bg-white text-slate-900 p-8 rounded-2xl w-full shadow-2xl mb-8 border border-teal-500">
-                                    <p className="text-slate-400 text-xs font-bold uppercase mb-2">{t.code}</p>
+                                    <p className="text-slate-400 text-xs font-bold uppercase mb-2">{t.code_label}</p>
                                     <div className="text-5xl font-mono font-bold tracking-widest">{doorCode}</div>
                                 </div>
                             </>
                         ) : (
                             <>
                                 <div className="w-24 h-24 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mb-6 shadow-lg"><Icon name="lock"/></div>
-                                <h1 className="text-xl font-bold mb-2 uppercase">{t.locked}</h1>
+                                <h1 className="text-xl font-bold mb-2 uppercase">{t.locked_title}</h1>
                                 <p className="mb-6 text-sm p-4 bg-orange-50 border border-orange-200 rounded-xl">{t.locked_msg}</p>
                                 <p className="text-xs font-bold mb-4 uppercase bg-slate-100 p-2 rounded">{t.missing} {missing} {t.guests}!</p>
                                 
                                 {property?.wb && property.wb !== '#' && (
-                                    <a href={property.wb} target="_blank" className="btn btn-secondary w-full mb-4 shadow-lg uppercase font-bold">{t.wb}</a>
+                                    <a href={property.wb} target="_blank" className="btn btn-secondary w-full mb-4 shadow-lg uppercase font-bold">{t.wb_btn}</a>
                                 )}
                                 <div className="bg-slate-50 p-4 rounded-xl w-full mb-4 border border-slate-200">
-                                    <p className="text-xs font-bold mb-2 uppercase text-slate-500">{t.share}</p>
+                                    <p className="text-xs font-bold mb-2 uppercase text-slate-500">{t.share_link}</p>
                                     <button onClick={()=>{const l=`${window.location.origin}${window.location.pathname}?session=${session.id}`; navigator.clipboard.writeText(l); alert('Copiato');}} className="text-blue-600 underline text-sm break-all font-bold">Copia Link</button>
                                 </div>
                             </>
                         )}
-                        <a href="https://wa.me/393338485333" target="_blank" className="btn btn-whatsapp w-full font-bold shadow-lg mt-4 uppercase">{t.wa}</a>
+                        <a href="https://wa.me/393338485333" target="_blank" className="btn btn-whatsapp w-full font-bold shadow-lg mt-4 uppercase">{t.wa_btn}</a>
                     </div>
                 );
             }
@@ -637,7 +909,7 @@
             if (step === 'admin_pass') return (
                 <div className="app-container p-8 justify-center flex flex-col text-center">
                     <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img"/></div></div>
-                    <form onSubmit={(e)=>{ e.preventDefault(); if(e.target.elements.apass.value==='W0d@w0d@'){fetchAdmin(); setStep('admin_dash');} }} className="w-full mt-8">
+                    <form onSubmit={(e)=>{ e.preventDefault(); if(e.target.elements.apass.value==='W0d@w0d@'){fetchAdmin(); fetchCodes(); setStep('admin_dash');} }} className="w-full mt-8">
                         <input name="apass" type="password" autoFocus className="input-field text-center font-bold" placeholder="PASSWORD" />
                         <button type="submit" className="btn btn-primary mt-4 w-full shadow-lg uppercase">SBLOCCA</button>
                     </form>
@@ -648,73 +920,94 @@
             if (step === 'admin_dash') return (
                 <div className="app-container overflow-y-auto bg-slate-100">
                     <div className="p-4 bg-white sticky top-0 z-10 flex justify-between items-center shadow-lg">
-                        <h2 className="font-bold tracking-widest text-teal-800">ADMIN</h2>
-                        <button onClick={()=>window.location.reload()} className="text-[10px] bg-red-600 text-white px-3 py-2 rounded font-bold uppercase">ESCI</button>
+                        <h2 className="font-bold tracking-widest text-teal-800">ADMIN PANEL</h2>
+                        <button onClick={clearHistory} className="text-[10px] bg-red-600 text-white px-3 py-2 rounded font-bold uppercase hover:bg-red-700 transition">CANCELLA TUTTO</button>
                     </div>
 
                     {/* MODAL DETTAGLIO OSPITE - TUTTO INCLUSO */}
                     {selectedSession && (
-                        <div className="modal-overlay" onClick={()=>setSelectedSession(null)}>
-                            <div className="modal-body" onClick={e=>e.stopPropagation()}>
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="font-bold text-xl uppercase text-teal-800">{selectedSession.guestName}</h3>
-                                    <button className="text-2xl font-bold bg-white w-10 h-10 rounded-full shadow" onClick={()=>setSelectedSession(null)}>X</button>
-                                </div>
-                                
+                        <div className="modal" onClick={()=>setSelectedSession(null)}>
+                            <div className="modal-content" onClick={e=>e.stopPropagation()}>
+                                <button className="absolute top-4 right-4 text-2xl font-bold bg-white rounded-full w-10 h-10 shadow flex justify-center items-center" onClick={()=>setSelectedSession(null)}><Icon name="close"/></button>
+                                <h3 className="font-bold text-center mb-4 text-2xl uppercase text-teal-800 mt-8">{selectedSession.guestName}</h3>
                                 {selectedSession.guests.map((g, i) => (
-                                    <div key={i} className="mb-8 bg-white p-4 rounded-xl shadow border border-slate-200">
-                                        <div className="bg-teal-50 p-2 rounded mb-4 font-bold text-teal-800 text-center uppercase">OSPITE {i+1}</div>
-                                        
-                                        <CopyRow label="COGNOME" value={g.surname} />
-                                        <CopyRow label="NOME" value={g.name} />
-                                        <CopyRow label="SESSO" value={g.sex} />
-                                        <CopyRow label="DATA NASCITA" value={formatDateIT(g.birthDate)} />
-                                        <CopyRow label="COMUNE NASCITA" value={g.birthCity} />
-                                        <CopyRow label="PROV. NASCITA" value={g.birthProvince} />
-                                        <CopyRow label="CITTADINANZA" value={g.citizenship} />
-                                        
-                                        <hr className="my-2"/>
-                                        <CopyRow label="INDIRIZZO" value={g.residenceStreet} />
-                                        <CopyRow label="CIVICO" value={g.residenceCivic} />
-                                        <CopyRow label="COMUNE RESIDENZA" value={g.residenceCity} />
-                                        <CopyRow label="PROV. RESIDENZA" value={g.residenceProvince} />
-                                        
-                                        <hr className="my-2"/>
-                                        <CopyRow label="TIPO DOC" value={g.docType} />
-                                        <CopyRow label="NUMERO" value={g.docNumber} />
-                                        <CopyRow label="ENTE RILASCIO" value={g.issuedBy} />
-                                        <CopyRow label="SCADENZA" value={formatDateIT(g.expiryDate)} />
-
+                                    <div key={i} className="mb-8 border-b-4 border-slate-200 pb-6 bg-slate-50 p-4 rounded-xl">
+                                        <h4 className="font-bold text-lg text-teal-700 mb-4 bg-teal-100 p-2 rounded text-center">OSPITE {i+1}</h4>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            <CopyRow label="Cognome" value={g.surname} />
+                                            <CopyRow label="Nome" value={g.name} />
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <CopyRow label="Sesso" value={g.sex} />
+                                                <CopyRow label="Data Nascita" value={formatDateIT(g.birthDate)} />
+                                            </div>
+                                            <CopyRow label="Luogo Nascita" value={`${g.birthCity} (${g.birthProvince})`} />
+                                            <CopyRow label="Cittadinanza" value={g.citizenship} />
+                                            <CopyRow label="Indirizzo" value={`${g.residenceAddress}, ${g.houseNumber} - ${g.residenceCity} (${g.residenceProvince})`} />
+                                            <CopyRow label="Tipo Doc" value={g.docType} />
+                                            <CopyRow label="Numero Doc" value={g.docNumber} />
+                                            <CopyRow label="Ente Rilascio" value={`${g.issuedBy || ''} ${g.issuedCity || ''}`} />
+                                            <CopyRow label="Scadenza" value={formatDateIT(g.expiryDate)} />
+                                        </div>
                                         <div className="grid grid-cols-2 gap-4 mt-4">
-                                            {g.imgFront && <div onClick={()=>setZoomImg(g.imgFront)}><p className="text-xs font-bold mb-1 uppercase">FRONTE</p><img src={g.imgFront} className="border rounded w-full h-32 object-contain bg-black cursor-pointer"/></div>}
-                                            {g.imgBack && <div onClick={()=>setZoomImg(g.imgBack)}><p className="text-xs font-bold mb-1 uppercase">RETRO</p><img src={g.imgBack} className="border rounded w-full h-32 object-contain bg-black cursor-pointer"/></div>}
+                                            {g.imgFront && (
+                                                <div className="text-center">
+                                                    <p className="text-xs font-bold mb-1 uppercase">FRONTE</p>
+                                                    <img src={g.imgFront} onClick={()=>setZoomImg(g.imgFront)} className="border rounded w-full h-32 object-contain bg-black cursor-pointer mb-2"/>
+                                                    <a href={g.imgFront} download={`Fronte_${g.surname}.jpg`} className="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold uppercase block w-full text-center">SCARICA</a>
+                                                </div>
+                                            )}
+                                            {g.imgBack && (
+                                                <div className="text-center">
+                                                    <p className="text-xs font-bold mb-1 uppercase">RETRO</p>
+                                                    <img src={g.imgBack} onClick={()=>setZoomImg(g.imgBack)} className="border rounded w-full h-32 object-contain bg-black cursor-pointer mb-2"/>
+                                                    <a href={g.imgBack} download={`Retro_${g.surname}.jpg`} className="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold uppercase block w-full text-center">SCARICA</a>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
-                                {selectedSession.signature && <div className="text-center mt-4 bg-white p-4 rounded shadow"><p className="font-bold uppercase text-slate-400 mb-2">FIRMA</p><img src={selectedSession.signature} className="h-24 mx-auto border-b-2 border-slate-300 mb-2"/></div>}
-                                
-                                <button onClick={()=>setSelectedSession(null)} className="w-full mt-8 bg-slate-800 text-white font-bold py-4 rounded-xl uppercase">CHIUDI SCHEDA</button>
+                                {selectedSession.signature && (
+                                    <div className="text-center mt-4 bg-white p-4 rounded shadow">
+                                        <p className="font-bold uppercase text-slate-400 mb-2">FIRMA RESPONSABILE</p>
+                                        <img src={selectedSession.signature} className="h-24 mx-auto border-b-2 border-slate-300 mb-2"/>
+                                        <a href={selectedSession.signature} download="Firma.png" className="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold uppercase">SCARICA</a>
+                                    </div>
+                                )}
+                                <button onClick={addEmergency} className="w-full mt-8 bg-red-100 text-red-600 font-bold py-4 rounded-xl uppercase border-2 border-red-200">{t.emergency_add}</button>
                             </div>
                         </div>
                     )}
 
-                    {/* ZOOM FOTO */}
-                    {zoomImg && <div className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4" onClick={()=>setZoomImg(null)}><img src={zoomImg} className="max-w-full max-h-full object-contain"/></div>}
+                    {/* ZOOM */}
+                    {zoomImg && <div className="modal justify-center items-center" onClick={()=>setZoomImg(null)}><img src={zoomImg} className="max-w-full max-h-full rounded"/></div>}
+
+                    {/* MODIFICA */}
+                    {editingGuestIndex !== null && (
+                        <div className="modal text-slate-800" onClick={()=>setEditingGuestIndex(null)}>
+                            <div className="bg-white p-6 rounded-2xl w-full max-w-sm" onClick={e=>e.stopPropagation()}>
+                                <h3 className="font-bold text-center mb-4 uppercase">Modifica Ospite</h3>
+                                <input className="input-field" value={formData.surname} onChange={e=>setFormData({...formData, surname:e.target.value.toUpperCase()})} placeholder="Cognome"/>
+                                <input className="input-field" value={formData.name} onChange={e=>setFormData({...formData, name:e.target.value.toUpperCase()})} placeholder="Nome"/>
+                                <input className="input-field" value={formData.docNumber} onChange={e=>setFormData({...formData, docNumber:e.target.value.toUpperCase()})} placeholder="Doc Num"/>
+                                <div className="flex gap-2 mt-4"><button onClick={()=>setEditingGuestIndex(null)} className="btn btn-secondary w-1/2">Annulla</button><button onClick={saveGuestEdit} className="btn btn-primary w-1/2">Salva</button></div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="p-4 space-y-6">
-                        {/* CODICI */}
+                        {/* 1. GESTIONE CODICI */}
                         <div className="bg-white p-4 rounded-xl shadow-sm border border-yellow-200">
                             <h3 className="font-bold text-yellow-700 text-xs uppercase mb-3">Codici Porte</h3>
                             {Object.keys(PROPERTIES).map(k => (
                                 <div key={k} className="flex gap-2 mb-2 items-center">
-                                    <span className="w-20 text-xs font-bold text-slate-500 uppercase">{PROPERTIES[k].name}</span>
-                                    <input id={`code_${k}`} className="border p-2 rounded w-full text-center font-mono font-bold text-slate-700" placeholder="Nuovo Codice" />
+                                    <span className="w-24 text-xs font-bold uppercase">{PROPERTIES[k].name}</span>
+                                    <input id={`code_${k}`} className="border p-2 rounded w-full text-center font-mono font-bold text-slate-700" placeholder="Nuovo Codice" defaultValue={propertyCodes[k]} />
                                     <button onClick={()=>saveCode(k)} className="bg-yellow-400 text-white px-3 py-2 rounded font-bold shadow text-xs">OK</button>
                                 </div>
                             ))}
                         </div>
 
-                        {/* LINK VIP */}
+                        {/* 2. LINK VIP */}
                         <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-200">
                             <h3 className="font-bold text-blue-700 text-xs uppercase mb-3">{t.admin_vip}</h3>
                             <div className="flex gap-2 mb-2">
@@ -733,7 +1026,7 @@
                             }} className={`btn w-full text-sm font-bold uppercase shadow-md ${vipLinkCopied?'bg-green-600':'bg-blue-600'} text-white`}>{vipLinkCopied?t.vip_success:t.admin_vip}</button>
                         </div>
 
-                        {/* LISTA */}
+                        {/* 3. LISTA */}
                         <div className="bg-white rounded-xl shadow-sm overflow-hidden pb-20">
                             <div className="bg-slate-50 p-3 border-b font-bold text-xs text-slate-500">PRENOTAZIONI RECENTI</div>
                             <input className="w-full p-3 text-center text-sm border-b" placeholder="Cerca ospite..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value.toLowerCase())} />
