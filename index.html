@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tuscan Retreats - Guest Portal</title>
     
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            alert("ERRORE CRITICO: " + message + "\nRiga: " + lineno);
+        };
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -16,73 +22,56 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
         
-        /* LOGO ADMIN 125px */
-        .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 30px 0; background: white; }
-        .logo-circle {
-            width: 125px; height: 125px; 
-            background: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden;
-            border: 3px solid #d4af37; position: relative; padding: 0;
-        }
+        /* LOGO */
+        .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 40px 0; background: white; }
+        .logo-circle { width: 125px; height: 125px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; border: 3px solid #d4af37; position: relative; padding: 0; }
         .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
 
-        /* HEADER OSPITE */
-        .header-logo-circle { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; }
-        .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
-
-        /* FOTO GIULIA */
-        .giulia-photo-container {
-            width: 130px; height: 130px; border-radius: 50%; border: 4px solid white; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15); overflow: hidden; margin: 0 auto;
-            position: relative; z-index: 10; margin-bottom: -65px;
-        }
-        .welcome-card {
-            background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 20px;
-            padding: 20px; padding-top: 75px; position: relative; z-index: 1; margin-bottom: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-
-        /* INPUTS & UI */
+        /* INPUTS */
         .input-field { width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 10px; color: #1e293b; }
         .input-field:focus { border-color: #0f766e; outline: none; box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); }
-        .input-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; margin-left: 4px; text-align: left; letter-spacing: 0.5px; }
+        
+        /* BUTTONS */
         .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 0.5px; }
         .btn-primary { background: #0f766e; color: white; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3); }
         .btn-secondary { background: #fff; border: 2px solid #e2e8f0; color: #334155; }
         .btn-success { background: #10b981; color: white; }
         .btn-danger { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
+        .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
 
-        /* SCANNER */
+        /* FOTO GIULIA */
+        .giulia-photo-container { width: 130px; height: 130px; border-radius: 50%; border: 4px solid white; box-shadow: 0 10px 20px rgba(0,0,0,0.15); overflow: hidden; margin: 0 auto; position: relative; z-index: 10; margin-bottom: -65px; }
+        .welcome-card { background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 20px; padding: 20px; padding-top: 75px; position: relative; z-index: 1; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+
+        /* UTILS */
         .scan-wrapper-full { position: relative; width: 100vw; height: 480px; background: #000; overflow: hidden; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; }
         video { width: 100%; height: 100%; object-fit: cover; }
         .guide-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
         .zone-residenza { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 15%; border: 2px solid #FFD60A; border-radius: 6px; background: rgba(255, 214, 10, 0.15); z-index: 10; }
         .zone-mrz { position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); width: 95%; height: 22%; border: 3px solid #00E0FF; border-radius: 6px; background: rgba(0, 224, 255, 0.15); z-index: 10; }
         
-        .card-select { width: 100%; padding: 20px; border-radius: 16px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
-        .card-select:hover { border-color: #0f766e; background: #f0fdfa; transform: translateY(-2px); }
-        .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
-        .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
-
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; overflow-y: auto; display: flex; flex-direction: column; }
-        .modal-content { background: #f8fafc; min-height: 100%; padding: 20px; padding-bottom: 100px; position: relative; }
-        .zoom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 5000; display: flex; align-items: center; justify-content: center; }
-        .zoom-img { max-width: 95%; max-height: 95%; border-radius: 8px; }
-
-        .loader { width: 32px; height: 32px; border: 4px solid #0f766e; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; margin: 0 auto; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .flag-btn { font-size: 26px; padding: 0 6px; opacity: 0.4; transition: 0.2s; filter: grayscale(100%); background: none; border: none; cursor: pointer; }
-        .flag-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
-        
         .admin-row { display: flex; flex-direction: column; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
         .admin-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
         .admin-val { font-size: 14px; font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
+        
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; overflow-y: auto; display: flex; flex-direction: column; }
+        .modal-content { background: #f8fafc; min-height: 100%; padding: 20px; padding-bottom: 100px; }
+        
+        .loader { width: 32px; height: 32px; border: 4px solid #0f766e; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; margin: 0 auto; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .flag-btn { font-size: 26px; padding: 0 6px; opacity: 0.4; transition: 0.2s; filter: grayscale(100%); background: none; border: none; cursor: pointer; }
+        .flag-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div style="height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+            <div class="loader"></div>
+            <p style="margin-top:20px; font-family:sans-serif; color:#666;">CARICAMENTO SISTEMA...</p>
+        </div>
+    </div>
     <canvas id="ocr-canvas" style="display:none;"></canvas>
 
     <script type="module">
@@ -111,140 +100,25 @@
         };
 
         const TRANSLATIONS = {
-            it: { 
-                welcome: "Benvenuto a", thanks_choice: "Grazie per averci scelto!",
-                intro_giulia: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, completa il check-in online.",
-                start_btn: "INIZIA CHECK-IN", 
-                guest_q: "Chi è il capogruppo?", 
-                guest_tip: "Inserisci il tuo nome e quanti ospiti siete in totale.",
-                name_ph: "Nome e Cognome", count_ph: "Numero Ospiti",
-                doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente",
-                scan_info: "Scansiona Documento", scan_help: "Posiziona il documento in orizzontale. Evita riflessi.",
-                scan_btn: "SCATTA E LEGGI", file_btn: "CARICA FILE", manual_btn: "INSERISCI A MANO",
-                ocr_processing: "Analisi in corso...", ocr_error: "Dati non letti. Riprova.", ocr_success: "Dati rilevati! Verifica.",
-                verify: "Verifica Dati", 
-                label_surname: "Cognome", label_name: "Nome", label_born: "Nato il", label_sex: "Sesso",
-                label_city: "Città Nascita", label_prov: "Prov.", label_cit: "Cittadinanza",
-                label_res: "Residenza (Via)", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_civic: "N. Civico",
-                label_doc: "N. Documento", label_exp: "Scadenza", label_issue: "Ente Rilascio",
-                photo_req: "FOTO OBBLIGATORIE", front: "Fronte", back: "Retro", take: "SCATTA",
-                sign_title: "Firma", tax_info: "Tassa di soggiorno da pagare in loco (se non inclusa).", clear: "Cancella",
-                save_guest: "SALVA OSPITE", cloud_save: "Salvataggio...",
-                success_title: "Check-in Completato!", code_label: "IL TUO CODICE:",
-                locked_title: "CHECK-IN INCOMPLETO", locked_msg: "Il codice è BLOCCATO 🔒",
-                locked_desc: "Tutti gli ospiti devono essere registrati per vedere il codice.",
-                missing: "Mancano", guests: "ospiti",
-                share_link: "Invia questo link agli altri:",
-                wb_btn: "LEGGI WELCOME BOOK", wa_btn: "AVVISA GIULIA (WHATSAPP)",
-                admin_vip: "Genera Link VIP (Sbloccato)", vip_success: "LINK COPIATO!",
-                emergency_add: "🆘 Aggiungi Manuale (Emergenza)",
-                required: "Tutti i campi sono obbligatori", guest_list: "Lista Ospiti", finish: "CONFERMA E PROCEDI",
-                add_guest_btn: "AGGIUNGI OSPITE"
-            },
-            en: { 
-                welcome: "Welcome to", thanks_choice: "Thanks for choosing us!",
-                intro_giulia: "Hi! I'm Giulia. Please complete online check-in.",
-                start_btn: "START CHECK-IN", 
-                guest_q: "Who is the lead guest?", 
-                guest_tip: "Enter full name and total guests.",
-                name_ph: "Full Name", count_ph: "Total Guests",
-                doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "License",
-                scan_info: "Scan Document", scan_help: "Place horizontally.",
-                scan_btn: "SNAP & READ", file_btn: "UPLOAD FILE", manual_btn: "MANUAL ENTRY",
-                ocr_processing: "Processing...", ocr_error: "Error. Retry.", ocr_success: "Detected!",
-                verify: "Verify Data", 
-                label_surname: "Surname", label_name: "Name", label_born: "Birth Date", label_sex: "Sex",
-                label_city: "Birth City", label_prov: "Prov.", label_cit: "Citizenship",
-                label_res: "Address", label_res_city: "City", label_res_prov: "Prov.", label_civic: "No.",
-                label_doc: "Doc Number", label_exp: "Expiry", label_issue: "Issued By",
-                photo_req: "MANDATORY PHOTOS", front: "Front", back: "Back", take: "TAKE",
-                sign_title: "Signature", tax_info: "City tax to be paid on site.", clear: "Clear",
-                save_guest: "SAVE GUEST", cloud_save: "Saving...",
-                success_title: "Check-in Complete!", code_label: "YOUR CODE:",
-                locked_title: "CHECK-IN INCOMPLETE", locked_msg: "Code is LOCKED 🔒",
-                locked_desc: "All guests must complete check-in.",
-                missing: "Missing", guests: "guests",
-                share_link: "Send link to others:",
-                wb_btn: "READ WELCOME BOOK", wa_btn: "NOTIFY GIULIA (WHATSAPP)",
-                admin_vip: "Generate VIP Link", vip_success: "LINK COPIED!",
-                emergency_add: "🆘 Manual Add (Emergency)",
-                required: "Required", guest_list: "Guest List", finish: "CONFIRM & PROCEED",
-                add_guest_btn: "ADD GUEST"
-            },
-            fr: { 
-                welcome: "Bienvenue à", thanks_choice: "Merci de nous avoir choisis !",
-                intro_giulia: "Je suis Giulia. Complétez l'enregistrement.",
-                start_btn: "COMMENCER", guest_q: "Invité principal ?",
-                guest_tip: "Nom et nombre total.", name_ph: "Nom", count_ph: "Total",
-                doc_type: "Document", doc_e: "C.I. Élec.", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis",
-                scan_info: "Scanner", scan_btn: "SCANNER", file_btn: "FICHIER", manual_btn: "MANUEL",
-                ocr_success: "Détecté !", verify: "Vérifier", 
-                label_surname: "Nom", label_name: "Prénom", label_born: "Né le", label_sex: "Sexe",
-                label_city: "Ville Naissance", label_prov: "Prov.", label_cit: "Nationalité", 
-                label_res: "Adresse", label_res_city: "Ville", label_res_prov: "Prov.", label_civic: "N°",
-                label_doc: "N° Doc", label_exp: "Expiration", label_issue: "Délivré par",
-                photo_req: "PHOTOS", front: "Recto", back: "Verso", take: "PHOTO",
-                sign_title: "Signature", tax_info: "Taxe de séjour sur place.", clear: "Effacer",
-                save_guest: "ENREGISTRER", success_title: "Terminé !", code_label: "CODE :",
-                locked_title: "INCOMPLET", locked_msg: "Code VERROUILLÉ 🔒", missing: "Manque", guests: "invités",
-                wb_btn: "LIVRET D'ACCUEIL", wa_btn: "WHATSAPP", admin_vip: "Lien VIP", vip_success: "COPIÉ !", 
-                emergency_add: "🆘 Urgence", required: "Requis", guest_list: "Invités", finish: "TERMINER",
-                add_guest_btn: "AJOUTER INVITÉ"
-            },
-            es: { 
-                welcome: "Bienvenido a", thanks_choice: "¡Gracias por elegirnos!",
-                intro_giulia: "Soy Giulia. Complete el registro.",
-                start_btn: "EMPEZAR", guest_q: "¿Huésped principal?",
-                guest_tip: "Nombre y total.", name_ph: "Nombre", count_ph: "Total",
-                doc_type: "Documento", doc_e: "DNI Elec.", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia",
-                scan_info: "Escanear", scan_btn: "ESCANEAR", file_btn: "ARCHIVO", manual_btn: "MANUAL",
-                ocr_success: "¡Detectado!", verify: "Verificar", 
-                label_surname: "Apellido", label_name: "Nombre", label_born: "Nacido", label_sex: "Sexo",
-                label_city: "Ciudad Nac.", label_prov: "Prov.", label_cit: "Ciudadanía", 
-                label_res: "Dirección", label_res_city: "Ciudad", label_res_prov: "Prov.", label_civic: "N°",
-                label_doc: "N° Doc", label_exp: "Caducidad", label_issue: "Emisor",
-                photo_req: "FOTOS", front: "Frente", back: "Dorso", take: "FOTO",
-                sign_title: "Firma", tax_info: "Tasa turística en el lugar.", clear: "Borrar",
-                save_guest: "GUARDAR", success_title: "¡Listo!", code_label: "CÓDIGO:",
-                locked_title: "INCOMPLETO", locked_msg: "Código BLOQUEADO 🔒", missing: "Faltan", guests: "huéspedes",
-                wb_btn: "LIBRO BIENVENIDA", wa_btn: "WHATSAPP", admin_vip: "Enlace VIP", vip_success: "¡COPIADO!", 
-                emergency_add: "🆘 Emergencia", required: "Requerido", guest_list: "Huéspedes", finish: "TERMINAR",
-                add_guest_btn: "AÑADIR HUÉSPED"
-            },
-            de: { 
-                welcome: "Willkommen", thanks_choice: "Danke für Ihre Wahl!",
-                intro_giulia: "Ich bin Giulia. Bitte Check-in abschließen.",
-                start_btn: "STARTEN", guest_q: "Hauptgast?",
-                guest_tip: "Name und Anzahl.", name_ph: "Name", count_ph: "Anzahl",
-                doc_type: "Dokument", doc_e: "Elek. ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein",
-                scan_info: "Scannen", scan_btn: "SCANNEN", file_btn: "DATEI", manual_btn: "MANUELL",
-                ocr_success: "Erkannt!", verify: "Prüfen", 
-                label_surname: "Nachname", label_name: "Vorname", label_born: "Geboren", label_sex: "Geschlecht",
-                label_city: "Geburtsort", label_prov: "Prov.", label_cit: "Nationalität", 
-                label_res: "Adresse", label_res_city: "Stadt", label_res_prov: "Prov.", label_civic: "Nr.",
-                label_doc: "Doc Nr.", label_exp: "Ablauf", label_issue: "Ausgestellt von",
-                photo_req: "FOTOS", front: "Vorn", back: "Hinten", take: "FOTO",
-                sign_title: "Unterschrift", tax_info: "Kurtaxe vor Ort.", clear: "Löschen",
-                save_guest: "SPEICHERN", success_title: "Fertig!", code_label: "CODE:",
-                locked_title: "UNVOLLSTÄNDIG", locked_msg: "Code GESPERRT 🔒", missing: "Fehlen", guests: "Gäste",
-                wb_btn: "WILLKOMMENSBUCH", wa_btn: "WHATSAPP", admin_vip: "VIP Link", vip_success: "KOPIERT!", 
-                emergency_add: "🆘 Notfall", required: "Pflichtfeld", guest_list: "Gäste", finish: "ABSCHLIESSEN",
-                add_guest_btn: "GAST HINZUFÜGEN"
-            }
+            it: { welcome: "Benvenuto a", thanks_choice: "Grazie per averci scelto!", intro_giulia: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, completa il check-in online.", start_btn: "INIZIA CHECK-IN", guest_q: "Chi è il capogruppo?", guest_tip: "Inserisci il tuo nome e quanti ospiti siete in totale.", name_ph: "Nome e Cognome", count_ph: "Numero Ospiti", doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente", scan_info: "Scansiona Documento", scan_help: "Posiziona il documento in orizzontale.", scan_btn: "SCATTA E LEGGI", file_btn: "CARICA FILE", manual_btn: "INSERISCI A MANO", ocr_processing: "Analisi in corso...", ocr_error: "Dati non letti. Riprova.", ocr_success: "Dati rilevati! Verifica.", verify: "Verifica Dati", label_surname: "Cognome", label_name: "Nome", label_born: "Nato il", label_sex: "Sesso", label_city: "Città Nascita", label_prov: "Prov.", label_cit: "Cittadinanza", label_res: "Residenza (Via)", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_civic: "N. Civico", label_doc: "N. Documento", label_exp: "Scadenza", label_issue: "Ente Rilascio", photo_req: "FOTO OBBLIGATORIE", front: "Fronte", back: "Retro", take: "SCATTA", sign_title: "Firma", tax_info: "Tassa di soggiorno da pagare in loco (se non inclusa).", clear: "Cancella", save_guest: "SALVA OSPITE", cloud_save: "Salvataggio...", success_title: "Check-in Completato!", code_label: "IL TUO CODICE:", locked_title: "CHECK-IN INCOMPLETO", locked_msg: "Il codice è BLOCCATO 🔒", missing: "Mancano", guests: "ospiti", share_link: "Invia questo link agli altri:", wb_btn: "LEGGI WELCOME BOOK", wa_btn: "AVVISA GIULIA (WHATSAPP)", admin_vip: "Genera Link VIP (Sbloccato)", vip_success: "LINK COPIATO!", emergency_add: "🆘 Aggiungi Manuale (Emergenza)", required: "Tutti i campi sono obbligatori", guest_list: "Lista Ospiti", finish: "CONFERMA E PROCEDI", add_guest_btn: "AGGIUNGI OSPITE" },
+            en: { welcome: "Welcome to", thanks_choice: "Thanks for choosing us!", intro_giulia: "Hi! I'm Giulia. Please complete online check-in.", start_btn: "START CHECK-IN", guest_q: "Lead Guest?", guest_tip: "Name and total guests.", name_ph: "Full Name", count_ph: "Total Guests", doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "License", scan_info: "Scan Document", scan_help: "Place horizontally.", scan_btn: "SNAP & READ", file_btn: "UPLOAD FILE", manual_btn: "MANUAL ENTRY", ocr_processing: "Processing...", ocr_error: "Error. Retry.", ocr_success: "Detected!", verify: "Verify Data", label_surname: "Surname", label_name: "Name", label_born: "Birth Date", label_sex: "Sex", label_city: "Birth City", label_prov: "Prov.", label_cit: "Citizenship", label_res: "Address", label_res_city: "City", label_res_prov: "Prov.", label_civic: "No.", label_doc: "Doc Number", label_exp: "Expiry", label_issue: "Issued By", photo_req: "PHOTOS", front: "Front", back: "Back", take: "TAKE", sign_title: "Signature", tax_info: "City tax on site.", clear: "Clear", save_guest: "SAVE GUEST", cloud_save: "Saving...", success_title: "Check-in Complete!", code_label: "YOUR CODE:", locked_title: "INCOMPLETE", locked_msg: "Code LOCKED 🔒", missing: "Missing", guests: "guests", share_link: "Send link:", wb_btn: "READ WELCOME BOOK", wa_btn: "NOTIFY GIULIA (WHATSAPP)", admin_vip: "Generate VIP Link", vip_success: "LINK COPIED!", emergency_add: "🆘 Manual Add", required: "Required", guest_list: "Guest List", finish: "CONFIRM", add_guest_btn: "ADD GUEST" },
+            fr: { welcome: "Bienvenue", thanks_choice: "Merci!", intro_giulia: "Salut, c'est Giulia. Check-in en ligne svp.", start_btn: "COMMENCER", guest_q: "Invité principal?", guest_tip: "Nom et total.", name_ph: "Nom", count_ph: "Nombre", doc_type: "Document", doc_e: "C.I. Elec", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis", scan_info: "Scanner", scan_help: "Horizontalement.", scan_btn: "SCANNER", file_btn: "FICHIER", manual_btn: "MANUEL", ocr_processing: "Analyse...", ocr_error: "Erreur.", ocr_success: "Détecté!", verify: "Vérifier", label_surname: "Nom", label_name: "Prénom", label_born: "Né le", label_sex: "Sexe", label_city: "Ville Naiss.", label_prov: "Prov.", label_cit: "Nationalité", label_res: "Adresse", label_res_city: "Ville", label_res_prov: "Prov.", label_civic: "N°", label_doc: "N° Doc", label_exp: "Expiration", label_issue: "Délivré par", photo_req: "PHOTOS", front: "Recto", back: "Verso", take: "PHOTO", sign_title: "Signature", tax_info: "Taxe sur place.", clear: "Effacer", save_guest: "ENREGISTRER", cloud_save: "Sauvegarde...", success_title: "Terminé!", code_label: "CODE:", locked_title: "INCOMPLET", locked_msg: "Code VERROUILLÉ 🔒", missing: "Manque", guests: "invités", share_link: "Envoyer lien:", wb_btn: "LIVRET ACCUEIL", wa_btn: "WHATSAPP", admin_vip: "Lien VIP", vip_success: "COPIÉ!", emergency_add: "🆘 Urgence", required: "Requis", guest_list: "Invités", finish: "TERMINER", add_guest_btn: "AJOUTER INVITÉ" },
+            es: { welcome: "Bienvenido", thanks_choice: "¡Gracias!", intro_giulia: "Hola, soy Giulia. Check-in online.", start_btn: "EMPEZAR", guest_q: "¿Principal?", guest_tip: "Nombre y total.", name_ph: "Nombre", count_ph: "Total", doc_type: "Documento", doc_e: "DNI Elec", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia", scan_info: "Escanear", scan_help: "Horizontal.", scan_btn: "ESCANEAR", file_btn: "ARCHIVO", manual_btn: "MANUAL", ocr_processing: "Procesando...", ocr_error: "Error.", ocr_success: "¡Detectado!", verify: "Verificar", label_surname: "Apellido", label_name: "Nombre", label_born: "Nacido", label_sex: "Sexo", label_city: "Ciudad Nac.", label_prov: "Prov.", label_cit: "Ciudadanía", label_res: "Dirección", label_res_city: "Ciudad", label_res_prov: "Prov.", label_civic: "N°", label_doc: "N° Doc", label_exp: "Caducidad", label_issue: "Emisor", photo_req: "FOTOS", front: "Frente", back: "Dorso", take: "FOTO", sign_title: "Firma", tax_info: "Tasa en lugar.", clear: "Borrar", save_guest: "GUARDAR", cloud_save: "Guardando...", success_title: "¡Listo!", code_label: "CÓDIGO:", locked_title: "INCOMPLETO", locked_msg: "BLOQUEADO 🔒", missing: "Faltan", guests: "huéspedes", share_link: "Enviar enlace:", wb_btn: "LIBRO BIENVENIDA", wa_btn: "WHATSAPP", admin_vip: "Enlace VIP", vip_success: "¡COPIADO!", emergency_add: "🆘 Emergencia", required: "Requerido", guest_list: "Lista", finish: "TERMINAR", add_guest_btn: "AÑADIR" },
+            de: { welcome: "Willkommen", thanks_choice: "Danke!", intro_giulia: "Hallo, ich bin Giulia. Check-in online.", start_btn: "STARTEN", guest_q: "Hauptgast?", guest_tip: "Name und Anzahl.", name_ph: "Name", count_ph: "Anzahl", doc_type: "Dokument", doc_e: "Elek. ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein", scan_info: "Scannen", scan_help: "Horizontal.", scan_btn: "SCANNEN", file_btn: "DATEI", manual_btn: "MANUELL", ocr_processing: "Verarbeitung...", ocr_error: "Fehler.", ocr_success: "Erkannt!", verify: "Prüfen", label_surname: "Nachname", label_name: "Vorname", label_born: "Geboren", label_sex: "Geschlecht", label_city: "Geburtsort", label_prov: "Prov.", label_cit: "Nationalität", label_res: "Adresse", label_res_city: "Stadt", label_res_prov: "Prov.", label_civic: "Nr.", label_doc: "Doc Nr.", label_exp: "Ablauf", label_issue: "Aussteller", photo_req: "FOTOS", front: "Vorn", back: "Hinten", take: "FOTO", sign_title: "Unterschrift", tax_info: "Kurtaxe vor Ort.", clear: "Löschen", save_guest: "SPEICHERN", cloud_save: "Speichern...", success_title: "Fertig!", code_label: "CODE:", locked_title: "UNVOLLSTÄNDIG", locked_msg: "GESPERRT 🔒", missing: "Fehlen", guests: "Gäste", share_link: "Link senden:", wb_btn: "WILLKOMMENSBUCH", wa_btn: "WHATSAPP", admin_vip: "VIP Link", vip_success: "KOPIERT!", emergency_add: "🆘 Notfall", required: "Pflichtfeld", guest_list: "Gäste", finish: "ABSCHLIESSEN", add_guest_btn: "HINZUFÜGEN" }
         };
 
-        const Icon = ({ name, className = "w-6 h-6" }) => {
-            const icons = {
-                trash: <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                check: <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                chevronLeft: <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                copy: <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                pencil: <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                camera: <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/>,
-                lock: <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                download: <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-            };
-            return <svg className={className} viewBox="0 0 24 24">{icons[name]}</svg>;
+        const Icon = ({ name }) => {
+            const path = {
+                trash: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
+                check: "M5 13l4 4L19 7",
+                chevronLeft: "M15 19l-7-7 7-7",
+                copy: "M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3",
+                pencil: "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z",
+                camera: "M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z",
+                lock: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
+                scan: "M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10"
+            }[name];
+            return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={path}/></svg>;
         };
 
         const SVGIcons = {
@@ -259,14 +133,14 @@
                 <span className="admin-label">{label}</span>
                 <div className="admin-val">
                     <span className="truncate mr-2 select-all">{value || "-"}</span>
-                    {value && <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(value); alert("Copiato!"); }} className="p-1 text-blue-600 bg-blue-50 rounded"><Icon name="copy" className="w-4 h-4"/></button>}
+                    {value && <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(value); alert("Copiato!"); }} className="p-1 text-blue-600 bg-blue-50 rounded"><Icon name="copy"/></button>}
                 </div>
             </div>
         );
 
         const formatDateIT = (dateString) => {
             if (!dateString) return "-";
-            if (dateString.includes('/')) return dateString; // Già formattata
+            if (dateString.includes('/')) return dateString;
             const [y, m, d] = dateString.split('-');
             return `${d}/${m}/${y}`;
         };
@@ -311,7 +185,7 @@
             const [step, setStep] = useState('loading'); 
             const [property, setProperty] = useState(null);
             
-            // SESSIONE E OSPITI
+            // SESSION
             const [session, setSession] = useState(null);
             const [localGuests, setLocalGuests] = useState([]); 
             const [dbGuests, setDbGuests] = useState([]); 
@@ -324,10 +198,11 @@
             // ADMIN
             const [adminData, setAdminData] = useState([]);
             const [selectedSession, setSelectedSession] = useState(null);
+            const [editingGuestIndex, setEditingGuestIndex] = useState(null);
             const [propertyCodes, setPropertyCodes] = useState({});
             const [doorCode, setDoorCode] = useState("...");
             const [vipLinkCopied, setVipLinkCopied] = useState(false);
-            const [zoomImg, setZoomImg] = useState(null); // Per zoom foto admin
+            const [zoomImg, setZoomImg] = useState(null);
             const [searchTerm, setSearchTerm] = useState("");
             
             // UTILS
@@ -342,27 +217,24 @@
             const videoRef = useRef(null);
             const fileRef = useRef(null);
 
-            // --- INIT ---
             useEffect(() => {
-                const init = async () => {
+                const init = setInterval(() => {
                     if (window.FirebaseSDK) {
-                         const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
-                         const auth = window.FirebaseSDK.getAuth(app);
-                         window.db = window.FirebaseSDK.getFirestore(app);
-                         await window.FirebaseSDK.signInAnonymously(auth);
-                         window.FirebaseSDK.onAuthStateChanged(auth, (u) => {
-                            setUser(u);
-                            handleRouting();
-                         });
+                        clearInterval(init);
+                        const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
+                        const auth = window.FirebaseSDK.getAuth(app);
+                        window.db = window.FirebaseSDK.getFirestore(app);
+                        window.FirebaseSDK.signInAnonymously(auth).then(() => {
+                            window.FirebaseSDK.onAuthStateChanged(auth, u => { if(u) handleRouting(); });
+                        });
                     }
-                };
-                setTimeout(init, 500);
+                }, 100);
             }, []);
 
             const handleRouting = async () => {
-                const params = new URLSearchParams(window.location.search);
-                const d = params.get('d');
-                const s = params.get('session');
+                const p = new URLSearchParams(window.location.search);
+                const d = p.get('d'); 
+                const s = p.get('session');
 
                 if (d === 'ADMIN') { setStep('admin_pass'); return; }
 
@@ -375,7 +247,6 @@
                             setProperty(PROPERTIES[data.booking]);
                             setDbGuests(data.guests || []);
                             
-                            // Se già verificata/diretta o completata localmente
                             if (data.verified || data.direct || localStorage.getItem(`done_${s}`)) setStep('success'); 
                             else setStep('welcome_personal');
                             return;
@@ -423,55 +294,41 @@
                 }; i.src = url;
             });
 
-            const saveGuestToCloud = async () => {
+            const saveGuest = async () => {
                 setIsSaving(true);
-                let signatureData = null;
-                if(sigRef.current) signatureData = sigRef.current.toDataURL();
+                const f = images.front ? await compress(images.front) : null;
+                const b = images.back ? await compress(images.back) : null;
+                const g = { ...formData, imgFront: f, imgBack: b, docType };
+                let sig = null; if(sigRef.current) sig = sigRef.current.toDataURL();
 
-                try {
-                    const processed = await Promise.all(localGuests.map(async g => ({ ...g, imgFront: g.imgFront ? await compress(g.imgFront) : null, imgBack: g.imgBack ? await compress(g.imgBack) : null })));
-                    
-                    const ref = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', session.id);
-                    let updateData = { guests: window.FirebaseSDK.arrayUnion(...processed) };
-                    if(signatureData) updateData.signature = signatureData;
-                    
-                    await window.FirebaseSDK.updateDoc(ref, updateData);
-                    setDbGuests([...dbGuests, ...processed]);
-                    setLocalGuests([]);
-                    localStorage.setItem(`done_${session.id}`, 'true');
-                } catch(e) { console.error(e); }
-                setIsSaving(false); setStep('success');
+                const ref = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', session.id);
+                let update = { guests: window.FirebaseSDK.arrayUnion(g) };
+                if(sig) update.signature = sig;
+
+                await window.FirebaseSDK.updateDoc(ref, update);
+                setDbGuests([...dbGuests, g]);
+                setLocalGuests([]); setFormData({}); setImages({});
+                localStorage.setItem(`done_${session.id}`, 'true');
+                setStep('success'); setIsSaving(false);
             };
 
-            // --- OCR ---
-            const fixOCRText = (s, type) => {
-                if(!s) return "";
-                if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
-                if(type === 'L') return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/2/g,'Z').replace(/8/g,'B').replace(/4/g,'A');
-                return s;
-            };
-            const cleanDoubleStart = (s) => (s && s.length > 2 && s[0] === s[1]) ? s.substring(1) : s;
-            const formatDateOCR = (d) => { 
-                if(!d || d.length<6) return ""; 
-                let y = d.substring(0,2); let m = d.substring(2,4); let day = d.substring(4,6);
-                return (parseInt(y) > 40 ? "19" : "20") + y + "-" + m + "-" + day; 
+            const fixOCR = (s, t) => { if(!s) return ""; return t==='N'?s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2'):s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S'); };
+            const parseDate = (d) => { if(!d||d.length<6)return""; let y=d.substring(0,2); return (parseInt(y)>40?"19":"20")+y+"-"+d.substring(2,4)+"-"+d.substring(4,6); };
+            
+            const parseCIE = (text) => {
+                const clean = text.toUpperCase().replace(/\s/g, '');
+                let d = { ...formData }; let ok = false;
+                let m1 = clean.match(/ITA([A-Z0-9]{9})/); if(m1) { d.docNumber = m1[1]; ok = true; }
+                let m2 = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/); if(m2) { d.surname = fixOCR(m2[1],'L'); d.name = fixOCR(m2[2],'L').replace(/</g,' '); ok=true; }
+                let m3 = clean.match(/([0-9]{6})([0-9])([MF])([0-9]{6})/); if(m3) { d.birthDate = parseDate(m3[1]); d.sex = m3[3]; d.expiryDate = parseDate(m3[4]); }
+                if(ok) { setFormData(d); setStep('manual_form'); } else alert(t.ocr_error);
             };
 
-            const parseCIE = (raw) => {
-                const up = raw.toUpperCase(); const clean = up.replace(/\s/g, ''); const lines = up.split('\n');
-                let newForm = { ...formData }; let found = false;
-                let dc = clean.match(/ITA([A-Z0-9]{9})/); if(dc) { newForm.docNumber = dc[1]; found = true; }
-                let nm = clean.match(/([A-Z0-9]+)<<([A-Z0-9]+)/); if(nm) { newForm.surname = cleanDoubleStart(fixOCRText(nm[1], 'L')); newForm.name = fixOCRText(nm[2], 'L').replace(/</g, ' '); found = true; }
-                let bio = clean.match(/([0-9OIZSB]{6,7})([MF])([0-9OIZSB]{6,7})([A-Z0-9]{3})/);
-                if(bio) { newForm.birthDate = formatDateOCR(fixOCRText(bio[1].substr(0,6), 'N')); newForm.sex = bio[2]; newForm.expiryDate = formatDateOCR(fixOCRText(bio[3].substr(0,6), 'N')); found = true; }
-                if(found) { setFormData(newForm); setStep('manual_entry'); alert(t.ocr_success); } else alert(t.ocr_warn);
-            };
-
-            const runOCR = async (source) => {
+            const runOCR = async (src) => {
                 setOcrProcessing(true);
                 const c = document.getElementById('ocr-canvas'); const ctx = c.getContext('2d');
-                c.width = 1280; let w = source.videoWidth || source.width; let h = source.videoHeight || source.height;
-                c.height = h * (1280/w); ctx.drawImage(source, 0, 0, c.width, c.height);
+                c.width = 1000; let w=src.videoWidth||src.width; let h=src.videoHeight||src.height;
+                ctx.drawImage(src,0,0,c.width,c.width*(h/w));
                 try { const { data: { text } } = await Tesseract.recognize(c, 'ita'); parseCIE(text); } catch(e) { alert(t.ocr_error); }
                 setOcrProcessing(false); setIsScanning(false);
             };
@@ -483,46 +340,37 @@
                 reader.readAsDataURL(file);
             };
 
-            // --- ADMIN ---
+            // ADMIN
             const fetchAdmin = async () => {
                 const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'checkins'));
                 let list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
                 list.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                 setAdminData(list);
             };
-            
-            const fetchPropertyCodes = async () => {
-                 if (user && window.db) {
-                    try {
-                        const col = window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'properties');
-                        const snap = await window.FirebaseSDK.getDocs(col);
-                        let codes = {};
-                        snap.forEach(d => codes[d.id] = d.data().currentCode);
-                        setPropertyCodes(codes);
-                    } catch(e) {}
-                 }
+            const fetchCodes = async () => {
+                const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'properties'));
+                let codes = {}; snap.forEach(d => codes[d.id] = d.data().currentCode);
+                setPropertyCodes(codes);
             };
-
-            const emergencyAdd = async () => {
+            const saveCode = async (pid) => {
+                let val = document.getElementById(`c_${pid}`).value;
+                if(pid === 'LOVE' && !val.endsWith('#')) val += '#';
+                await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'properties', pid), { currentCode: val }, { merge: true });
+                alert('OK!');
+            };
+            const addEmergency = async () => {
                 if(!selectedSession) return;
                 const dummy = { surname: "MANUALE", name: "EMERGENZA", docNumber: "MANUAL", birthDate: "2000-01-01", citizenship: "ITA", sex: "M", issuedBy: "HOST" };
                 await window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', selectedSession.id), { guests: window.FirebaseSDK.arrayUnion(dummy) });
                 alert("Ospite aggiunto."); setSelectedSession(null); fetchAdmin();
             };
-
             const deleteSession = async (id) => { if(confirm("ELIMINARE?")) { await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id)); fetchAdmin(); setSelectedSession(null); } };
             const clearHistory = async () => { if(confirm("CANCELLARE TUTTO?")) { adminData.forEach(async s => await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', s.id))); setAdminData([]); } };
-            const saveCode = async (pid) => {
-                let val = document.getElementById(`c_${pid}`).value;
-                if(pid === 'LOVE' && !val.endsWith('#')) val += '#'; 
-                await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db,'artifacts',appId,'public','data','properties',pid), {currentCode:val}, {merge:true});
-                alert('Codice Salvato!');
-            };
+            const saveGuestEdit = async () => { const up = [...selectedSession.guests]; up[editingGuestIndex] = formData; await window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', selectedSession.id), { guests: up }); fetchAdmin(); setEditingGuestIndex(null); alert("Salvato"); };
 
-            // --- FETCH CODICE GUEST ---
             useEffect(() => {
                 if (step === 'success' && property && window.db) {
-                     window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'properties', property.id))
+                    window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'properties', property.id))
                         .then(s => { if(s.exists()) setDoorCode(s.data().currentCode); });
                 }
             }, [step, property]);
@@ -530,22 +378,21 @@
             const checkPhotos = () => images.front && (docType === 'passport' || images.back);
             const isFormComplete = () => formData.surname && formData.name && formData.birthDate && formData.docNumber && dataTrue;
 
-            // ================= RENDER =================
+            // RENDER
+            if (step === 'loading') return <div className="h-screen flex items-center justify-center flex-col"><div className="loader"></div><p className="mt-4 text-slate-500">CARICAMENTO SISTEMA...</p></div>;
 
-            if (step === 'loading') return <div className="h-screen flex items-center justify-center"><div className="loader"></div></div>;
-
-            // 1. LOGIN
+            // LOGIN
             if (step === 'login') return (
                 <div className="app-container p-8 text-center flex flex-col justify-center">
                     <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img"/></div></div>
                     <form onSubmit={(e) => { e.preventDefault(); const val = e.target.elements.c.value.toUpperCase().trim(); if (val === 'ADMIN') setStep('admin_pass'); else alert('Link invalido'); }} className="w-full">
-                        <input name="c" autoFocus className="input-field text-center uppercase font-bold tracking-widest mt-8" placeholder="CODICE" />
+                        <input name="c" autoFocus className="input-field text-center font-bold tracking-widest mt-8" placeholder="CODICE" />
                         <button type="submit" className="btn btn-primary mt-4 w-full">ENTRA</button>
                     </form>
                 </div>
             );
 
-            // 2. INIT LANDING
+            // INIT
             if (step === 'init_landing') return (
                 <div className="app-container p-8 pt-20 text-center">
                     <Header setStep={()=>{}} setLang={setLang} lang={lang} />
@@ -561,7 +408,7 @@
                 </div>
             );
 
-            // 3. WELCOME PERSONAL
+            // WELCOME
             if (step === 'welcome_personal') return (
                 <div className="app-container">
                     <div className="p-8 text-center flex-1 flex flex-col justify-center">
@@ -576,7 +423,7 @@
                 </div>
             );
 
-            // 4. GUEST LIST
+            // GUEST LIST
             if (step === 'guest_list') return (
                 <div className="app-container flex flex-col">
                     <div className="p-4 bg-white border-b flex justify-between items-center shadow-sm">
@@ -589,7 +436,7 @@
                         {localGuests.map((g,i) => <div key={'loc'+i} className="bg-white border border-teal-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-teal-900">{g.surname} {g.name}</span><button onClick={()=>setLocalGuests(localGuests.filter((_,x)=>x!==i))} className="text-red-500"><Icon name="trash"/></button></div>)}
                         
                         {(dbGuests.length + localGuests.length) < session.totalGuests ? 
-                            <button onClick={()=>{ setFormData({}); setImages({}); setStep('doc_select'); }} className="btn w-full py-4 border-2 border-dashed border-teal-600 bg-white text-teal-600 font-bold uppercase shadow-sm flex items-center justify-center gap-2 text-lg hover:bg-teal-50">{t.add_guest_btn}</button> :
+                            <button onClick={()=>{ setFormData({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "", citizenship: "ITALIANA", citizenshipManual: "", residenceCity: "", residenceProvince: "", residenceAddress: "", houseNumber: "", issuedBy: "COMUNE DI", issuedManual: "", docNumber: "", expiryDate: "" }); setStep('doc_select'); }} className="btn w-full py-4 border-2 border-dashed border-teal-600 bg-white text-teal-600 font-bold uppercase shadow-sm flex items-center justify-center gap-2 text-lg hover:bg-teal-50">{t.add_guest_btn}</button> :
                             <div className="bg-green-100 p-4 rounded-xl text-center text-green-800 font-bold uppercase shadow-inner">Tutti inseriti!</div>
                         }
                     </div>
@@ -597,7 +444,7 @@
                 </div>
             );
 
-            // 5. DOC SELECT
+            // DOC SELECT
             if (step === 'doc_select') return (
                 <div className="app-container p-6 text-center">
                     <Header setStep={setStep} backStep="guest_list" setLang={setLang} lang={lang} />
@@ -611,7 +458,7 @@
                 </div>
             );
 
-            // 6. SCANNER
+            // SCANNER
             if (step === 'scan') return (
                 <div className="app-container flex flex-col text-center">
                      {isScanning ? (
@@ -624,8 +471,8 @@
                              <h2 className="text-xl font-bold mb-4 uppercase">{t.scan_info}</h2>
                              <div className="alert-blue">{t.scan_help}</div>
                              <button onClick={()=>{setIsScanning(true); navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(s=>videoRef.current.srcObject=s);}} className="btn btn-primary w-full mb-4 flex justify-center gap-2 uppercase font-bold"><Icon name="camera"/> {t.scan_btn}</button>
-                             <button onClick={()=>fileRef.current.click()} className="btn btn-secondary w-full mb-4 uppercase font-bold">{t.file_btn}</button>
-                             <input type="file" className="hidden" ref={fileRef} onChange={handleFileUpload} />
+                             <button onClick={()=>fileInputRef.current.click()} className="btn btn-secondary w-full mb-4 uppercase font-bold">{t.file_btn}</button>
+                             <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
                              {ocrProcessing && <p className="text-teal-600 font-bold animate-pulse">{t.ocr_processing}</p>}
                              <button onClick={()=>setStep('manual_form')} className="underline mt-4 text-sm font-bold uppercase text-slate-400">{t.manual_btn}</button>
                          </div>
@@ -633,7 +480,7 @@
                 </div>
             );
 
-            // 7. MANUAL FORM
+            // MANUAL FORM
             if (step === 'manual_form') return (
                 <div className="app-container flex flex-col">
                     <div className="p-4 border-b flex items-center bg-white"><button onClick={()=>setStep('guest_list')}><Icon name="chevronLeft"/></button><span className="ml-4 font-bold uppercase">{t.verify}</span></div>
@@ -728,7 +575,7 @@
                                 <p className="text-xs font-bold mb-4 uppercase bg-slate-100 p-2 rounded">{t.missing} {missing} {t.guests}!</p>
                                 
                                 {property?.wb && property.wb !== '#' && (
-                                    <a href={property.wb} target="_blank" className="btn btn-secondary w-full mb-2 font-bold text-xs uppercase shadow-sm">{t.wb_btn}</a>
+                                    <a href={property.wb} target="_blank" className="btn btn-secondary w-full mb-4 shadow-lg uppercase font-bold">{t.wb_btn}</a>
                                 )}
                                 <div className="bg-slate-50 p-4 rounded-xl w-full mb-4 border border-slate-200">
                                     <p className="text-xs font-bold mb-2 uppercase text-slate-500">{t.share_link}</p>
@@ -741,11 +588,11 @@
                 );
             }
 
-            // --- ADMIN LOGIN ---
+            // ADMIN LOGIN
             if (step === 'admin_pass') return (
                 <div className="app-container p-8 justify-center flex flex-col text-center">
                     <h2 className="text-xl font-bold mb-6 text-teal-800 uppercase tracking-widest">Sblocca</h2>
-                    <form onSubmit={(e)=>{ e.preventDefault(); if(e.target.elements.apass.value==='W0d@w0d@'){fetchAdmin(); fetchPropertyCodes(); setStep('admin_dash');} }} className="w-full mt-8">
+                    <form onSubmit={(e)=>{ e.preventDefault(); if(e.target.elements.apass.value==='W0d@w0d@'){fetchAdmin(); fetchCodes(); setStep('admin_dash');} }} className="w-full mt-8">
                         <input name="apass" type="password" autoFocus className="input-field text-center font-bold" placeholder="PASSWORD" />
                         <button type="submit" className="btn btn-primary mt-4 w-full shadow-lg uppercase">SBLOCCA</button>
                     </form>
@@ -753,7 +600,7 @@
                 </div>
             );
 
-            // --- ADMIN DASHBOARD ---
+            // ADMIN DASHBOARD
             if (step === 'admin_dash') return (
                 <div className="app-container overflow-y-auto bg-slate-100">
                     <div className="p-4 bg-white sticky top-0 z-10 flex justify-between items-center shadow-lg">
@@ -761,10 +608,7 @@
                         <button onClick={clearHistory} className="text-[10px] bg-red-600 text-white px-3 py-2 rounded font-bold uppercase hover:bg-red-700 transition">CANCELLA TUTTO</button>
                     </div>
 
-                    {/* ZOOM MODAL */}
-                    {zoomImg && <div className="zoom-modal" onClick={()=>setZoomImg(null)}><img src={zoomImg} className="zoom-img"/></div>}
-
-                    {/* MODAL DETTAGLIO OSPITE - TUTTO INCLUSO */}
+                    {/* MODAL DETTAGLIO OSPITE */}
                     {selectedSession && (
                         <div className="modal" onClick={()=>setSelectedSession(null)}>
                             <div className="modal-content" onClick={e=>e.stopPropagation()}>
@@ -818,6 +662,10 @@
                         </div>
                     )}
 
+                    {/* ZOOM */}
+                    {zoomImg && <div className="modal justify-center items-center" onClick={()=>setZoomImg(null)}><img src={zoomImg} className="max-w-full max-h-full rounded"/></div>}
+
+                    {/* ALTRI ELEMENTI DASHBOARD RIMANGONO INVARIATI (Gestione codici, VIP, Lista)... */}
                     <div className="p-4 space-y-6">
                         {/* 1. GESTIONE CODICI */}
                         <div className="bg-white p-4 rounded-xl shadow-sm border border-yellow-200">
