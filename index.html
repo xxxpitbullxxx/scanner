@@ -13,15 +13,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        /* STILI GRAFICI */
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
         
-        /* LOGO */
+        /* LOGHI */
         .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 30px 0; background: white; }
         .logo-circle { width: 125px; height: 125px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; border: 3px solid #d4af37; position: relative; padding: 0; }
         .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
-
-        /* HEADER */
         .header-logo-circle { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; }
         .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 
@@ -29,15 +28,16 @@
         .giulia-photo-container { width: 130px; height: 130px; border-radius: 50%; border: 4px solid white; box-shadow: 0 10px 20px rgba(0,0,0,0.15); overflow: hidden; margin: 0 auto; position: relative; z-index: 10; margin-bottom: -65px; }
         .welcome-card { background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 20px; padding: 20px; padding-top: 75px; position: relative; z-index: 1; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
 
-        /* UI ELEMENTS */
+        /* INPUT & UI */
         .input-field { width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 10px; color: #1e293b; }
         .input-field:focus { border-color: #0f766e; outline: none; box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); }
         .input-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; margin-left: 4px; text-align: left; }
-        .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; border: none; text-transform: uppercase; }
         .btn-primary { background: #0f766e; color: white; }
         .btn-secondary { background: #fff; border: 2px solid #e2e8f0; color: #334155; }
         .btn-success { background: #10b981; color: white; }
         .btn-danger { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
+        .btn-warning { background: #f59e0b; color: white; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
 
         /* SCANNER */
@@ -51,19 +51,17 @@
         .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
         .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
 
-        /* MODAL ADMIN */
+        /* ADMIN SPECIFIC */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; overflow-y: auto; display: flex; flex-direction: column; }
         .modal-content { background: #f8fafc; min-height: 100%; padding: 20px; padding-bottom: 100px; }
+        .admin-row { display: flex; flex-direction: column; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+        .admin-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .admin-val { font-size: 14px; font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
 
         .loader { width: 32px; height: 32px; border: 4px solid #0f766e; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; margin: 0 auto; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .flag-btn { font-size: 26px; padding: 0 6px; opacity: 0.4; transition: 0.2s; filter: grayscale(100%); background: none; border: none; cursor: pointer; }
         .flag-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
-        
-        /* ADMIN DATA ROW */
-        .admin-row { display: flex; flex-direction: column; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
-        .admin-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; }
-        .admin-val { font-size: 14px; font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -73,8 +71,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDocs, getDoc, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        window.FirebaseSDK = { initializeApp, getFirestore, collection, doc, setDoc, getDocs, getDoc, deleteDoc, updateDoc, arrayUnion, getAuth, signInAnonymously, onAuthStateChanged };
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        window.FirebaseSDK = { initializeApp, getFirestore, collection, doc, setDoc, getDocs, getDoc, deleteDoc, updateDoc, arrayUnion, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken };
     </script>
 
     <script type="text/babel">
@@ -106,7 +104,7 @@
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente",
                 scan_info: "Scansiona Documento", scan_help: "Posiziona il documento in orizzontale. Evita riflessi.",
                 scan_btn: "SCATTA E LEGGI", file_btn: "CARICA FILE", manual_btn: "INSERISCI A MANO",
-                ocr_processing: "Analisi in corso...", ocr_error: "Dati non letti. Riprova.", ocr_success: "Dati rilevati!",
+                ocr_processing: "Analisi in corso...", ocr_error: "Dati non letti. Riprova.", ocr_success: "Dati rilevati! Verifica.",
                 verify: "Verifica Dati", 
                 label_surname: "Cognome", label_name: "Nome", label_born: "Nato il", label_sex: "Sesso",
                 label_city: "Città Nascita", label_prov: "Prov.", label_cit: "Cittadinanza",
@@ -153,22 +151,71 @@
                 admin_vip: "Generate VIP Link", vip_success: "LINK COPIED!",
                 emergency_add: "🆘 Manual Add (Emergency)",
                 required: "Required", guest_list: "Guest List", finish: "CONFIRM & PROCEED"
+            },
+            fr: { 
+                welcome: "Bienvenue à", thanks_choice: "Merci de nous avoir choisis !",
+                intro_giulia: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement en ligne.",
+                start_btn: "COMMENCER", guest_q: "Qui est l'invité principal ?",
+                guest_tip: "Nom complet et nombre total d'invités.", name_ph: "Nom Complet", count_ph: "Nombre",
+                doc_type: "Type Document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis",
+                scan_info: "Scanner", scan_btn: "SCANNER", file_btn: "FICHIER", manual_btn: "MANUEL",
+                ocr_success: "Données détectées !", verify: "Vérifier", 
+                label_surname: "Nom", label_name: "Prénom", label_born: "Né le", label_sex: "Sexe",
+                label_city: "Ville Naissance", label_prov: "Prov.", label_cit: "Nationalité", 
+                label_res: "Adresse", label_res_city: "Ville", label_res_prov: "Prov.", 
+                label_doc: "N° Doc", label_exp: "Expiration", label_issue: "Délivré par",
+                photo_req: "PHOTOS OBLIGATOIRES", front: "Recto", back: "Verso", sign_title: "Signature",
+                save_guest: "ENREGISTRER", success_title: "Terminé !", code_label: "VOTRE CODE :",
+                locked_title: "INCOMPLET", locked_msg: "Code VERROUILLÉ 🔒", missing: "Manque", guests: "invités",
+                wb_btn: "LIVRET D'ACCUEIL", wa_btn: "AVISER HÔTE (WHATSAPP)", admin_vip: "Lien VIP", vip_success: "COPIÉ !", emergency_add: "🆘 Urgence"
+            },
+            es: { 
+                welcome: "Bienvenido a", thanks_choice: "¡Gracias por elegirnos!",
+                intro_giulia: "¡Hola! Soy Giulia. Complete el registro en línea.",
+                start_btn: "EMPEZAR", guest_q: "¿Huésped principal?",
+                guest_tip: "Nombre y total de huéspedes.", name_ph: "Nombre", count_ph: "Total",
+                doc_type: "Tipo Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia",
+                scan_info: "Escanear", scan_btn: "ESCANEAR", file_btn: "ARCHIVO", manual_btn: "MANUAL",
+                ocr_success: "¡Datos detectados!", verify: "Verificar", 
+                label_surname: "Apellido", label_name: "Nombre", label_born: "Nacido el", label_sex: "Sexo",
+                label_city: "Ciudad Nac.", label_prov: "Prov.", label_cit: "Ciudadanía", 
+                label_res: "Dirección", label_res_city: "Ciudad", label_res_prov: "Prov.", 
+                label_doc: "N° Doc", label_exp: "Caducidad", label_issue: "Emisor",
+                photo_req: "FOTOS OBLIGATORIAS", front: "Frente", back: "Dorso", sign_title: "Firma",
+                save_guest: "GUARDAR", success_title: "¡Completado!", code_label: "SU CÓDIGO:",
+                locked_title: "INCOMPLETO", locked_msg: "Código BLOQUEADO 🔒", missing: "Faltan", guests: "huéspedes",
+                wb_btn: "LIBRO BIENVENIDA", wa_btn: "WHATSAPP", admin_vip: "Enlace VIP", vip_success: "¡COPIADO!", emergency_add: "🆘 Emergencia"
+            },
+            de: { 
+                welcome: "Willkommen bei", thanks_choice: "Danke für Ihre Wahl!",
+                intro_giulia: "Hallo! Ich bin Giulia. Bitte Check-in abschließen.",
+                start_btn: "STARTEN", guest_q: "Hauptgast?",
+                guest_tip: "Name und Gästeanzahl.", name_ph: "Name", count_ph: "Anzahl",
+                doc_type: "Dokument", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein",
+                scan_info: "Scannen", scan_btn: "SCANNEN", file_btn: "DATEI", manual_btn: "MANUELL",
+                ocr_success: "Daten erkannt!", verify: "Prüfen", 
+                label_surname: "Nachname", label_name: "Vorname", label_born: "Geburtsdatum", label_sex: "Geschlecht",
+                label_city: "Geburtsort", label_prov: "Prov.", label_cit: "Nationalität", 
+                label_res: "Adresse", label_res_city: "Wohnort", label_res_prov: "Prov.", 
+                label_doc: "Dokument Nr.", label_exp: "Ablaufdatum", label_issue: "Ausgestellt von",
+                photo_req: "PFLICHTFOTOS", front: "Vorderseite", back: "Rückseite", sign_title: "Unterschrift",
+                save_guest: "SPEICHERN", success_title: "Fertig!", code_label: "IHR CODE:",
+                locked_title: "UNVOLLSTÄNDIG", locked_msg: "Code GESPERRT 🔒", missing: "Fehlen", guests: "Gäste",
+                wb_btn: "WILLKOMMENSBUCH", wa_btn: "WHATSAPP", admin_vip: "VIP Link", vip_success: "KOPIERT!", emergency_add: "🆘 Notfall"
             }
         };
 
-        // --- ICONS ---
-        const Icon = ({ name, className = "w-6 h-6" }) => {
-            const icons = {
-                trash: <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                check: <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                chevronLeft: <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                copy: <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                pencil: <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                camera: <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/>,
-                lock: <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-            };
-            return <svg className={className} viewBox="0 0 24 24">{icons[name]}</svg>;
-        };
+        // --- COMPONENTS ---
+        const Icon = ({ name }) => {
+            if(name==='check') return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>;
+            if(name==='trash') return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>;
+            if(name==='copy') return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>;
+            if(name==='left') return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>;
+            if(name==='lock') return <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>;
+            if(name==='camera') return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/></svg>;
+            if(name==='pencil') return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>;
+            return null;
+        }
 
         const SVGIcons = {
             electronic: <svg viewBox="0 0 24 24" className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 15h.01M11 15h.01M15 15h.01M19 15h.01M7 11h.01M11 11h.01M15 11h.01" /><circle cx="17" cy="9" r="1"/></svg>,
@@ -182,7 +229,7 @@
                 <span className="admin-label">{label}</span>
                 <div className="admin-val">
                     <span className="truncate mr-2 select-all">{value || "-"}</span>
-                    {value && <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(value); alert("Copiato!"); }} className="p-1 text-blue-600 bg-blue-50 rounded"><Icon name="copy" className="w-4 h-4"/></button>}
+                    {value && <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(value); alert("Copiato!"); }} className="p-1 text-blue-600 bg-blue-50 rounded"><Icon name="copy"/></button>}
                 </div>
             </div>
         );
@@ -194,11 +241,12 @@
                 const resize = () => { c.width = c.parentElement.clientWidth; c.height = 160; ctx.lineWidth=3; ctx.lineCap='round'; };
                 resize();
                 let drawing = false;
-                const start = (e) => { e.preventDefault(); drawing=true; ctx.beginPath(); const r=c.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top; ctx.moveTo(x,y); };
-                const move = (e) => { if(!drawing) return; e.preventDefault(); const r=c.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top; ctx.lineTo(x,y); ctx.stroke(); };
+                const getPos = (e) => { const r = c.getBoundingClientRect(); return { x: (e.touches?e.touches[0].clientX:e.clientX)-r.left, y: (e.touches?e.touches[0].clientY:e.clientY)-r.top }; };
+                const start = (e) => { e.preventDefault(); drawing=true; ctx.beginPath(); const p=getPos(e); ctx.moveTo(p.x, p.y); };
+                const draw = (e) => { if(!drawing) return; e.preventDefault(); const p=getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
                 const end = () => drawing=false;
-                c.addEventListener('mousedown', start); c.addEventListener('mousemove', move); c.addEventListener('mouseup', end);
-                c.addEventListener('touchstart', start, {passive:false}); c.addEventListener('touchmove', move, {passive:false}); c.addEventListener('touchend', end);
+                c.addEventListener('mousedown', start); c.addEventListener('mousemove', draw); c.addEventListener('mouseup', end);
+                c.addEventListener('touchstart', start, {passive:false}); c.addEventListener('touchmove', draw, {passive:false}); c.addEventListener('touchend', end);
             }, []);
             return <canvas ref={canvasRef} style={{width:'100%', height:'160px'}}/>;
         };
@@ -206,7 +254,11 @@
         const Header = ({ setStep, backStep, setLang, lang }) => (
             <div className="flex flex-col bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
                 <div className="flex justify-end p-2 pb-0 gap-2">
-                     {['it','en','fr','es','de'].map(l => <button key={l} onClick={()=>setLang(l)} className={`flag-btn ${lang===l?'active':''}`}>{l==='it'?'🇮🇹':l==='en'?'🇬🇧':l==='fr'?'🇫🇷':l==='es'?'🇪🇸':'🇩🇪'}</button>)}
+                     {['it','en','fr','es','de'].map(l => (
+                         <button key={l} onClick={()=>setLang(l)} className={`flag-btn ${lang===l?'active':''}`}>
+                             {l==='it'?'🇮🇹':l==='en'?'🇬🇧':l==='fr'?'🇫🇷':l==='es'?'🇪🇸':'🇩🇪'}
+                         </button>
+                     ))}
                 </div>
                 <div className="flex items-center justify-center p-3 pt-0 relative">
                     {backStep && <button onClick={() => setStep(backStep)} className="absolute left-4 p-1 text-slate-400"><Icon name="chevronLeft" /></button>}
@@ -218,11 +270,10 @@
 
         function App() {
             const [lang, setLang] = useState('it');
-            const [user, setUser] = useState(null);
             const [step, setStep] = useState('loading'); 
             const [property, setProperty] = useState(null);
             
-            // SESSIONE
+            // SESSION
             const [session, setSession] = useState(null);
             const [localGuests, setLocalGuests] = useState([]); 
             const [dbGuests, setDbGuests] = useState([]); 
@@ -237,11 +288,11 @@
             const [selectedSession, setSelectedSession] = useState(null);
             const [editingGuestIndex, setEditingGuestIndex] = useState(null);
             const [propertyCodes, setPropertyCodes] = useState({});
-            const [searchTerm, setSearchTerm] = useState("");
+            const [doorCode, setDoorCode] = useState("...");
             const [vipLinkCopied, setVipLinkCopied] = useState(false);
+            const [searchTerm, setSearchTerm] = useState("");
             
             // UTILS
-            const [doorCode, setDoorCode] = useState("...");
             const [isScanning, setIsScanning] = useState(false);
             const [isSaving, setIsSaving] = useState(false);
             const [ocrProcessing, setOcrProcessing] = useState(false);
@@ -253,15 +304,19 @@
             const videoRef = useRef(null);
             const fileRef = useRef(null);
 
+            // --- INIT ---
             useEffect(() => {
-                const init = async () => {
-                    const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
-                    const auth = window.FirebaseSDK.getAuth(app);
-                    window.db = window.FirebaseSDK.getFirestore(app);
-                    await window.FirebaseSDK.signInAnonymously(auth);
-                    window.FirebaseSDK.onAuthStateChanged(auth, u => { if(u) handleRouting(); });
-                };
-                setTimeout(init, 500);
+                const init = setInterval(() => {
+                    if (window.FirebaseSDK) {
+                        clearInterval(init);
+                        const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
+                        const auth = window.FirebaseSDK.getAuth(app);
+                        window.db = window.FirebaseSDK.getFirestore(app);
+                        window.FirebaseSDK.signInAnonymously(auth).then(() => {
+                            window.FirebaseSDK.onAuthStateChanged(auth, u => { if(u) handleRouting(); });
+                        });
+                    }
+                }, 100);
             }, []);
 
             const handleRouting = async () => {
@@ -279,7 +334,7 @@
                             setSession({ id: s, ...data });
                             setProperty(PROPERTIES[data.booking]);
                             setDbGuests(data.guests || []);
-                            // SE DIRETTA O GIÀ FATTO IN LOCALE -> SUCCESSO
+                            // SE VIP O GIÀ FATTO
                             if (data.direct || localStorage.getItem(`done_${s}`)) setStep('success'); 
                             else setStep('welcome_personal');
                             return;
@@ -306,11 +361,11 @@
                 const payload = {
                     booking: property.id,
                     property: property.name,
-                    guestName: name, 
+                    guestName: name,
                     totalGuests: parseInt(count),
                     timestamp: new Date().toISOString(),
                     guests: [],
-                    direct: isDirect // FLAG VIP
+                    direct: isDirect // VIP FLAG
                 };
                 await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id), payload);
                 setSession({ id, ...payload });
@@ -344,6 +399,7 @@
                 setStep('success'); setIsSaving(false);
             };
 
+            // --- OCR ---
             const fixOCR = (s, t) => { if(!s) return ""; return t==='N'?s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2'):s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S'); };
             const parseDate = (d) => { if(!d||d.length<6)return""; let y=d.substring(0,2); return (parseInt(y)>40?"19":"20")+y+"-"+d.substring(2,4)+"-"+d.substring(4,6); };
             
@@ -372,7 +428,7 @@
                 reader.readAsDataURL(file);
             };
 
-            // ADMIN
+            // --- ADMIN ---
             const fetchAdmin = async () => {
                 const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'checkins'));
                 let list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
@@ -392,7 +448,7 @@
             };
             const addEmergency = async () => {
                 if(!selectedSession) return;
-                const dummy = { surname: "MANUALE", name: "EMERGENZA", docNumber: "MANUAL", birthDate: "2000-01-01", citizenship: "ITA", sex: "M", issuedManual: "HOST" };
+                const dummy = { surname: "MANUALE", name: "EMERGENZA", docNumber: "MANUAL", birthDate: "2000-01-01", citizenship: "ITA", sex: "M", issuedBy: "HOST" };
                 await window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', selectedSession.id), { guests: window.FirebaseSDK.arrayUnion(dummy) });
                 alert("Ospite aggiunto."); setSelectedSession(null); fetchAdmin();
             };
@@ -413,18 +469,18 @@
             // RENDER
             if (step === 'loading') return <div className="h-screen flex items-center justify-center"><div className="loader"></div></div>;
 
-            // 1. LOGIN
+            // LOGIN
             if (step === 'login') return (
                 <div className="app-container p-8 text-center flex flex-col justify-center">
                     <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img"/></div></div>
                     <form onSubmit={(e) => { e.preventDefault(); const val = e.target.elements.c.value.toUpperCase().trim(); if (val === 'ADMIN') setStep('admin_pass'); else alert('Link invalido'); }} className="w-full">
-                        <input name="c" autoFocus className="input-field text-center uppercase font-bold tracking-widest mt-8" placeholder="CODICE" />
-                        <button type="submit" className="btn btn-primary mt-4 w-full">ENTRA</button>
+                        <input name="c" autoFocus className="input-field text-center font-bold tracking-widest mt-8" placeholder="CODICE" />
+                        <button className="btn btn-primary mt-4 w-full">ENTRA</button>
                     </form>
                 </div>
             );
 
-            // 2. INIT LANDING
+            // INIT
             if (step === 'init_landing') return (
                 <div className="app-container p-8 pt-20 text-center">
                     <Header setStep={()=>{}} setLang={setLang} lang={lang} />
@@ -440,7 +496,7 @@
                 </div>
             );
 
-            // 3. WELCOME
+            // WELCOME PERSONAL
             if (step === 'welcome_personal') return (
                 <div className="app-container">
                     <div className="p-8 text-center flex-1 flex flex-col justify-center">
@@ -455,7 +511,7 @@
                 </div>
             );
 
-            // 4. GUEST LIST
+            // GUEST LIST
             if (step === 'guest_list') return (
                 <div className="app-container flex flex-col">
                     <div className="p-4 bg-white border-b flex justify-between items-center shadow-sm">
@@ -464,8 +520,8 @@
                         <div className="bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-bold">{dbGuests.length + localGuests.length} / {session.totalGuests}</div>
                     </div>
                     <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-                        {dbGuests.map((g,i) => <div key={'db'+i} className="bg-green-50 border border-green-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-green-800">{g.surname} {g.name}</span><Icon name="check"/></div>)}
-                        {localGuests.map((g,i) => <div key={'loc'+i} className="bg-white border border-teal-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-teal-900">{g.surname} {g.name}</span><button onClick={()=>setLocalGuests(localGuests.filter((_,x)=>x!==i))} className="text-red-500"><Icon name="trash"/></button></div>)}
+                        {dbGuests.map((g,i) => <div key={'d'+i} className="bg-green-50 border border-green-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-green-800">{g.surname} {g.name}</span><Icon name="check"/></div>)}
+                        {localGuests.map((g,i) => <div key={'l'+i} className="bg-white border border-teal-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-teal-900">{g.surname} {g.name}</span><button onClick={()=>setLocalGuests(localGuests.filter((_,x)=>x!==i))} className="text-red-500"><Icon name="trash"/></button></div>)}
                         
                         {(dbGuests.length + localGuests.length) < session.totalGuests ? 
                             <button onClick={()=>{ setFormData({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "", citizenship: "ITALIANA", citizenshipManual: "", residenceCity: "", residenceProvince: "", residenceAddress: "", houseNumber: "", issuedBy: "COMUNE DI", issuedManual: "", docNumber: "", expiryDate: "" }); setStep('doc_select'); }} className="w-full py-6 border-2 border-dashed border-teal-600 rounded-2xl font-bold text-lg hover:bg-teal-50 transition uppercase text-teal-600">+ {t.add_guest}</button> :
@@ -476,7 +532,7 @@
                 </div>
             );
 
-            // 5. DOC SELECT
+            // DOC SELECT
             if (step === 'doc_select') return (
                 <div className="app-container p-6 text-center">
                     <Header setStep={setStep} backStep="guest_list" setLang={setLang} lang={lang} />
@@ -490,7 +546,7 @@
                 </div>
             );
 
-            // 6. SCANNER
+            // SCANNER
             if (step === 'scan') return (
                 <div className="app-container flex flex-col text-center">
                      {isScanning ? (
@@ -512,7 +568,7 @@
                 </div>
             );
 
-            // 7. MANUAL FORM
+            // MANUAL FORM
             if (step === 'manual_form') return (
                 <div className="app-container flex flex-col">
                     <div className="p-4 border-b flex items-center bg-white"><button onClick={()=>setStep('guest_list')}><Icon name="chevronLeft"/></button><span className="ml-4 font-bold uppercase">{t.verify}</span></div>
@@ -599,20 +655,16 @@
                             <>
                                 <div className="w-24 h-24 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mb-6 shadow-lg"><Icon name="lock"/></div>
                                 <h1 className="text-xl font-bold mb-2 uppercase">{t.locked_title}</h1>
-                                <p className="mb-4 text-sm font-bold">{t.locked_msg}</p>
+                                <p className="mb-6 text-sm p-4 bg-orange-50 border border-orange-200 rounded-xl">{t.locked_msg}</p>
+                                <p className="text-xs font-bold mb-4 uppercase bg-slate-100 p-2 rounded">{t.missing} {missing} {t.guests}!</p>
                                 
-                                <div className="alert-red w-full">
-                                    {t.missing} {missing} {t.guests}!
-                                </div>
-
+                                {property?.wb && property.wb !== '#' && (
+                                    <a href={property.wb} target="_blank" className="btn btn-secondary w-full mb-4 shadow-lg uppercase font-bold">{t.wb_btn}</a>
+                                )}
                                 <div className="bg-slate-50 p-4 rounded-xl w-full mb-4 border border-slate-200">
                                     <p className="text-xs font-bold mb-2 uppercase text-slate-500">{t.share_link}</p>
                                     <button onClick={()=>{const l=`${window.location.origin}${window.location.pathname}?session=${session.id}`; navigator.clipboard.writeText(l); alert('Copiato');}} className="text-blue-600 underline text-sm break-all font-bold">Copia Link</button>
                                 </div>
-                                
-                                {property?.wb && property.wb !== '#' && (
-                                    <a href={property.wb} target="_blank" className="btn btn-secondary w-full mb-2 font-bold text-xs uppercase shadow-sm">{t.wb_btn}</a>
-                                )}
                             </>
                         )}
                         <a href="https://wa.me/39338485333" target="_blank" className="btn btn-whatsapp w-full font-bold shadow-lg mt-4 uppercase">{t.wa_btn}</a>
@@ -620,18 +672,18 @@
                 );
             }
 
-            // --- ADMIN LOGIN ---
+            // ADMIN LOGIN
             if (step === 'admin_pass') return (
                 <div className="app-container p-8 justify-center flex flex-col text-center">
-                    <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img"/></div></div>
-                    <form onSubmit={(e)=>{ e.preventDefault(); if(e.target.elements.apass.value==='W0d@w0d@'){fetchAdmin(); fetchCodes(); setStep('admin_dash');} }} className="w-full mt-8">
+                    <h2 className="text-xl font-bold mb-6 text-teal-800 uppercase tracking-widest">Sblocca</h2>
+                    <form onSubmit={(e)=>{ e.preventDefault(); if(e.target.elements.apass.value==='W0d@w0d@'){fetchAdmin(); fetchCodes(); setStep('admin_dash');} }} className="w-full">
                         <input name="apass" type="password" autoFocus className="input-field text-center font-bold" placeholder="PASSWORD" />
                         <button type="submit" className="btn btn-primary mt-4 w-full shadow-lg uppercase">SBLOCCA</button>
                     </form>
                 </div>
             );
 
-            // --- ADMIN DASHBOARD ---
+            // ADMIN DASHBOARD
             if (step === 'admin_dash') return (
                 <div className="app-container overflow-y-auto bg-slate-100">
                     <div className="p-4 bg-white sticky top-0 z-10 flex justify-between items-center shadow-lg">
