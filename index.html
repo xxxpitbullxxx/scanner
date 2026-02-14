@@ -17,7 +17,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
         
-        /* LOGO GIULIA - STILE ORIGINALE */
+        /* LOGO GIULIA */
         .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 25px 0; background: white; }
         .logo-circle {
             width: 200px; height: 200px; background: white; border-radius: 50%;
@@ -35,11 +35,11 @@
         /* SCANNER FULL WIDTH */
         .scan-wrapper-full {
             position: relative;
-            width: 100vw; 
-            height: 480px; 
+            width: 100vw; /* Larghezza totale schermo */
+            height: 480px; /* Altezza ottimizzata */
             background: #000;
             overflow: hidden;
-            left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; 
+            left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; /* Rompe il container */
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         
@@ -48,20 +48,28 @@
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
         }
         
+        /* Rettangolo Giallo - Indirizzo (Centrale/Alto) */
         .zone-residenza {
-            position: absolute; top: 48%; left: 50%; 
+            position: absolute;
+            top: 48%; /* Abbassato per evitare l'intestazione */
+            left: 50%; 
             transform: translate(-50%, -50%);
-            width: 94%; height: 14%; 
+            width: 94%; 
+            height: 14%; /* Sottile solo per l'indirizzo */
             border: 2px solid #FFD60A; 
             border-radius: 4px;
             background: rgba(255, 214, 10, 0.1);
             z-index: 10;
         }
 
+        /* Rettangolo Azzurro - MRZ (Basso) */
         .zone-mrz {
-            position: absolute; top: 82%; left: 50%; 
+            position: absolute;
+            top: 82%; /* Spostato in basso per evitare barcode centrale */
+            left: 50%; 
             transform: translate(-50%, -50%);
-            width: 96%; height: 25%;
+            width: 96%; 
+            height: 25%;
             border: 3px solid #00E0FF; 
             border-radius: 4px;
             background: rgba(0, 224, 255, 0.1);
@@ -80,9 +88,7 @@
         .warning-red { color: #ef4444; font-size: 11px; font-weight: 700; line-height: 1.3; margin-top: 5px; text-align: center; border: 1px solid #fee2e2; background: #fef2f2; padding: 8px; border-radius: 8px; }
         .info-blue { color: #1e40af; font-size: 12px; line-height: 1.4; background: #eff6ff; padding: 12px; border-radius: 12px; border: 1px solid #dbeafe; text-align: left; margin-bottom: 20px; }
         .info-success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 15px; text-align: center; }
-        
-        /* NUOVO: Locked State */
-        .info-locked { background: #fff1f2; border: 1px solid #fda4af; color: #9f1239; padding: 15px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-top: 15px; text-align: center; margin-bottom: 15px; }
+        .info-locked { background: #fff1f2; border: 1px solid #fda4af; color: #9f1239; padding: 15px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-top: 15px; text-align: center; margin-bottom: 20px; }
 
         .input-field { 
             width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; 
@@ -147,17 +153,16 @@
           appId: "1:775354595552:web:d527557e2a397640977885"
         };
 
-        // NUOVA CONFIGURAZIONE: Aggiunti Welcome Book
         const PROPERTIES = {
-            "LOVE": { id: "LOVE", name: "Love Nest", wb: "https://welcomebooklovenest.netlify.app", type: "electronic" },
-            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", wb: "https://welcomebooklatartaruga.netlify.app", type: "keybox" },
-            "REGINA": { id: "REGINA", name: "Santa Regina", wb: "#", type: "keybox" }
+            "LOVE": { id: "LOVE", name: "Love Nest", type: "electronic", wb: "https://welcomebooklovenest.netlify.app" },
+            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", type: "keybox", wb: "https://welcomebooklatartaruga.netlify.app" },
+            "REGINA": { id: "REGINA", name: "Santa Regina", type: "keybox", wb: "#" }
         };
 
-        // TRADUZIONI ORIGINALI COMPLETE
         const TRANSLATIONS = {
             it: { 
-                welcome: "Ciao {name}, grazie per averci scelto! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
+                welcome_header: "Ciao {name}, grazie per averci scelto!",
+                welcome_body: "Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
                 login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", 
                 scan_rear: "SCANSIONA DOC", scan_info: "Posiziona il documento in orizzontale.", 
                 scan_help: "Inquadra il retro della C.I. (MRZ in basso, Indirizzo in alto).",
@@ -166,25 +171,26 @@
                 tax_info: "In conformità con le normative locali, se hai prenotato tramite Booking.com la tassa di soggiorno dovrà essere pagata in loco all'arrivo (in contanti), oppure tramite il link sicuro per carta di credito o debito che ti invierò a breve. Se hai prenotato tramite Airbnb, la tassa è già inclusa.",
                 doc_type: "Tipo Documento", doc_e: "C.I. Elettronica", doc_p: "C.I. Cartacea", doc_pass: "Passaporto", doc_l: "Patente di Guida",
                 label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_prov: "Prov.", label_citizenship: "Cittadinanza", label_cit_ph: "Specifica...", label_res_city: "Città Residenza", label_res_prov: "Prov.", label_address: "Via / Piazza", label_civic: "Civico", label_issued: "Rilasciato da", label_issued_ph: "Es. Milano...", label_docnum: "N. Documento", label_expiry: "Scadenza",
-                thanks: "Grazie", success_msg: "Check-in completato con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
+                thanks: "Grazie", success_msg: "Check-in completato con successo. Ecco il codice:", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...",
                 data_true_label: "Dichiaro che i dati inseriti sono reali", clear_sign: "CANCELLA FIRMA", sign_title: "Firma e Tassa",
                 ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO",
                 ocr_warn: "ATTENZIONE: Luci e ombre possono falsare i dati. Controlla attentamente nella scheda successiva.",
                 ocr_success: "Dati rilevati! Verifica i campi compilati e inserisci quelli mancanti. Poi prosegui per caricare le foto.",
                 guest_count_q: "Chi è il capogruppo?", 
-                guest_count_tip: "Inserisci il tuo nome (es. Mario Rossi) e il numero totale di ospiti.",
+                guest_count_tip: "Inserisci il tuo nome (es. Mario Rossi) e quanti siete in totale.",
                 continue: "CONTINUA",
-                share_link: "INVIA LINK AGLI ALTRI OSPITI", guests_missing: "Mancano ancora ospiti da registrare",
+                share_link: "INVIA LINK AGLI ALTRI OSPITI (Ognuno compila il suo)", guests_missing: "Mancano ancora ospiti da registrare",
                 upload_docs_title: "Carica Documenti", upload_docs_desc: "Carica la foto fronte e retro del documento. È obbligatorio.",
                 take_photo: "SCATTA FOTO", upload_file: "CARICA FILE", proceed_docs: "PROCEDI AI DOCUMENTI",
                 label_res_zone: "RESIDENZA", label_mrz_zone: "CODICI MRZ",
                 save_link_msg: "💡 CONSIGLIO: Salvati questo link! Se dimentichi il codice, potrai riaprirlo per visualizzarlo senza rifare il check-in.",
-                locked_title: "CHECK-IN IN ATTESA", locked_msg: "Il codice è BLOCCATO. Attendi che Giulia verifichi i documenti o che tutti gli ospiti completino il check-in.",
+                locked_title: "CHECK-IN IN ATTESA", locked_msg: "Grazie! I tuoi documenti sono stati inviati. Il codice si sbloccherà quando tutti gli ospiti avranno completato la registrazione o dopo la verifica di Giulia.",
                 wb_btn: "LEGGI IL WELCOME BOOK", notify_host: "AVVISA GIULIA (WhatsApp)",
                 admin_vip: "Genera Link VIP (Sbloccato)", emergency_add: "🆘 Aggiungi Manuale (Emergenza)"
             },
             en: { 
-                welcome: "Hi {name}, thanks for choosing us! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
+                welcome_header: "Hi {name}, thanks for choosing us!",
+                welcome_body: "I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
                 login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", scan_rear: "SCAN DOC", scan_info: "Scan document horizontally.", 
                 scan_help: "Frame the back of ID (Address at top, MRZ at bottom).",
                 photo_req: "DOCUMENT PHOTO", confirm_btn: "SAVE & CONTINUE", recover_btn: "VIEW YOUR DOOR CODE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
@@ -192,7 +198,7 @@
                 tax_info: "Tourist tax must be paid on-site (cash) if booked via Booking.com. Airbnb includes tax.",
                 doc_type: "Document Type", doc_e: "Electronic ID", doc_p: "Paper ID", doc_pass: "Passport", doc_l: "Driving License",
                 label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_prov: "Prov.", label_citizenship: "Citizenship", label_cit_ph: "Specify...", label_res_city: "Residence City", label_res_prov: "Prov.", label_address: "Address", label_civic: "No.", label_issued: "Issued by", label_issued_ph: "Ex. London...", label_docnum: "Doc Number", label_expiry: "Expiry Date",
-                thanks: "Thank you", success_msg: "Check-in successfully completed.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
+                thanks: "Thank you", success_msg: "Check-in successfully completed. Here is your code:", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
                 data_true_label: "I declare that the data entered is true", clear_sign: "CLEAR SIGNATURE", sign_title: "Signature",
                 ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD FILE",
                 ocr_warn: "WARNING: Lighting and shadows may affect data accuracy. Check next screen.",
@@ -200,17 +206,18 @@
                 guest_count_q: "Who is the lead guest?", 
                 guest_count_tip: "Enter your name and total guests.",
                 continue: "CONTINUE",
-                share_link: "SEND LINK TO OTHER GUESTS", guests_missing: "Guests missing",
+                share_link: "SEND LINK TO OTHER GUESTS (Each fills their own)", guests_missing: "Guests missing",
                 upload_docs_title: "Upload Documents", upload_docs_desc: "Upload front and back photo. Mandatory.",
                 take_photo: "TAKE PHOTO", upload_file: "UPLOAD FILE", proceed_docs: "PROCEED TO DOCS",
                 label_res_zone: "ADDRESS", label_mrz_zone: "MRZ CODES",
                 save_link_msg: "💡 TIP: Save this link! If you forget the code, reopen it to view without repeating check-in.",
-                locked_title: "VERIFICATION PENDING", locked_msg: "Code LOCKED. Waiting for verification or other guests.",
+                locked_title: "VERIFICATION PENDING", locked_msg: "Thanks! Documents sent. Code will unlock when all guests complete check-in or after Giulia's verification.",
                 wb_btn: "READ WELCOME BOOK", notify_host: "NOTIFY HOST (WhatsApp)",
                 admin_vip: "Generate VIP Link", emergency_add: "🆘 Manual Add (Emergency)"
             },
             fr: { 
-                welcome: "Salut {name}, merci de nous avoir choisis ! Je suis Giulia. Veuillez compléter l'enregistrement en ligne.", 
+                welcome_header: "Salut {name}, merci de nous avoir choisis !",
+                welcome_body: "Je suis Giulia. Veuillez compléter l'enregistrement en ligne.", 
                 login_ph: "CODE", start_btn: "COMMENCER", scan_rear: "SCANNER DOC", scan_info: "Scannez le document horizontalement.", 
                 scan_help: "Cadrez le verso (Adresse en haut, MRZ en bas).",
                 photo_req: "PHOTO DOCUMENT", confirm_btn: "ENREGISTRER ET CONTINUER", recover_btn: "VOIR LE CODE", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
@@ -226,17 +233,18 @@
                 guest_count_q: "Qui est l'invité principal ?", 
                 guest_count_tip: "Entrez votre nom et le nombre total d'invités.",
                 continue: "CONTINUER",
-                share_link: "ENVOYER LIEN AUX AUTRES", guests_missing: "Invités manquants",
+                share_link: "ENVOYER LIEN AUX AUTRES (Chacun remplit le sien)", guests_missing: "Invités manquants",
                 upload_docs_title: "Charger les documents", upload_docs_desc: "Chargez la photo recto et verso du document. Obligatoire.",
                 take_photo: "PHOTO", upload_file: "FICHIER", proceed_docs: "DOCUMENTS SUIVANTS",
                 label_res_zone: "ADRESSE", label_mrz_zone: "CODES MRZ",
                 save_link_msg: "💡 CONSEIL : Sauvegardez ce lien ! Si vous oubliez le code, rouvrez-le pour voir sans refaire l'enregistrement.",
-                locked_title: "VÉRIFICATION EN ATTENTE", locked_msg: "Code VERROUILLÉ. En attente de vérification.",
+                locked_title: "VÉRIFICATION EN ATTENTE", locked_msg: "Code VERROUILLÉ. En attente de vérification ou que tous les invités terminent.",
                 wb_btn: "LIRE LE LIVRET D'ACCUEIL", notify_host: "AVISER L'HÔTE (WhatsApp)",
                 admin_vip: "Générer lien VIP", emergency_add: "🆘 Ajout Manuel (Urgence)"
             },
             es: { 
-                welcome: "¡Hola {name}, gracias por elegirnos! Soy Giulia. Complete el registro en línea.", 
+                welcome_header: "¡Hola {name}, gracias por elegirnos!",
+                welcome_body: "Soy Giulia. Complete el registro en línea.", 
                 login_ph: "CÓDIGO", start_btn: "EMPEZAR", scan_rear: "ESCANEAR DOC", scan_info: "Escanee el documento horizontalmente.", 
                 scan_help: "Encuadre el reverso (Dirección arriba, MRZ abajo).",
                 photo_req: "FOTO DOCUMENTO", confirm_btn: "GUARDAR Y CONTINUAR", recover_btn: "VER TU CÓDIGO", add_guest: "AÑADIR", save_guest: "GUARDAR",
@@ -252,17 +260,18 @@
                 guest_count_q: "¿Quién es el huésped principal?", 
                 guest_count_tip: "Ingrese su nombre y el total de huéspedes.",
                 continue: "CONTINUAR",
-                share_link: "ENVIAR ENLACE A OTROS", guests_missing: "Faltan huéspedes",
+                share_link: "ENVIAR ENLACE A OTROS (Cada uno llena el suyo)", guests_missing: "Faltan huéspedes",
                 upload_docs_title: "Subir Documentos", upload_docs_desc: "Suba foto del frente y dorso. Obligatorio.",
                 take_photo: "FOTO", upload_file: "ARCHIVO", proceed_docs: "IR A DOCUMENTOS",
                 label_res_zone: "DIRECCIÓN", label_mrz_zone: "CÓDIGOS MRZ",
                 save_link_msg: "💡 CONSEJO: ¡Guarde este enlace! Si olvida el código, ábralo de nuevo para ver sin repetir el registro.",
-                locked_title: "VERIFICACIÓN PENDIENTE", locked_msg: "Código BLOQUEADO. Esperando verificación.",
+                locked_title: "VERIFICACIÓN PENDIENTE", locked_msg: "Código BLOQUEADO. Esperando verificación o que todos los huéspedes terminen.",
                 wb_btn: "LEER LIBRO DE BIENVENIDA", notify_host: "NOTIFICAR AL ANFITRIÓN (WhatsApp)",
                 admin_vip: "Generar Enlace VIP", emergency_add: "🆘 Agregar Manual (Emergencia)"
             },
             de: { 
-                welcome: "Hallo {name}, danke, dass Sie uns gewählt haben! Ich bin Giulia. Bitte schließen Sie den Online-Check-in ab.", 
+                welcome_header: "Hallo {name}, danke, dass Sie uns gewählt haben!",
+                welcome_body: "Ich bin Giulia. Bitte schließen Sie den Online-Check-in ab.", 
                 login_ph: "CODE", start_btn: "STARTEN", scan_rear: "DOKUMENT SCANNEN", scan_info: "Dokument horizontal scannen.", 
                 scan_help: "Rückseite einrahmen (Adresse oben, MRZ unten).",
                 photo_req: "FOTO", confirm_btn: "SPEICHERN & WEITER", recover_btn: "TÜRCODE ANZEIGEN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
@@ -278,12 +287,12 @@
                 guest_count_q: "Wer ist der Hauptgast?", 
                 guest_count_tip: "Geben Sie Ihren Namen und die Gesamtzahl der Gäste ein.",
                 continue: "WEITER",
-                share_link: "LINK AN ANDERE SENDEN", guests_missing: "Gäste fehlen",
+                share_link: "LINK AN ANDERE SENDEN (Jeder füllt selbst aus)", guests_missing: "Gäste fehlen",
                 upload_docs_title: "Dokumente hochladen", upload_docs_desc: "Laden Sie Vorder- und Rückseite hoch. Obligatorisch.",
                 take_photo: "FOTO MACHEN", upload_file: "DATEI HOCHLADEN", proceed_docs: "ZU DEN DOKUMENTEN",
                 label_res_zone: "ADRESSE", label_mrz_zone: "MRZ CODES",
                 save_link_msg: "💡 TIPP: Speichern Sie diesen Link! Wenn Sie den Code vergessen, öffnen Sie ihn erneut, um ihn ohne erneutes Einchecken anzuzeigen.",
-                locked_title: "ÜBERPRÜFUNG AUSSTEHEND", locked_msg: "Code GESPERRT. Warten auf Überprüfung.",
+                locked_title: "ÜBERPRÜFUNG AUSSTEHEND", locked_msg: "Code GESPERRT. Warten auf Überprüfung oder Abschluss aller Gäste.",
                 wb_btn: "WILLKOMMENSBUCH LESEN", notify_host: "GASTGEBER BENACHRICHTIGEN (WhatsApp)",
                 admin_vip: "VIP-Link generieren", emergency_add: "🆘 Manuell hinzufügen (Notfall)"
             }
@@ -325,8 +334,10 @@
                         el.value = value;
                         document.body.appendChild(el);
                         el.select();
-                        try { document.execCommand('copy'); alert('Copiato!'); } catch(e){}
+                        try { document.execCommand('copy'); } catch(e){}
                         document.body.removeChild(el);
+                        e.currentTarget.style.color = '#10b981';
+                        setTimeout(() => e.currentTarget.style.color = '', 500);
                     }} className="p-1 hover:bg-white rounded transition text-slate-400 hover:text-blue-600"><Icon name="copy" className="w-4 h-4" /></button>}
                 </div>
             </div>
@@ -408,6 +419,7 @@
             const [moturistCode, setMoturistCode] = useState("");
             const [dates, setDates] = useState({ arrival: "", departure: "" });
             const [searchTerm, setSearchTerm] = useState("");
+            const [propertyCodes, setPropertyCodes] = useState({});
 
             const sigCanvasRef = useRef(null);
             const videoRef = useRef(null); 
@@ -520,7 +532,7 @@
                 setIsSaving(false); setStep('success');
             };
 
-            // --- OCR COMPLETO (Originale) ---
+            // --- OCR COMPLETO ---
             const fixOCRText = (s, type) => {
                 if(!s) return "";
                 if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8');
@@ -597,6 +609,18 @@
                 let list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
                 list.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 setAdminData(list);
+            };
+            
+            const fetchPropertyCodes = async () => {
+                 if (user && window.db) {
+                    try {
+                        const col = window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'properties');
+                        const snap = await window.FirebaseSDK.getDocs(col);
+                        let codes = {};
+                        snap.forEach(d => codes[d.id] = d.data().currentCode);
+                        setPropertyCodes(codes);
+                    } catch(e) {}
+                 }
             };
 
             const emergencyAdd = async () => {
@@ -877,7 +901,7 @@
                 <div className="app-container p-8 justify-center flex flex-col text-center">
                     <h2 className="text-xl font-bold mb-6 text-teal-800 uppercase tracking-widest">Sblocca</h2>
                     <input id="apass" type="password" className="input-field text-center font-bold" placeholder="PASSWORD" />
-                    <button onClick={()=>{if(document.getElementById('apass').value==='W0d@w0d@'){fetchAdmin(); setStep('admin_dash');}}} className="btn btn-primary mt-4 font-bold shadow-lg uppercase">SBLOCCA</button>
+                    <button onClick={()=>{if(document.getElementById('apass').value==='W0d@w0d@'){fetchAdmin(); fetchPropertyCodes(); setStep('admin_dash');}}} className="btn btn-primary mt-4 font-bold shadow-lg uppercase">SBLOCCA</button>
                     <button onClick={()=>setStep('login')} className="mt-8 text-sm text-slate-400 underline">Indietro</button>
                 </div>
             );
@@ -909,7 +933,7 @@
                         {Object.keys(PROPERTIES).map(k => (
                             <div key={k} className="flex gap-2 mb-2 items-center">
                                 <span className="w-24 text-xs font-bold uppercase">{PROPERTIES[k].name}</span>
-                                <input id={`c_${k}`} className="border p-2 rounded w-full text-center font-mono font-bold" placeholder="Nuovo Codice" />
+                                <input id={`c_${k}`} className="border p-2 rounded w-full text-center font-mono font-bold" placeholder="Nuovo Codice" defaultValue={propertyCodes[k]} />
                                 <button onClick={()=>{ window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db,'artifacts',appId,'public','data','properties',k), {currentCode:document.getElementById(`c_${k}`).value}, {merge:true}); alert('OK'); }} className="bg-yellow-500 text-white px-3 py-2 rounded text-xs font-bold uppercase shadow-sm">SALVA</button>
                             </div>
                         ))}
