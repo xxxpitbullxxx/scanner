@@ -3,112 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tuscan Retreats - Guest Portal Pro</title>
-    
+    <title>Tuscan Retreats - Guest Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
-        
-        .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 25px 0; background: white; }
-        .logo-circle { width: 200px; height: 200px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 3px solid #d4af37; position: relative; }
-        .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
-
-        .scan-wrapper-full { position: relative; width: 100vw; height: 480px; background: #000; overflow: hidden; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); }
+        .logo-circle { width: 180px; height: 180px; border-radius: 50%; overflow: hidden; border: 3px solid #d4af37; margin: 0 auto; }
+        .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
+        .scan-box { position: relative; width: 100%; height: 400px; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        .zone-residenza { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); width: 94%; height: 14%; border: 2px solid #FFD60A; border-radius: 4px; background: rgba(255, 214, 10, 0.1); z-index: 10; }
-        .zone-mrz { position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); width: 96%; height: 25%; border: 3px solid #00E0FF; border-radius: 4px; background: rgba(0, 224, 255, 0.1); z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.6); }
-        .label-guide { position: absolute; top: -20px; left: 0; font-size: 10px; font-weight: 800; padding: 2px 6px; background: rgba(0,0,0,0.7); color: white; border-radius: 4px; text-transform: uppercase; }
-
-        .input-field { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #fff; margin-bottom: 8px; }
-        .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; border: none; }
+        .guide-mrz { position: absolute; top: 75%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 20%; border: 3px solid #00E0FF; border-radius: 8px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
         .btn-primary { background: #0f766e; color: white; }
-        .btn-success { background: #10b981; color: white; }
-        
-        .field-ok { border-left: 4px solid #10b981 !important; background: #f0fdf4 !important; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .loader { width: 30px; height: 30px; border: 4px solid #FFF; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .input-field { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
-    <canvas id="hidden-canvas" style="display:none;"></canvas>
+    <canvas id="ocr-cvs" style="display:none;"></canvas>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        window.FirebaseSDK = { initializeApp, getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, updateDoc, getAuth, signInAnonymously };
+        window.FB = { initializeApp, getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, getDocs, getAuth, signInAnonymously };
     </script>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const MY_FIREBASE_CONFIG = {
-          apiKey: "AIzaSyAI9ehjq0UAiYu6l_VxXiAZCV12QL0RbDk",
-          authDomain: "tuscan-retreats-9322c.firebaseapp.com",
-          projectId: "tuscan-retreats-9322c",
-          storageBucket: "tuscan-retreats-9322c.firebasestorage.app",
-          messagingSenderId: "775354595552",
-          appId: "1:775354595552:web:d527557e2a397640977885"
-        };
-
         const PROPERTIES = {
             "LOVE": { id: "LOVE", name: "Love Nest", welcome: "https://welcomebooklovenest.netlify.app" },
-            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", welcome: "https://welcomebooklatartaruga.netlify.app" },
-            "REGINA": { id: "REGINA", name: "Santa Regina", welcome: "" }
-        };
-
-        const TRANSLATIONS = {
-            it: { 
-                welcome: "Ciao! Sono Giulia. Completa il check-in online per ricevere il codice.", 
-                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA", 
-                confirm_btn: "CONFERMA", add_guest: "AGGIUNGI OSPITE", 
-                finish_btn: "INVIA DOCUMENTI", verify: "Verifica Dati", 
-                thanks: "Grazie", success_msg: "Dati inviati a Giulia.", 
-                waiting_approval: "Verifica in corso...", code_ready_soon: "Il codice apparirà tra poco.",
-                welcome_book_btn: "📖 APRI WELCOME BOOK", share_link: "INVIA LINK AD AMICI",
-                label_surname: "Cognome", label_name: "Nome", label_doc: "N. Documento"
-            },
-            en: { 
-                welcome: "Hi! I'm Giulia. Please complete online check-in.", 
-                login_ph: "BOOKING CODE", start_btn: "START", 
-                confirm_btn: "CONFIRM", add_guest: "ADD GUEST", 
-                finish_btn: "FINISH", verify: "Verify Data", 
-                thanks: "Thank you", success_msg: "Data sent to Giulia.", 
-                waiting_approval: "Verification in progress...", code_ready_soon: "The code will appear shortly.",
-                welcome_book_btn: "📖 OPEN WELCOME BOOK", share_link: "SHARE LINK",
-                label_surname: "Surname", label_name: "Name", label_doc: "Doc Number"
-            }
+            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", welcome: "https://welcomebooklatartaruga.netlify.app" }
         };
 
         function App() {
-            const [lang, setLang] = useState('it');
             const [step, setStep] = useState('login');
-            const [property, setProperty] = useState(null);
-            const [bookingId, setBookingId] = useState("");
+            const [prop, setProp] = useState(null);
+            const [guestName, setGuestName] = useState("");
             const [doorCode, setDoorCode] = useState("WAIT");
-            const [guests, setGuests] = useState([]);
-            const [isAnalysing, setIsAnalysing] = useState(false);
-            const [formData, setFormData] = useState({ surname: "", name: "", docNumber: "", expiryDate: "" });
-            const [adminList, setAdminList] = useState([]);
-            const sigCanvasRef = useRef(null);
+            const [formData, setFormData] = useState({ surname: "", name: "", doc: "" });
+            const [loading, setLoading] = useState(false);
             const videoRef = useRef(null);
-            const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
 
             useEffect(() => {
-                const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
-                window.db = window.FirebaseSDK.getFirestore(app);
-                window.FirebaseSDK.signInAnonymously(window.FirebaseSDK.getAuth(app));
+                const app = window.FB.initializeApp({
+                    apiKey: "AIzaSyAI9ehjq0UAiYu6l_VxXiAZCV12QL0RbDk",
+                    authDomain: "tuscan-retreats-9322c.firebaseapp.com",
+                    projectId: "tuscan-retreats-9322c"
+                });
+                window.db = window.FB.getFirestore(app);
+                window.FB.signInAnonymously(window.FB.getAuth(app));
 
                 const params = new URLSearchParams(window.location.search);
                 const d = params.get('d');
@@ -116,180 +66,101 @@
                     try {
                         const decoded = JSON.parse(atob(d));
                         if (PROPERTIES[decoded.p]) {
-                            setProperty(PROPERTIES[decoded.p]);
+                            setProp(PROPERTIES[decoded.p]);
+                            setGuestName(decoded.n || "Ospite");
+                            setStep('welcome');
                             const sid = `${decoded.p}_${(decoded.n || "Guest").replace(/\s/g, '_')}`;
-                            setBookingId(sid); setStep('welcome');
-                            window.FirebaseSDK.onSnapshot(window.FirebaseSDK.doc(window.db, 'checkins', sid), (doc) => {
+                            window.FB.onSnapshot(window.FB.doc(window.db, 'checkins', sid), (doc) => {
                                 if (doc.exists()) setDoorCode(doc.data().doorCode || "WAIT");
                             });
                         }
-                    } catch (e) {}
+                    } catch (e) { console.error("Link Error"); }
                 }
             }, []);
 
-            // --- LOGICA OCR UNIFICATA (C.I. + PASSAPORTO) ---
             const fix = (s, type) => {
                 if(!s) return "";
-                if(type === 'N') return s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2');
-                return s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S');
+                return type === 'N' ? s.replace(/O/g,'0').replace(/I/g,'1') : s.replace(/0/g,'O').replace(/1/g,'I');
             };
 
             const runOCR = async () => {
-                setIsAnalysing(true);
-                const canvas = document.getElementById('hidden-canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 1280;
-                canvas.height = videoRef.current.videoHeight * (1280 / videoRef.current.videoWidth);
+                setLoading(true);
+                const cvs = document.getElementById('ocr-cvs');
+                const ctx = cvs.getContext('2d');
+                cvs.width = 1280; cvs.height = videoRef.current.videoHeight * (1280/videoRef.current.videoWidth);
                 ctx.filter = 'grayscale(100%) contrast(250%)';
-                ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(videoRef.current, 0, 0, cvs.width, cvs.height);
+                const { data: { text } } = await Tesseract.recognize(cvs, 'eng');
                 
-                const { data: { text } } = await Tesseract.recognize(canvas, 'eng+ita');
-                parseDocument(text);
-                setIsAnalysing(false);
-                setStep('manual_entry');
-            };
-
-            const parseDocument = (raw) => {
-                const clean = raw.toUpperCase().replace(/\s/g, '');
-                // Passport?
-                let p = clean.match(/P<([A-Z]{3})([A-Z<]+)/);
-                if(p) {
-                    let parts = p[2].split('<<');
-                    setFormData({ ...formData, surname: fix(parts[0], 'L').replace(/</g, ' '), name: fix(parts[1], 'L').replace(/</g, ' ') });
-                    return;
+                const up = text.toUpperCase().replace(/\s/g, '');
+                let p = up.match(/P<([A-Z]{3})([A-Z<]+)/);
+                if(p) { // Passport
+                    let n = p[2].split('<<');
+                    setFormData({ surname: fix(n[0], 'L').replace(/</g,' '), name: fix(n[1], 'L').replace(/</g,' '), doc: up.match(/([A-Z0-9]{9})/)?.[0] || "" });
                 }
-                // C.I. Elettronica?
-                let ci = clean.match(/I<ITA([A-Z0-9]{9})/);
-                if(ci) {
-                    setFormData({ ...formData, docNumber: ci[1] });
-                }
-            };
-
-            const saveCheckin = async () => {
-                const sid = bookingId || `B_${Date.now()}`;
-                await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'checkins', sid), {
-                    guests, propertyId: property.id, doorCode: "WAIT", timestamp: new Date().toISOString()
-                });
-                setStep('success');
+                setLoading(false); setStep('manual');
             };
 
             if (step === 'login') return (
-                <div className="app-container p-8 flex flex-col items-center justify-center text-center">
-                    <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img" /></div></div>
-                    <input className="input-field text-center font-bold" placeholder={t.login_ph} onKeyDown={e => {
+                <div className="app-container p-10 flex flex-col justify-center items-center">
+                    <div className="logo-circle mb-8"><img src="logo.png" className="logo-img" /></div>
+                    <input className="input-field text-center font-bold" placeholder="CODICE" onKeyDown={e => {
                         if(e.key === 'Enter' && e.target.value.toUpperCase() === 'ADMIN') {
-                            const p = prompt("Password:");
-                            if(p === 'W0d@w0d@') setStep('admin_panel');
-                        } else if(e.key === 'Enter' && PROPERTIES[e.target.value.toUpperCase()]) {
-                            setProperty(PROPERTIES[e.target.value.toUpperCase()]); setStep('welcome');
+                            if(prompt("Pass:") === 'W0d@w0d@') setStep('admin');
                         }
                     }} />
                 </div>
             );
 
-            if (step === 'admin_panel') return (
-                <div className="app-container p-6 overflow-y-auto">
-                    <h2 className="font-bold text-teal-800 border-b pb-2 mb-4">AREA PROPRIETARIO</h2>
-                    <button onClick={async () => {
-                        const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'checkins'));
-                        const l = []; snap.forEach(d => l.push({id: d.id, ...d.data()})); setAdminList(l);
-                    }} className="btn btn-primary mb-4 text-xs">CARICA CHECK-IN</button>
-                    {adminList.map(c => (
-                        <div key={c.id} className="bg-slate-50 p-4 rounded-xl mb-3 border">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase">{c.id}</div>
-                            <div className="flex gap-2 mt-2">
-                                <input id={`in_${c.id}`} className="input-field py-1 mb-0" placeholder="Codice Porta" defaultValue={c.doorCode === 'WAIT' ? '' : c.doorCode}/>
-                                <button onClick={() => window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(window.db, 'checkins', c.id), {doorCode: document.getElementById(`in_${c.id}`).value})} className="btn btn-success p-2 w-20 text-[10px]">SALVA</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            );
-
             if (step === 'welcome') return (
-                <div className="app-container p-8 text-center flex flex-col justify-center">
-                    <div className="logo-circle mx-auto mb-6"><img src="foto.jpg" className="logo-img" /></div>
-                    <p className="italic text-lg mb-8">"{t.welcome}"</p>
+                <div className="app-container p-10 text-center flex flex-col justify-center">
+                    <div className="logo-circle mb-6"><img src="foto.jpg" className="logo-img" /></div>
+                    <h2 className="text-xl italic mb-10">"Ciao {guestName}, completa il check-in per ricevere il codice porta."</h2>
                     <button onClick={() => {
                         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
                             videoRef.current.srcObject = s; setStep('scan');
                         });
-                    }} className="btn btn-primary font-bold shadow-xl">{t.start_btn}</button>
+                    }} className="btn btn-primary shadow-xl">INIZIA SCAN DOCUMENTO</button>
                 </div>
             );
 
             if (step === 'scan') return (
                 <div className="app-container bg-black">
-                    <div className="scan-wrapper-full">
-                        <video ref={videoRef} autoPlay playsinline />
-                        <div className="zone-mrz"><span className="label-guide">ZONA MRZ / CODICE</span></div>
-                    </div>
-                    <div className="p-6">
-                        <button onClick={runOCR} className="btn btn-primary">{isAnalysing ? <div className="loader" /> : "SCANSIONA"}</button>
-                        <button onClick={() => setStep('manual_entry')} className="mt-4 text-white underline w-full text-center">Inserisci a mano</button>
-                    </div>
+                    <div className="scan-box"><video ref={videoRef} autoPlay playsinline /><div className="guide-mrz"></div></div>
+                    <div className="p-6"><button onClick={runOCR} className="btn btn-primary">{loading ? "ANALISI..." : "SCANSIONA"}</button></div>
                 </div>
             );
 
-            if (step === 'manual_entry') return (
-                <div className="app-container p-6 overflow-y-auto">
-                    <h2 className="font-bold mb-4 uppercase text-sm">{t.verify}</h2>
-                    <input className="input-field" placeholder={t.label_surname} value={formData.surname} onChange={e=>setFormData({...formData, surname: e.target.value.toUpperCase()})} />
-                    <input className="input-field" placeholder={t.label_name} value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value.toUpperCase()})} />
-                    <input className="input-field" placeholder={t.label_doc} value={formData.docNumber} onChange={e=>setFormData({...formData, docNumber: e.target.value.toUpperCase()})} />
-                    <button onClick={()=>{setGuests([...guests, formData]); setStep('guest_list');}} className="btn btn-success mt-4">SALVA OSPITE</button>
-                </div>
-            );
-
-            if (step === 'guest_list') return (
+            if (step === 'manual') return (
                 <div className="app-container p-6">
-                    <h2 className="font-bold border-b pb-2 mb-4 uppercase">{t.guest_list}</h2>
-                    {guests.map((g,i)=>(<div key={i} className="p-4 bg-slate-50 rounded-xl mb-2 flex justify-between"><b>{g.surname} {g.name}</b><span className="text-green-500 font-bold">✓</span></div>))}
-                    <button onClick={() => setStep('scan')} className="w-full py-4 border-2 border-dashed border-teal-600 rounded-xl text-teal-600 font-bold mb-4">+ AGGIUNGI ALTRO</button>
-                    <button onClick={() => setStep('sign')} className="btn btn-primary">PROCEDI ALLA FIRMA</button>
-                </div>
-            );
-
-            if (step === 'sign') return (
-                <div className="app-container p-8">
-                    <h2 className="font-bold mb-4">FIRMA DIGITALE</h2>
-                    <div className="h-60 border-2 bg-slate-50 rounded-2xl mb-6 overflow-hidden"><SignaturePad canvasRef={sigCanvasRef}/></div>
-                    <button onClick={saveCheckin} className="btn btn-primary">INVIA TUTTO</button>
+                    <h2 className="font-bold mb-4">VERIFICA DATI</h2>
+                    <input className="input-field" value={formData.surname} onChange={e=>setFormData({...formData, surname: e.target.value.toUpperCase()})} placeholder="Cognome" />
+                    <input className="input-field" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value.toUpperCase()})} placeholder="Nome" />
+                    <input className="input-field" value={formData.doc} onChange={e=>setFormData({...formData, doc: e.target.value.toUpperCase()})} placeholder="N. Documento" />
+                    <button onClick={() => {
+                        const sid = `${prop.id}_${guestName.replace(/\s/g, '_')}`;
+                        window.FB.setDoc(window.FB.doc(window.db, 'checkins', sid), { doorCode: "WAIT", timestamp: new Date().toISOString() });
+                        setStep('success');
+                    }} className="btn btn-primary mt-4 font-bold">INVIA E FINISCI</button>
                 </div>
             );
 
             if (step === 'success') return (
-                <div className="app-container bg-teal-800 text-white items-center p-10 text-center flex flex-col justify-center min-h-screen">
-                    <div className="w-20 h-20 bg-white text-teal-700 rounded-full flex items-center justify-center mb-6 shadow-2xl animate-bounce">✓</div>
-                    <h1 className="text-2xl font-bold mb-2 uppercase">{t.thanks}!</h1>
-                    <div className="bg-white text-slate-900 rounded-3xl p-8 w-full shadow-2xl border mb-6">
+                <div className="app-container bg-teal-800 text-white p-10 text-center flex flex-col justify-center min-h-screen">
+                    <div className="w-20 h-20 bg-white text-teal-700 rounded-full flex items-center justify-center mb-6 mx-auto animate-bounce text-3xl font-bold">✓</div>
+                    <h1 className="text-2xl font-bold mb-6">GRAZIE, {guestName}!</h1>
+                    <div className="bg-white text-slate-900 rounded-3xl p-8 mb-6 shadow-2xl">
                         {doorCode === "WAIT" ? (
-                            <div className="animate-pulse">
-                                <p className="text-sm italic text-slate-600">{t.waiting_approval}</p>
-                                <p className="text-[10px] font-bold mt-2 uppercase text-slate-400">{t.code_ready_soon}</p>
-                            </div>
+                            <div className="animate-pulse text-slate-500 italic">Giulia sta verificando i tuoi dati...<br/><small>Il codice apparirà qui tra poco.</small></div>
                         ) : (
-                            <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">CODICE PORTA</p>
-                                <div className="text-5xl font-mono font-bold text-slate-800 my-4 tracking-tighter">{doorCode}</div>
-                                <p className="text-[10px] text-teal-600 font-bold uppercase mt-4">SBLOCCATO ✅</p>
-                            </div>
+                            <div><p className="text-[10px] text-slate-400 font-bold uppercase mb-2">CODICE PORTA</p><div className="text-5xl font-mono font-bold text-slate-800 tracking-tighter">{doorCode}</div><p className="text-xs text-teal-600 font-bold mt-4">SBLOCCATO ✅</p></div>
                         )}
                     </div>
-                    {property?.welcome && (
-                        <a href={property.welcome} target="_blank" className="btn bg-white text-teal-800 w-full mb-4 font-bold shadow-lg">
-                            {t.welcome_book_btn}
-                        </a>
-                    )}
-                    <button onClick={()=>{navigator.share({url: window.location.href})}} className="btn bg-teal-900 text-teal-100 font-bold uppercase text-xs mb-6 border border-teal-700">{t.share_link}</button>
-                    <div className="p-4 bg-teal-900/40 rounded-xl text-[11px] text-teal-100 border border-teal-700 italic">
-                        {t.save_link_msg}
-                    </div>
+                    {prop?.welcome && <a href={prop.welcome} target="_blank" className="btn bg-white text-teal-800 font-bold mb-4">📖 APRI WELCOME BOOK</a>}
                 </div>
             );
             return null;
         }
-
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
