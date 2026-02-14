@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tuscan Retreats - Guest Portal</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
+        
+        /* LOGO GIULIA */
+        .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 25px 0; background: white; }
+        .logo-circle {
+            width: 200px; height: 200px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden;
+            border: 3px solid #d4af37; position: relative;
+            padding: 0;
+        }
+        .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); position: relative; z-index: 2; }
+
+        /* HEADER LOGO */
+        .header-logo-circle { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; }
+        .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
+
+        /* SCANNER FULL WIDTH */
+        .scan-wrapper-full {
+            position: relative;
+            width: 100vw; /* Larghezza totale schermo */
+            height: 480px; /* Altezza ottimizzata */
+            background: #000;
+            overflow: hidden;
+            left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; /* Rompe il container */
+        }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* GUIDE VISIVE */
+        .guide-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
+        }
+        
+        .zone-residenza {
+            position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%);
+            width: 94%; height: 14%; border: 2px solid #FFD60A; border-radius: 4px;
+            background: rgba(255, 214, 10, 0.1); z-index: 10;
+        }
+
+        .zone-mrz {
+            position: absolute; top: 82%; left: 50%; transform: translate(-50%, -50%);
+            width: 96%; height: 25%; border: 3px solid #00E0FF; border-radius: 4px;
+            background: rgba(0, 224, 255, 0.1); z-index: 10;
+        }
+
+        .label-guide { 
+            position: absolute; top: -20px; left: 0;
+            font-size: 10px; font-weight: 800; padding: 2px 6px; 
+            background: rgba(0,0,0,0.7); color: white; border-radius: 4px; 
+            text-transform: uppercase; letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        .warning-red { color: #ef4444; font-size: 11px; font-weight: 700; line-height: 1.3; margin-top: 5px; text-align: center; border: 1px solid #fee2e2; background: #fef2f2; padding: 8px; border-radius: 8px; }
+        .info-blue { color: #1e40af; font-size: 12px; line-height: 1.4; background: #eff6ff; padding: 12px; border-radius: 12px; border: 1px solid #dbeafe; text-align: left; margin-bottom: 20px; }
+        .info-success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 15px; text-align: center; }
+
+        .input-field { 
+            width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; 
+            font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 8px; color: #1e293b;
+        }
+        .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; transition: all 0.1s; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; border: none; }
+        .btn-primary { background: #0f766e; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .flag-btn { font-size: 24px; padding: 4px 6px; opacity: 0.5; transition: 0.2s; cursor: pointer; border: none; background: transparent; filter: grayscale(100%); }
+        .flag-btn.active { opacity: 1; transform: scale(1.1); filter: grayscale(0%); }
+
+        .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
+        .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
+
+        .loader { width: 24px; height: 24px; border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <canvas id="ocr-canvas" style="display:none;"></canvas>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        window.FirebaseSDK = { initializeApp, getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, updateDoc, getAuth, signInAnonymously, onAuthStateChanged };
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const MY_FIREBASE_CONFIG = {
+          apiKey: "AIzaSyAI9ehjq0UAiYu6l_VxXiAZCV12QL0RbDk",
+          authDomain: "tuscan-retreats-9322c.firebaseapp.com",
+          projectId: "tuscan-retreats-9322c",
+          storageBucket: "tuscan-retreats-9322c.firebasestorage.app",
+          messagingSenderId: "775354595552",
+          appId: "1:775354595552:web:d527557e2a397640977885"
+        };
+
+        const PROPERTIES = {
+            "LOVE": { id: "LOVE", name: "Love Nest", welcome: "https://welcomebooklovenest.netlify.app" },
+            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", welcome: "https://welcomebooklatartaruga.netlify.app" },
+            "REGINA": { id: "REGINA", name: "Santa Regina", welcome: "" }
+        };
+
+        const TRANSLATIONS = {
+            it: { 
+                welcome: "Ciao! Sono Giulia. Per rendere il tuo arrivo più semplice, ti chiedo di completare il check-in online.", 
+                login_ph: "CODICE PRENOTAZIONE", start_btn: "INIZIA IL CHECK-IN", 
+                confirm_btn: "CONFERMA E CONTINUA", add_guest: "AGGIUNGI OSPITE", save_guest: "SALVA OSPITE",
+                finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", 
+                thanks: "Grazie", success_msg: "Documenti inviati con successo!",
+                waiting_approval: "Giulia sta verificando i tuoi dati...",
+                code_ready_soon: "Il codice apparirà automaticamente appena pronto.",
+                welcome_book_btn: "📖 APRI WELCOME BOOK",
+                guests_registered: "Ospiti registrati",
+                save_link_msg: "💡 CONSIGLIO: Salva questa pagina! Qui troverai il codice sbloccato appena verificato.",
+                exit: "Esci", ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO",
+                label_surname: "Cognome", label_name: "Nome", label_docnum: "N. Documento", label_expiry: "Scadenza",
+                guest_count_q: "Quanti ospiti siete? (1+ anni)", share_link: "INVIA LINK AGLI ALTRI OSPITI"
+            },
+            en: { 
+                welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
+                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", 
+                confirm_btn: "SAVE & CONTINUE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
+                finish_btn: "FINISH AND PROCEED", verify: "Verify Data",
+                thanks: "Thank you", success_msg: "Documents sent successfully!",
+                waiting_approval: "Giulia is verifying your data...",
+                code_ready_soon: "The code will appear automatically when ready.",
+                welcome_book_btn: "📖 OPEN WELCOME BOOK",
+                guests_registered: "Guests registered",
+                save_link_msg: "💡 TIP: Save this page! You will find the unlocked code here once verified.",
+                exit: "Exit", ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD FILE",
+                label_surname: "Surname", label_name: "Name", label_docnum: "Doc Number", label_expiry: "Expiry Date",
+                guest_count_q: "How many guests? (1+ years)", share_link: "SEND LINK TO OTHERS"
+            },
+            fr: { 
+                welcome: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement en ligne.", 
+                login_ph: "CODE", start_btn: "COMMENCER", confirm_btn: "ENREGISTRER", add_guest: "AJOUTER", save_guest: "ENREGISTRER",
+                finish_btn: "TERMINER", thanks: "Merci", success_msg: "Documents envoyés !",
+                waiting_approval: "Giulia vérifie vos données...",
+                welcome_book_btn: "📖 OUVRIR WELCOME BOOK",
+                save_link_msg: "💡 CONSEIL : Sauvegardez cette page !", exit: "Sortie"
+            },
+            es: { 
+                welcome: "¡Hola! Soy Giulia. Complete el registro en línea.", 
+                login_ph: "CÓDIGO", start_btn: "EMPEZAR", confirm_btn: "GUARDAR", add_guest: "AÑADIR", save_guest: "GUARDAR",
+                finish_btn: "TERMINAR", thanks: "Gracias", success_msg: "¡Enviado!",
+                waiting_approval: "Giulia está verificando...",
+                welcome_book_btn: "📖 ABRIR WELCOME BOOK",
+                save_link_msg: "💡 CONSEJO: ¡Guarda esta página!", exit: "Salir"
+            },
+            de: { 
+                welcome: "Hallo! Ich bin Giulia. Bitte online einchecken.", 
+                login_ph: "CODE", start_btn: "STARTEN", confirm_btn: "SPEICHERN", add_guest: "HINZUFÜGEN", save_guest: "SPEICHERN",
+                finish_btn: "ABSCHLIESSEN", thanks: "Danke", success_msg: "Gesendet!",
+                waiting_approval: "Giulia überprüft...",
+                welcome_book_btn: "📖 WELCOME BOOK ÖFFNEN",
+                save_link_msg: "💡 TIPP: Seite speichern!", exit: "Beenden"
+            }
+        };
+
+        const Icon = ({ name, className = "w-6 h-6" }) => {
+            const icons = {
+                check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/>,
+                trash: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>,
+                camera: <React.Fragment><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/></React.Fragment>,
+                chevronLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />,
+                lock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />,
+                copy: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />,
+                scan: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10" />
+            };
+            return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name] || icons.camera}</svg>;
+        };
+
+        const SignaturePad = ({ canvasRef }) => {
+            useEffect(() => {
+                const canvas = canvasRef.current; if (!canvas) return;
+                const ctx = canvas.getContext('2d'); let isDrawing = false;
+                const resize = () => { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; ctx.lineWidth = 3; ctx.lineCap = 'round'; };
+                resize(); const getPos = (e) => { const rect = canvas.getBoundingClientRect(); return { x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top }; };
+                const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+                const draw = (e) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+                const stop = () => isDrawing = false;
+                canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
+                canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stop);
+            }, []);
+            return <canvas ref={canvasRef} className="w-full h-full" />;
+        };
+
+        const Header = ({ showBack, setStep, setLang, lang }) => (
+            <div className="flex flex-col bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
+                <div className="flex justify-end p-2 pb-0">
+                     <div className="flex space-x-1">
+                        {['it','en','fr','es','de'].map(l => (
+                             <button key={l} onClick={() => setLang(l)} className={`flag-btn ${lang === l ? 'active' : ''}`}>
+                                 {l === 'it' ? '🇮🇹' : l === 'en' ? '🇬🇧' : l === 'fr' ? '🇫🇷' : l === 'es' ? '🇪🇸' : '🇩🇪'}
+                             </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="flex items-center justify-center p-3 pt-0">
+                    {showBack && <button onClick={() => setStep('welcome')} className="absolute left-4 p-1 text-slate-400"><Icon name="chevronLeft" /></button>}
+                    <div className="header-logo-circle"><img src="logo.png" /></div>
+                    <div className="ml-3 font-bold text-slate-700 text-[14px] uppercase tracking-widest">Tuscan Retreats</div>
+                </div>
+            </div>
+        );
+
+        function App() {
+            const [lang, setLang] = useState('it');
+            const [step, setStep] = useState('login');
+            const [property, setProperty] = useState(null);
+            const [bookingId, setBookingId] = useState("");
+            const [doorCode, setDoorCode] = useState("WAIT");
+            const [guests, setGuests] = useState([]);
+            const [expectedGuests, setExpectedGuests] = useState(1);
+            const [images, setImages] = useState({ front: null, back: null });
+            const [formData, setFormData] = useState({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", citizenship: "ITALIANA", residenceCity: "", residenceAddress: "", docNumber: "", expiryDate: "" });
+            const [adminData, setAdminData] = useState([]);
+            const sigCanvasRef = useRef(null);
+            const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
+
+            useEffect(() => {
+                const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
+                window.db = window.FirebaseSDK.getFirestore(app);
+                window.FirebaseSDK.signInAnonymously(window.FirebaseSDK.getAuth(app));
+
+                const params = new URLSearchParams(window.location.search);
+                const d = params.get('d');
+                if (d) {
+                    try {
+                        const decoded = JSON.parse(atob(d));
+                        if (PROPERTIES[decoded.p]) {
+                            setProperty(PROPERTIES[decoded.p]);
+                            const sid = decoded.id || `SESS_${Date.now()}`;
+                            setBookingId(sid); setStep('welcome');
+                            const unsub = window.FirebaseSDK.onSnapshot(window.FirebaseSDK.doc(window.db, 'checkins', sid), (doc) => {
+                                if (doc.exists()) setDoorCode(doc.data().doorCode || "WAIT");
+                            });
+                            return () => unsub();
+                        }
+                    } catch (e) {}
+                }
+            }, []);
+
+            const saveToCloud = async () => {
+                const sid = bookingId || `B_${Date.now()}`;
+                const payload = { 
+                    guests, 
+                    propertyId: property.id, 
+                    expectedGuests, 
+                    doorCode: "WAIT", 
+                    timestamp: new Date().toISOString() 
+                };
+                await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'checkins', sid), payload);
+                setStep('success');
+            };
+
+            if (step === 'login') return (
+                <div className="app-container p-8 justify-center items-center text-center">
+                    <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img" /></div></div>
+                    <input className="input-field text-center font-bold" placeholder={t.login_ph} onKeyDown={e => {
+                        if(e.key === 'Enter') {
+                            const val = e.target.value.toUpperCase();
+                            if(val === 'ADMIN') setStep('admin_panel');
+                            else if(PROPERTIES[val]) { setProperty(PROPERTIES[val]); setStep('welcome'); }
+                        }
+                    }} />
+                </div>
+            );
+
+            if (step === 'admin_panel') return (
+                <div className="app-container p-6 overflow-y-auto">
+                    <div className="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 className="font-bold text-teal-800 uppercase">Dashboard Proprietario</h2>
+                        <button onClick={() => setStep('login')} className="text-xs underline italic text-slate-400">Esci</button>
+                    </div>
+                    <button onClick={async () => {
+                        const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'checkins'));
+                        const l = []; snap.forEach(d => l.push({id: d.id, ...d.data()})); setAdminData(l);
+                    }} className="btn btn-primary mb-4 text-xs font-bold uppercase tracking-widest">Aggiorna Lista</button>
+                    
+                    <div className="space-y-4">
+                        {adminData.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(c => (
+                            <div key={c.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div className="flex justify-between font-bold text-[10px] mb-2 uppercase text-slate-500">
+                                    <span>{c.guests?.[0]?.surname || "Ospite"} - {c.propertyId}</span>
+                                    <span className={c.doorCode === 'WAIT' ? 'text-orange-500' : 'text-green-600'}>
+                                        {c.guests?.length} / {c.expectedGuests}
+                                    </span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input id={`c_${c.id}`} className="input-field py-1 mb-0 text-sm" placeholder="Inserisci Codice Porta" defaultValue={c.doorCode==='WAIT'?'':c.doorCode}/>
+                                    <button onClick={() => window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(window.db, 'checkins', c.id), {doorCode: document.getElementById(`c_${c.id}`).value})} className="btn btn-success p-2 w-24 text-[10px] uppercase font-bold">Invia</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            if (step === 'welcome') return (
+                <div className="app-container">
+                    <Header setLang={setLang} lang={lang} />
+                    <div className="p-8 text-center flex-1 flex flex-col justify-center">
+                        <div className="logo-circle mx-auto mb-6"><img src="foto.jpg" className="logo-img" /></div>
+                        <p className="italic text-lg mb-8">"{t.welcome}"</p>
+                        <button onClick={() => setStep('ask_guests')} className="btn btn-primary font-bold shadow-xl">{t.start_btn}</button>
+                    </div>
+                </div>
+            );
+
+            if (step === 'ask_guests') return (
+                <div className="app-container p-8 text-center">
+                    <Header showBack setStep={setStep} setLang={setLang} lang={lang} />
+                    <h2 className="text-xl font-bold mt-8 mb-4">{t.guest_count_q}</h2>
+                    <div className="flex justify-center gap-6 items-center mb-8">
+                        <button onClick={()=>setExpectedGuests(Math.max(1, expectedGuests-1))} className="w-12 h-12 bg-slate-100 rounded-full text-2xl font-bold">-</button>
+                        <span className="text-4xl font-bold text-teal-700">{expectedGuests}</span>
+                        <button onClick={()=>setExpectedGuests(expectedGuests+1)} className="w-12 h-12 bg-teal-100 rounded-full text-2xl font-bold">+</button>
+                    </div>
+                    <button onClick={()=>setStep('guest_list')} className="btn btn-primary shadow-lg">{t.continue}</button>
+                </div>
+            );
+
+            if (step === 'guest_list') return (
+                <div className="app-container p-6">
+                    <Header showBack setStep={setStep} setLang={setLang} lang={lang} />
+                    <div className="flex justify-between items-center mb-6 font-bold uppercase text-xs border-b pb-2 tracking-widest">
+                        <span>{t.guest_list}</span>
+                        <span className="text-teal-600 bg-teal-50 px-2 py-1 rounded">{guests.length} / {expectedGuests}</span>
+                    </div>
+                    {guests.map((g,i)=>(<div key={i} className="p-4 bg-slate-50 rounded-xl mb-2 flex justify-between items-center"><b>{g.surname} {g.name}</b><Icon name="check" className="text-green-500 w-5 h-5"/></div>))}
+                    {guests.length < expectedGuests ? (
+                        <button onClick={()=>setStep('manual_entry')} className="w-full py-6 border-2 border-dashed border-teal-600 rounded-2xl text-teal-600 font-bold uppercase text-xs tracking-widest">+ {t.add_guest}</button>
+                    ) : (
+                        <button onClick={()=>setStep('sign')} className="btn btn-primary mt-4 shadow-xl">{t.finish_btn}</button>
+                    )}
+                </div>
+            );
+
+            if (step === 'manual_entry') return (
+                <div className="app-container p-6 overflow-y-auto">
+                    <Header showBack setStep={setStep} setLang={setLang} lang={lang} />
+                    <h2 className="font-bold mb-4 uppercase text-sm tracking-widest">{t.verify}</h2>
+                    <div className="space-y-4">
+                        <input className="input-field" placeholder={t.label_surname} value={formData.surname} onChange={e=>setFormData({...formData, surname: e.target.value.toUpperCase()})} />
+                        <input className="input-field" placeholder={t.label_name} value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value.toUpperCase()})} />
+                        <input className="input-field" placeholder={t.label_docnum} value={formData.docNumber} onChange={e=>setFormData({...formData, docNumber: e.target.value.toUpperCase()})} />
+                        <input type="date" className="input-field text-center font-bold" value={formData.expiryDate} onChange={e=>setFormData({...formData, expiryDate: e.target.value})} />
+                        <button onClick={()=>{setGuests([...guests, formData]); setStep('guest_list');}} className="btn btn-success mt-4 uppercase shadow-lg">{t.save_guest}</button>
+                    </div>
+                </div>
+            );
+
+            if (step === 'sign') return (
+                <div className="app-container p-8">
+                    <Header showBack setStep={setStep} setLang={setLang} lang={lang} />
+                    <h2 className="font-bold mb-4 uppercase tracking-widest text-sm">Firma e Tassa</h2>
+                    <div className="h-60 border-2 bg-slate-50 rounded-2xl mb-6 overflow-hidden relative shadow-inner">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none text-2xl font-bold uppercase">Firma Qui</div>
+                        <SignaturePad canvasRef={sigCanvasRef}/>
+                    </div>
+                    <button onClick={saveToCloud} className="btn btn-primary shadow-xl">CONFERMA E FINE</button>
+                </div>
+            );
+
+            if (step === 'success') return (
+                <div className="app-container bg-teal-800 text-white items-center p-10 text-center flex flex-col justify-center min-h-screen">
+                    <div className="w-20 h-20 bg-white text-teal-700 rounded-full flex items-center justify-center mb-6 shadow-2xl animate-bounce"><Icon name="check" className="w-10 h-10" /></div>
+                    <h1 className="text-2xl font-bold mb-2 uppercase">{t.thanks}!</h1>
+                    
+                    <div className="bg-white text-slate-900 rounded-3xl p-8 w-full shadow-2xl border mb-6">
+                        {doorCode === "WAIT" ? (
+                            <div className="animate-pulse">
+                                <div className="p-4 bg-orange-50 rounded-2xl mb-4 text-orange-500 mx-auto w-20"><Icon name="lock" /></div>
+                                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Verifica Documenti</p>
+                                <p className="text-sm italic mt-2 leading-relaxed">{t.waiting_approval}</p>
+                                <p className="text-[9px] font-bold mt-4 text-slate-500">{t.code_ready_soon}</p>
+                            </div>
+                        ) : (
+                            <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">Codice d'Ingresso</p>
+                                <div className="text-5xl font-mono font-bold text-slate-800 my-4 tracking-tighter">{doorCode}</div>
+                                <p className="text-[10px] text-teal-600 font-bold uppercase mt-4">Sbloccato ✅</p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {PROPERTIES[property.id]?.welcome && (
+                        <a href={PROPERTIES[property.id].welcome} target="_blank" className="btn bg-white text-teal-800 w-full mb-4 font-bold shadow-lg flex items-center justify-center gap-2 uppercase text-xs tracking-widest">
+                            {t.welcome_book_btn}
+                        </a>
+                    )}
+                    
+                    <div className="p-4 bg-teal-900/40 rounded-xl text-[11px] text-teal-100 border border-teal-700 italic leading-relaxed">
+                        {t.save_link_msg}
+                    </div>
+                    <button onClick={() => window.location.reload()} className="mt-8 text-teal-200 text-[10px] uppercase underline opacity-60 font-bold tracking-widest">{t.exit}</button>
+                </div>
+            );
+            return null;
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
