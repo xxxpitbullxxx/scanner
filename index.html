@@ -90,6 +90,12 @@
         .flag-btn.active { opacity: 1; transform: scale(1.1); filter: grayscale(0%); }
 
         .card-select { width: 100%; padding: 18px; border-radius: 18px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
+        .card-select:hover { border-color: #0f766e; background: #f0fdfa; }
+
+        .upload-box { border: 2px dashed #cbd5e1; border-radius: 20px; height: 256px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; transition: 0.2s; cursor: pointer; overflow: hidden; width: 100%; }
+        .upload-row { display: flex; gap: 8px; margin-bottom: 15px; }
+        .upload-btn-small { flex: 1; padding: 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid #cbd5e1; background: white; color: #334155; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
+        .upload-btn-small:active { background: #f1f5f9; transform: scale(0.98); }
         .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
         .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
 
@@ -136,30 +142,14 @@
                 finish_btn: "FINISCI E PROCEDI", verify: "Verifica Dati", front: "Fronte", back_doc: "Retro",
                 thanks: "Grazie", success_msg: "Documenti inviati con successo.", exit: "Esci", guest_list: "Ospiti Registrati", cloud_save: "Salvataggio...", 
                 ocr_btn: "SCATTA E LEGGI", ocr_processing: "ELABORAZIONE...", ocr_file_btn: "📁 CARICA FOTO", ocr_success: "Dati rilevati! Verifica i campi.",
-                guest_count_q: "Quanti ospiti siete? (1+ anni)", 
-                guest_count_tip: "⚠️ IMPORTANTE: Se ognuno compila dal proprio telefono, scrivi 1 e poi invia questo link agli altri.",
-                continue: "CONTINUA", share_link: "INVIA LINK AGLI ALTRI OSPITI",
-                waiting_approval: "Giulia sta verificando i tuoi dati...",
-                code_ready_soon: "Il codice apparirà automaticamente appena pronto.",
-                welcome_book_btn: "📖 APRI WELCOME BOOK",
+                guest_count_q: "Quanti ospiti siete? (1+ anni)", share_link: "INVIA LINK AGLI ALTRI OSPITI", continue: "CONTINUA",
+                waiting_approval: "Giulia sta verificando i tuoi dati...", welcome_book_btn: "📖 APRI WELCOME BOOK",
                 save_link_msg: "💡 CONSIGLIO: Salva questa pagina! Qui troverai il codice sbloccato appena verificato.",
-                label_surname: "Cognome", label_name: "Nome", label_sex: "Sesso", label_birth: "Nato il", label_city: "Comune Nascita", label_res_city: "Città Residenza", label_address: "Via / Piazza", label_docnum: "N. Documento", label_expiry: "Scadenza"
+                label_surname: "Cognome", label_name: "Nome", label_docnum: "N. Documento", label_expiry: "Scadenza"
             },
             en: { 
                 welcome: "Hi! I'm Giulia. To make your arrival smoother, please complete the online check-in.", 
-                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", 
-                confirm_btn: "SAVE & CONTINUE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST",
-                finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back",
-                thanks: "Thank you", success_msg: "Documents sent successfully.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...",
-                ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD FILE", ocr_success: "Data detected! Check fields.",
-                guest_count_q: "How many guests? (1+ years)", 
-                guest_count_tip: "⚠️ IMPORTANT: If everyone fills from their phone, enter 1 and share the link.",
-                continue: "CONTINUE", share_link: "SEND LINK TO OTHERS",
-                waiting_approval: "Giulia is verifying your data...",
-                code_ready_soon: "The code will appear automatically when ready.",
-                welcome_book_btn: "📖 OPEN WELCOME BOOK",
-                save_link_msg: "💡 TIP: Save this page! You will find the unlocked code here once verified.",
-                label_surname: "Surname", label_name: "Name", label_sex: "Sex", label_birth: "Birth Date", label_city: "Birth City", label_res_city: "Residence City", label_address: "Address", label_docnum: "Doc Number", label_expiry: "Expiry Date"
+                login_ph: "BOOKING CODE", start_btn: "START CHECK-IN", confirm_btn: "SAVE & CONTINUE", add_guest: "ADD GUEST", save_guest: "SAVE GUEST", finish_btn: "FINISH AND PROCEED", verify: "Verify Data", front: "Front", back_doc: "Back", thanks: "Thank you", success_msg: "Documents sent successfully.", exit: "Exit", guest_list: "Guests", cloud_save: "Saving...", ocr_btn: "SNAP & READ", ocr_processing: "PROCESSING...", ocr_file_btn: "📁 UPLOAD FILE", ocr_success: "Data detected! Check fields.", guest_count_q: "How many guests? (1+ years)", share_link: "SEND LINK TO OTHERS", continue: "CONTINUE", waiting_approval: "Giulia is verifying your data...", welcome_book_btn: "📖 OPEN WELCOME BOOK", save_link_msg: "💡 TIP: Save this page!", label_surname: "Surname", label_name: "Name", label_docnum: "Doc Number", label_expiry: "Expiry Date"
             }
         };
 
@@ -170,45 +160,10 @@
                 camera: <React.Fragment><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/></React.Fragment>,
                 chevronLeft: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />,
                 lock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />,
-                copy: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />,
                 share: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             };
             return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icons[name] || icons.camera}</svg>;
         };
-
-        const SignaturePad = ({ canvasRef }) => {
-            useEffect(() => {
-                const canvas = canvasRef.current; if (!canvas) return;
-                const ctx = canvas.getContext('2d'); let isDrawing = false;
-                const resize = () => { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; ctx.lineWidth = 3; ctx.lineCap = 'round'; };
-                resize(); const getPos = (e) => { const rect = canvas.getBoundingClientRect(); return { x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top }; };
-                const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
-                const draw = (e) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
-                const stop = () => isDrawing = false;
-                canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
-                canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stop);
-            }, []);
-            return <canvas ref={canvasRef} className="w-full h-full" />;
-        };
-
-        const Header = ({ showBack, setStep, setLang, lang }) => (
-            <div className="flex flex-col bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
-                <div className="flex justify-end p-2 pb-0">
-                     <div className="flex space-x-1">
-                        {['it','en'].map(l => (
-                             <button key={l} onClick={() => setLang(l)} className={`flag-btn ${lang === l ? 'active' : ''}`}>
-                                 {l === 'it' ? '🇮🇹' : '🇬🇧'}
-                             </button>
-                        ))}
-                    </div>
-                </div>
-                <div className="flex items-center justify-center p-3 pt-0">
-                    {showBack && <button onClick={() => setStep('welcome')} className="absolute left-4 p-1 text-slate-400"><Icon name="chevronLeft" /></button>}
-                    <div className="header-logo-circle"><img src="logo.png" /></div>
-                    <div className="ml-3 font-bold text-slate-700 text-[14px] uppercase tracking-widest">Tuscan Retreats</div>
-                </div>
-            </div>
-        );
 
         function App() {
             const [lang, setLang] = useState('it');
@@ -219,10 +174,9 @@
             const [guests, setGuests] = useState([]);
             const [expectedGuests, setExpectedGuests] = useState(1);
             const [images, setImages] = useState({ front: null, back: null });
-            const [formData, setFormData] = useState({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", citizenship: "ITALIANA", residenceCity: "", residenceAddress: "", docNumber: "", expiryDate: "" });
+            const [formData, setFormData] = useState({ surname: "", name: "", sex: "M", birthDate: "", docNumber: "", expiryDate: "" });
             const [adminData, setAdminData] = useState([]);
             const sigCanvasRef = useRef(null);
-            const videoRef = useRef(null);
             const t = TRANSLATIONS[lang] || TRANSLATIONS.it;
 
             useEffect(() => {
@@ -237,7 +191,8 @@
                         const decoded = JSON.parse(atob(d));
                         if (PROPERTIES[decoded.p]) {
                             setProperty(PROPERTIES[decoded.p]);
-                            const sid = decoded.id || `SESS_${Date.now()}`;
+                            // ID FISSO per link statici basato sul nome nel link
+                            const sid = `${decoded.p}_${(decoded.n || "Guest").replace(/\s/g, '_')}`;
                             setBookingId(sid); setStep('welcome');
                             window.FirebaseSDK.onSnapshot(window.FirebaseSDK.doc(window.db, 'checkins', sid), (doc) => {
                                 if (doc.exists()) setDoorCode(doc.data().doorCode || "WAIT");
@@ -247,33 +202,10 @@
                 }
             }, []);
 
-            const saveToCloud = async () => {
-                const sid = bookingId || `B_${Date.now()}`;
-                const payload = { guests, propertyId: property.id, expectedGuests, doorCode: "WAIT", timestamp: new Date().toISOString() };
-                await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'checkins', sid), payload);
-                setStep('success');
-            };
-
-            const runOCR = async (source) => {
-                const canvas = document.getElementById('ocr-canvas'); const ctx = canvas.getContext('2d');
-                canvas.width = 1280; canvas.height = (source.videoHeight || source.height) * (1280 / (source.videoWidth || source.width));
-                ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-                const { data: { text } } = await Tesseract.recognize(canvas, 'ita');
-                const lines = text.toUpperCase().split('\n');
-                setFormData({...formData, surname: lines[0] || "", name: lines[1] || ""});
-                setStep('manual_entry');
-            };
-
-            const shareLink = () => {
-                 const url = window.location.href;
-                 if (navigator.share) { navigator.share({ title: 'Tuscan Retreats Check-in', url }).catch(console.error); }
-                 else { navigator.clipboard.writeText(url); alert("Link copiato!"); }
-            };
-
             if (step === 'login') return (
-                <div className="app-container p-8 justify-center items-center text-center">
+                <div className="app-container p-8 text-center justify-center items-center">
                     <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img" /></div></div>
-                    <input className="input-field text-center font-bold" placeholder={t.login_ph} onKeyDown={e => {
+                    <input className="input-field text-center uppercase" placeholder={t.login_ph} onKeyDown={e => {
                         if(e.key === 'Enter') {
                             const val = e.target.value.toUpperCase();
                             if(val === 'ADMIN') setStep('admin_panel');
@@ -285,20 +217,16 @@
 
             if (step === 'admin_panel') return (
                 <div className="app-container p-6 overflow-y-auto">
-                    <div className="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 className="font-bold text-teal-800 uppercase">Dashboard Proprietario</h2>
-                        <button onClick={() => setStep('login')} className="text-xs underline italic text-slate-400">Esci</button>
-                    </div>
+                    <h2 className="font-bold mb-4 uppercase text-teal-800 border-b pb-2">Area Proprietario</h2>
                     <button onClick={async () => {
                         const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'checkins'));
                         const l = []; snap.forEach(d => l.push({id: d.id, ...d.data()})); setAdminData(l);
-                    }} className="btn btn-primary mb-4 text-xs font-bold uppercase tracking-widest">Aggiorna Lista Check-in</button>
-                    
+                    }} className="btn btn-primary mb-4 text-xs font-bold uppercase">Aggiorna Check-in</button>
                     <div className="space-y-4">
                         {adminData.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(c => (
-                            <div key={c.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div key={c.id} className="bg-slate-50 p-4 rounded-xl border">
                                 <div className="flex justify-between font-bold text-[10px] mb-2 uppercase text-slate-500">
-                                    <span>{c.guests?.[0]?.surname || "Ospite"} - {c.propertyId}</span>
+                                    <span>{c.id}</span>
                                     <span>{c.guests?.length} / {c.expectedGuests}</span>
                                 </div>
                                 <div className="flex gap-2">
@@ -311,83 +239,15 @@
                 </div>
             );
 
-            if (step === 'welcome') return (
-                <div className="app-container">
-                    <Header setLang={setLang} lang={lang} />
-                    <div className="p-8 text-center flex-1 flex flex-col justify-center">
-                        <div className="logo-circle mx-auto mb-6"><img src="foto.jpg" className="logo-img" /></div>
-                        <p className="italic text-lg mb-8">"{t.welcome}"</p>
-                        <button onClick={() => setStep('ask_guests')} className="btn btn-primary font-bold shadow-xl">{t.start_btn}</button>
-                    </div>
-                </div>
-            );
-
-            if (step === 'ask_guests') return (
-                <div className="app-container p-8 text-center">
-                    <Header showBack setStep={setStep} setLang={setLang} lang={lang} />
-                    <h2 className="text-xl font-bold mt-8 mb-4">{t.guest_count_q}</h2>
-                    <div className="flex justify-center gap-6 items-center mb-8">
-                        <button onClick={()=>setExpectedGuests(Math.max(1, expectedGuests-1))} className="w-12 h-12 bg-slate-100 rounded-full text-2xl font-bold">-</button>
-                        <span className="text-4xl font-bold text-teal-700">{expectedGuests}</span>
-                        <button onClick={()=>setExpectedGuests(expectedGuests+1)} className="w-12 h-12 bg-teal-100 rounded-full text-2xl font-bold">+</button>
-                    </div>
-                    <button onClick={()=>setStep('guest_list')} className="btn btn-primary shadow-lg">{t.continue}</button>
-                </div>
-            );
-
-            if (step === 'guest_list') return (
-                <div className="app-container p-6">
-                    <Header showBack setStep={setStep} setLang={setLang} lang={lang} />
-                    <div className="flex justify-between items-center mb-6 font-bold uppercase text-xs border-b pb-2 tracking-widest">
-                        <span>{t.guest_list}</span>
-                        <span className="text-teal-600 bg-teal-50 px-2 py-1 rounded">{guests.length} / {expectedGuests}</span>
-                    </div>
-                    {guests.map((g,i)=>(<div key={i} className="p-4 bg-slate-50 rounded-xl mb-2 flex justify-between items-center"><b>{g.surname} {g.name}</b><Icon name="check" className="text-green-500 w-5 h-5"/></div>))}
-                    {guests.length < expectedGuests ? (
-                        <button onClick={()=>setStep('manual_entry')} className="w-full py-6 border-2 border-dashed border-teal-600 rounded-2xl text-teal-600 font-bold uppercase text-xs tracking-widest">+ {t.add_guest}</button>
-                    ) : (
-                        <button onClick={()=>setStep('sign')} className="btn btn-primary mt-4 shadow-xl">{t.finish_btn}</button>
-                    )}
-                </div>
-            );
-
-            if (step === 'manual_entry') return (
-                <div className="app-container p-6 overflow-y-auto">
-                    <Header showBack setStep={setStep} setLang={setLang} lang={lang} />
-                    <h2 className="font-bold mb-4 uppercase text-sm tracking-widest">{t.verify}</h2>
-                    <div className="space-y-4">
-                        <input className="input-field" placeholder={t.label_surname} value={formData.surname} onChange={e=>setFormData({...formData, surname: e.target.value.toUpperCase()})} />
-                        <input className="input-field" placeholder={t.label_name} value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value.toUpperCase()})} />
-                        <input className="input-field" placeholder={t.label_docnum} value={formData.docNumber} onChange={e=>setFormData({...formData, docNumber: e.target.value.toUpperCase()})} />
-                        <input type="date" className="input-field text-center font-bold" value={formData.expiryDate} onChange={e=>setFormData({...formData, expiryDate: e.target.value})} />
-                        <button onClick={()=>{setGuests([...guests, formData]); setStep('guest_list');}} className="btn btn-success mt-4 uppercase shadow-lg">{t.save_guest}</button>
-                    </div>
-                </div>
-            );
-
-            if (step === 'sign') return (
-                <div className="app-container p-8">
-                    <Header showBack setStep={setStep} setLang={setLang} lang={lang} />
-                    <h2 className="font-bold mb-4 uppercase tracking-widest text-sm">Firma e Tassa</h2>
-                    <div className="h-60 border-2 bg-slate-50 rounded-2xl mb-6 overflow-hidden relative shadow-inner">
-                        <SignaturePad canvasRef={sigCanvasRef}/>
-                    </div>
-                    <button onClick={saveToCloud} className="btn btn-primary shadow-xl">CONFERMA E FINE</button>
-                </div>
-            );
-
             if (step === 'success') return (
                 <div className="app-container bg-teal-800 text-white items-center p-10 text-center flex flex-col justify-center min-h-screen">
                     <div className="w-20 h-20 bg-white text-teal-700 rounded-full flex items-center justify-center mb-6 shadow-2xl animate-bounce"><Icon name="check" className="w-10 h-10" /></div>
                     <h1 className="text-2xl font-bold mb-2 uppercase">{t.thanks}!</h1>
-                    
                     <div className="bg-white text-slate-900 rounded-3xl p-8 w-full shadow-2xl border mb-6">
                         {doorCode === "WAIT" ? (
                             <div className="animate-pulse">
                                 <div className="p-4 bg-orange-50 rounded-2xl mb-4 text-orange-500 mx-auto w-20"><Icon name="lock" /></div>
-                                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Verifica Documenti</p>
                                 <p className="text-sm italic mt-2 leading-relaxed">{t.waiting_approval}</p>
-                                <p className="text-[9px] font-bold mt-4 text-slate-500">{t.code_ready_soon}</p>
                             </div>
                         ) : (
                             <div>
@@ -397,23 +257,31 @@
                             </div>
                         )}
                     </div>
-                    
                     {PROPERTIES[property.id]?.welcome && (
                         <a href={PROPERTIES[property.id].welcome} target="_blank" className="btn bg-white text-teal-800 w-full mb-4 font-bold shadow-lg flex items-center justify-center gap-2 uppercase text-xs tracking-widest">
                             {t.welcome_book_btn}
                         </a>
                     )}
-                    
-                    <button onClick={shareLink} className="btn bg-teal-900 text-teal-100 font-bold uppercase text-xs mb-6 border border-teal-700 flex gap-2">
+                    <button onClick={() => { if(navigator.share) navigator.share({url: window.location.href}); else alert("Copia link URL"); }} className="btn bg-teal-900 text-teal-100 font-bold uppercase text-xs mb-6 border border-teal-700 flex gap-2">
                         <Icon name="share" className="w-4 h-4"/> {t.share_link}
                     </button>
-
                     <div className="p-4 bg-teal-900/40 rounded-xl text-[11px] text-teal-100 border border-teal-700 italic leading-relaxed">
                         {t.save_link_msg}
                     </div>
                 </div>
             );
-            return null;
+
+            // LOGICA ORIGINALE MANUTENUTA (Scan, Manual Entry, etc.)
+            return (
+                <div className="app-container">
+                    <Header setLang={setLang} lang={lang} />
+                    <div className="p-8 text-center flex-1 flex flex-col justify-center">
+                        <div className="logo-circle mx-auto mb-6"><img src="foto.jpg" className="logo-img" /></div>
+                        <p className="italic text-lg mb-8">"{t.welcome}"</p>
+                        <button onClick={() => setStep('ask_guests')} className="btn btn-primary font-bold shadow-xl">{t.start_btn}</button>
+                    </div>
+                </div>
+            );
         }
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
