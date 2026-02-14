@@ -13,59 +13,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* BASE STYLE */
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; overflow-x: hidden; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
         
-        /* LOGO ADMIN FIX - 125PX TONDO */
-        .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 40px 0; background: white; }
-        .logo-circle {
-            width: 125px; height: 125px; 
-            background: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden;
-            border: 3px solid #d4af37; position: relative; padding: 0;
-        }
+        /* LOGO */
+        .logo-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; padding: 30px 0; background: white; }
+        .logo-circle { width: 125px; height: 125px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; border: 3px solid #d4af37; position: relative; padding: 0; }
         .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
 
-        /* HEADER OSPITE */
+        /* HEADER */
         .header-logo-circle { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid #d4af37; background: white; flex-shrink: 0; }
         .header-logo-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 
-        /* FOTO GIULIA - FIX LAYOUT */
-        .giulia-photo-container {
-            width: 130px; height: 130px; border-radius: 50%; border: 4px solid white; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15); overflow: hidden; margin: 0 auto;
-            position: relative; z-index: 10; margin-bottom: -65px;
-        }
-        .welcome-card {
-            background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 20px;
-            padding: 20px; padding-top: 75px; /* Spazio per foto */
-            position: relative; z-index: 1; margin-bottom: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
+        /* FOTO GIULIA */
+        .giulia-photo-container { width: 130px; height: 130px; border-radius: 50%; border: 4px solid white; box-shadow: 0 10px 20px rgba(0,0,0,0.15); overflow: hidden; margin: 0 auto; position: relative; z-index: 10; margin-bottom: -65px; }
+        .welcome-card { background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 20px; padding: 20px; padding-top: 75px; position: relative; z-index: 1; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
 
-        /* INPUTS */
-        .input-field { 
-            width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 12px; 
-            font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 10px; color: #1e293b;
-        }
+        /* UI ELEMENTS */
+        .input-field { width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; background: #fff; transition: all 0.2s; margin-bottom: 10px; color: #1e293b; }
         .input-field:focus { border-color: #0f766e; outline: none; box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); }
-        .input-label { 
-            font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; 
-            margin-bottom: 4px; display: block; margin-left: 4px; text-align: left; letter-spacing: 0.5px;
-        }
-        .input-label.required::after { content: " *"; color: #ef4444; }
-
-        /* BUTTONS */
+        .input-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; margin-left: 4px; text-align: left; }
         .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 0.5px; }
-        .btn-primary { background: #0f766e; color: white; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3); }
+        .btn-primary { background: #0f766e; color: white; }
         .btn-secondary { background: #fff; border: 2px solid #e2e8f0; color: #334155; }
         .btn-success { background: #10b981; color: white; }
         .btn-danger { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
-        .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; filter: grayscale(100%); }
-        .btn:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
 
         /* SCANNER */
         .scan-wrapper-full { position: relative; width: 100vw; height: 480px; background: #000; overflow: hidden; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; }
@@ -74,30 +47,23 @@
         .zone-residenza { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 15%; border: 2px solid #FFD60A; border-radius: 6px; background: rgba(255, 214, 10, 0.15); z-index: 10; }
         .zone-mrz { position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); width: 95%; height: 22%; border: 3px solid #00E0FF; border-radius: 6px; background: rgba(0, 224, 255, 0.15); z-index: 10; }
         
-        /* CARD SELECT */
         .card-select { width: 100%; padding: 20px; border-radius: 16px; border: 2px solid #f1f5f9; background: white; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
-        .card-select:hover { border-color: #0f766e; background: #f0fdfa; transform: translateY(-2px); }
-
-        /* UPLOAD */
         .upload-preview { width: 100%; height: 200px; border: 2px dashed #cbd5e1; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; position: relative; margin-bottom: 10px; }
         .upload-preview img { width: 100%; height: 100%; object-fit: contain; }
-        .upload-btn-small { flex: 1; padding: 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid #cbd5e1; background: white; color: #334155; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; cursor: pointer; }
 
-        /* MODAL */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; overflow-y: auto; display: flex; flex-direction: column; }
-        .modal-content { background: #f8fafc; min-height: 100%; padding: 20px; padding-bottom: 100px; position: relative; }
+        /* MODAL ADMIN */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; overflow-y: auto; display: flex; flex-direction: column; }
+        .modal-content { background: #f8fafc; min-height: 100%; padding: 20px; padding-bottom: 100px; }
 
-        /* LOADER */
         .loader { width: 32px; height: 32px; border: 4px solid #0f766e; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; margin: 0 auto; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* ALERTS */
-        .alert-red { background: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; padding: 15px; border-radius: 12px; font-size: 13px; font-weight: 700; text-align: center; margin-bottom: 15px; }
-        .alert-blue { background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; padding: 15px; border-radius: 12px; font-size: 12px; text-align: left; margin-bottom: 20px; line-height: 1.5; }
-
-        /* FLAGS */
         .flag-btn { font-size: 26px; padding: 0 6px; opacity: 0.4; transition: 0.2s; filter: grayscale(100%); background: none; border: none; cursor: pointer; }
         .flag-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
+        
+        /* ADMIN DATA ROW */
+        .admin-row { display: flex; flex-direction: column; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+        .admin-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .admin-val { font-size: 14px; font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -129,7 +95,6 @@
             "REGINA": { id: "REGINA", name: "Santa Regina", wb: "#", type: "keybox" }
         };
 
-        // --- TRADUZIONI COMPLETE ---
         const TRANSLATIONS = {
             it: { 
                 welcome: "Benvenuto a", thanks_choice: "Grazie per averci scelto!",
@@ -188,51 +153,10 @@
                 admin_vip: "Generate VIP Link", vip_success: "LINK COPIED!",
                 emergency_add: "🆘 Manual Add (Emergency)",
                 required: "Required", guest_list: "Guest List", finish: "CONFIRM & PROCEED"
-            },
-            fr: { 
-                welcome: "Bienvenue à", thanks_choice: "Merci de nous avoir choisis !",
-                intro_giulia: "Salut ! Je suis Giulia. Veuillez compléter l'enregistrement en ligne.",
-                start_btn: "COMMENCER", guest_q: "Qui est l'invité principal ?",
-                guest_tip: "Nom complet et nombre total d'invités.", name_ph: "Nom Complet", count_ph: "Nombre",
-                doc_type: "Type Document", doc_e: "C.I. Électronique", doc_p: "C.I. Papier", doc_pass: "Passeport", doc_l: "Permis",
-                scan_info: "Scanner", scan_btn: "SCANNER", file_btn: "FICHIER", manual_btn: "MANUEL",
-                verify: "Vérifier", label_surname: "Nom", label_name: "Prénom", label_born: "Né le",
-                label_city: "Ville Naissance", label_cit: "Nationalité", label_res: "Adresse", label_doc: "N° Doc", label_issue: "Délivré par",
-                photo_req: "PHOTOS OBLIGATOIRES", front: "Recto", back: "Verso", sign_title: "Signature",
-                save_guest: "ENREGISTRER", success_title: "Terminé !", code_label: "VOTRE CODE :",
-                locked_title: "INCOMPLET", locked_msg: "Code VERROUILLÉ 🔒", missing: "Manque", guests: "invités",
-                wb_btn: "LIVRET D'ACCUEIL", wa_btn: "WHATSAPP", admin_vip: "Lien VIP", vip_success: "COPIÉ !", emergency_add: "🆘 Urgence"
-            },
-            es: { 
-                welcome: "Bienvenido a", thanks_choice: "¡Gracias por elegirnos!",
-                intro_giulia: "¡Hola! Soy Giulia. Complete el registro en línea.",
-                start_btn: "EMPEZAR", guest_q: "¿Huésped principal?",
-                guest_tip: "Nombre y total de huéspedes.", name_ph: "Nombre", count_ph: "Total",
-                doc_type: "Tipo Documento", doc_e: "DNI Electrónico", doc_p: "DNI Papel", doc_pass: "Pasaporte", doc_l: "Licencia",
-                scan_info: "Escanear", scan_btn: "ESCANEAR", file_btn: "ARCHIVO", manual_btn: "MANUAL",
-                verify: "Verificar", label_surname: "Apellido", label_name: "Nombre", label_born: "Nacido el",
-                label_city: "Ciudad Nac.", label_cit: "Ciudadanía", label_res: "Dirección", label_doc: "N° Doc", label_issue: "Emisro",
-                photo_req: "FOTOS OBLIGATORIAS", front: "Frente", back: "Dorso", sign_title: "Firma",
-                save_guest: "GUARDAR", success_title: "¡Completado!", code_label: "SU CÓDIGO:",
-                locked_title: "INCOMPLETO", locked_msg: "Código BLOQUEADO 🔒", missing: "Faltan", guests: "huéspedes",
-                wb_btn: "LIBRO BIENVENIDA", wa_btn: "WHATSAPP", admin_vip: "Enlace VIP", vip_success: "¡COPIADO!", emergency_add: "🆘 Emergencia"
-            },
-            de: { 
-                welcome: "Willkommen bei", thanks_choice: "Danke für Ihre Wahl!",
-                intro_giulia: "Hallo! Ich bin Giulia. Bitte Check-in abschließen.",
-                start_btn: "STARTEN", guest_q: "Hauptgast?",
-                guest_tip: "Name und Gästeanzahl.", name_ph: "Name", count_ph: "Anzahl",
-                doc_type: "Dokument", doc_e: "Elektronisch ID", doc_p: "Papier ID", doc_pass: "Reisepass", doc_l: "Führerschein",
-                scan_info: "Scannen", scan_btn: "SCANNEN", file_btn: "DATEI", manual_btn: "MANUELL",
-                verify: "Prüfen", label_surname: "Nachname", label_name: "Vorname", label_born: "Geburtsdatum",
-                label_city: "Geburtsort", label_cit: "Nationalität", label_res: "Adresse", label_doc: "Dokument Nr.", label_issue: "Ausgestellt von",
-                photo_req: "PFLICHTFOTOS", front: "Vorderseite", back: "Rückseite", sign_title: "Unterschrift",
-                save_guest: "SPEICHERN", success_title: "Fertig!", code_label: "IHR CODE:",
-                locked_title: "UNVOLLSTÄNDIG", locked_msg: "Code GESPERRT 🔒", missing: "Fehlen", guests: "Gäste",
-                wb_btn: "WILLKOMMENSBUCH", wa_btn: "WHATSAPP", admin_vip: "VIP Link", vip_success: "KOPIERT!", emergency_add: "🆘 Notfall"
             }
         };
 
+        // --- ICONS ---
         const Icon = ({ name, className = "w-6 h-6" }) => {
             const icons = {
                 trash: <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -242,7 +166,6 @@
                 pencil: <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
                 camera: <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/>,
                 lock: <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>,
-                scan: <path d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2M7 12h10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
             };
             return <svg className={className} viewBox="0 0 24 24">{icons[name]}</svg>;
         };
@@ -255,11 +178,11 @@
         };
 
         const CopyField = ({ label, value }) => (
-            <div className="bg-slate-100 p-2 rounded mb-2 border relative">
-                <span className="text-[10px] uppercase font-bold text-slate-500">{label}</span>
-                <div className="flex justify-between items-center">
-                    <span className="font-bold text-sm truncate mr-8 select-all">{value || "-"}</span>
-                    <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(value); alert("Copiato!"); }} className="p-2 absolute right-0 top-1 text-blue-600 bg-slate-100 rounded-l-none rounded-r"><Icon name="copy" className="w-4 h-4"/></button>
+            <div className="admin-row">
+                <span className="admin-label">{label}</span>
+                <div className="admin-val">
+                    <span className="truncate mr-2 select-all">{value || "-"}</span>
+                    {value && <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(value); alert("Copiato!"); }} className="p-1 text-blue-600 bg-blue-50 rounded"><Icon name="copy" className="w-4 h-4"/></button>}
                 </div>
             </div>
         );
@@ -271,26 +194,38 @@
                 const resize = () => { c.width = c.parentElement.clientWidth; c.height = 160; ctx.lineWidth=3; ctx.lineCap='round'; };
                 resize();
                 let drawing = false;
-                const getPos = (e) => { const r = c.getBoundingClientRect(); return { x: (e.touches?e.touches[0].clientX:e.clientX)-r.left, y: (e.touches?e.touches[0].clientY:e.clientY)-r.top }; };
-                const start = (e) => { e.preventDefault(); drawing=true; ctx.beginPath(); const p=getPos(e); ctx.moveTo(p.x, p.y); };
-                const draw = (e) => { if(!drawing) return; e.preventDefault(); const p=getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+                const start = (e) => { e.preventDefault(); drawing=true; ctx.beginPath(); const r=c.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top; ctx.moveTo(x,y); };
+                const move = (e) => { if(!drawing) return; e.preventDefault(); const r=c.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top; ctx.lineTo(x,y); ctx.stroke(); };
                 const end = () => drawing=false;
-                c.addEventListener('mousedown', start); c.addEventListener('mousemove', draw); c.addEventListener('mouseup', end);
-                c.addEventListener('touchstart', start, {passive:false}); c.addEventListener('touchmove', draw, {passive:false}); c.addEventListener('touchend', end);
+                c.addEventListener('mousedown', start); c.addEventListener('mousemove', move); c.addEventListener('mouseup', end);
+                c.addEventListener('touchstart', start, {passive:false}); c.addEventListener('touchmove', move, {passive:false}); c.addEventListener('touchend', end);
             }, []);
             return <canvas ref={canvasRef} style={{width:'100%', height:'160px'}}/>;
         };
 
+        const Header = ({ setStep, backStep, setLang, lang }) => (
+            <div className="flex flex-col bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm text-center">
+                <div className="flex justify-end p-2 pb-0 gap-2">
+                     {['it','en','fr','es','de'].map(l => <button key={l} onClick={()=>setLang(l)} className={`flag-btn ${lang===l?'active':''}`}>{l==='it'?'🇮🇹':l==='en'?'🇬🇧':l==='fr'?'🇫🇷':l==='es'?'🇪🇸':'🇩🇪'}</button>)}
+                </div>
+                <div className="flex items-center justify-center p-3 pt-0 relative">
+                    {backStep && <button onClick={() => setStep(backStep)} className="absolute left-4 p-1 text-slate-400"><Icon name="chevronLeft" /></button>}
+                    <div className="header-logo-circle"><img src="logo.png" /></div>
+                    <div className="ml-3"><span className="block font-bold text-slate-700 text-[14px] uppercase tracking-widest">Tuscan Retreats</span></div>
+                </div>
+            </div>
+        );
+
         function App() {
             const [lang, setLang] = useState('it');
             const [user, setUser] = useState(null);
-            const [step, setStep] = useState('loading');
+            const [step, setStep] = useState('loading'); 
             const [property, setProperty] = useState(null);
             
             // SESSIONE
             const [session, setSession] = useState(null);
             const [localGuests, setLocalGuests] = useState([]); 
-            const [dbGuests, setDbGuests] = useState([]);
+            const [dbGuests, setDbGuests] = useState([]); 
             
             // FORM
             const [formData, setFormData] = useState({});
@@ -300,12 +235,13 @@
             // ADMIN
             const [adminData, setAdminData] = useState([]);
             const [selectedSession, setSelectedSession] = useState(null);
+            const [editingGuestIndex, setEditingGuestIndex] = useState(null);
             const [propertyCodes, setPropertyCodes] = useState({});
-            const [doorCode, setDoorCode] = useState("...");
             const [searchTerm, setSearchTerm] = useState("");
             const [vipLinkCopied, setVipLinkCopied] = useState(false);
             
             // UTILS
+            const [doorCode, setDoorCode] = useState("...");
             const [isScanning, setIsScanning] = useState(false);
             const [isSaving, setIsSaving] = useState(false);
             const [ocrProcessing, setOcrProcessing] = useState(false);
@@ -317,7 +253,6 @@
             const videoRef = useRef(null);
             const fileRef = useRef(null);
 
-            // FIREBASE INIT
             useEffect(() => {
                 const init = async () => {
                     const app = window.FirebaseSDK.initializeApp(MY_FIREBASE_CONFIG);
@@ -336,26 +271,22 @@
 
                 if (d === 'ADMIN') { setStep('admin_pass'); return; }
 
-                // SESSIONE ESISTENTE
                 if (s) {
-                    const snap = await window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', s));
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        setSession({ id: s, ...data });
-                        setProperty(PROPERTIES[data.booking]);
-                        setDbGuests(data.guests || []);
-                        
-                        // SE VIP o COMPLETATA IN LOCALE -> SUCCESSO SUBITO
-                        if (data.direct || localStorage.getItem(`done_${s}`)) {
-                            setStep('success');
-                        } else {
-                            setStep('welcome_personal');
+                    try {
+                        const snap = await window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', s));
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            setSession({ id: s, ...data });
+                            setProperty(PROPERTIES[data.booking]);
+                            setDbGuests(data.guests || []);
+                            // SE DIRETTA O GIÀ FATTO IN LOCALE -> SUCCESSO
+                            if (data.direct || localStorage.getItem(`done_${s}`)) setStep('success'); 
+                            else setStep('welcome_personal');
+                            return;
                         }
-                        return;
-                    }
+                    } catch(e) {}
                 }
 
-                // NUOVO GRUPPO DA LINK DIRETTO
                 if (d) {
                     try {
                         const dec = JSON.parse(atob(d));
@@ -369,18 +300,17 @@
                 setStep('login');
             };
 
-            // --- LOGICA OSPITE ---
             const createSession = async (name, count, isDirect=false) => {
                 if(!name || !count) return alert(t.required);
                 const id = `${property.id}_${Date.now()}`;
                 const payload = {
                     booking: property.id,
                     property: property.name,
-                    guestName: name,
+                    guestName: name, 
                     totalGuests: parseInt(count),
                     timestamp: new Date().toISOString(),
                     guests: [],
-                    direct: isDirect // VIP FLAG
+                    direct: isDirect // FLAG VIP
                 };
                 await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id), payload);
                 setSession({ id, ...payload });
@@ -398,10 +328,9 @@
 
             const saveGuest = async () => {
                 setIsSaving(true);
-                const f = imgFront ? await compress(imgFront) : null;
-                const b = imgBack ? await compress(imgBack) : null;
+                const f = images.front ? await compress(images.front) : null;
+                const b = images.back ? await compress(images.back) : null;
                 const g = { ...formData, imgFront: f, imgBack: b, docType };
-                
                 let sig = null; if(sigRef.current) sig = sigRef.current.toDataURL();
 
                 const ref = window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', session.id);
@@ -411,13 +340,10 @@
                 await window.FirebaseSDK.updateDoc(ref, update);
                 setDbGuests([...dbGuests, g]);
                 setLocalGuests([]); setFormData({}); setImages({});
-                
                 localStorage.setItem(`done_${session.id}`, 'true');
-                setStep('success');
-                setIsSaving(false);
+                setStep('success'); setIsSaving(false);
             };
 
-            // --- OCR COMPLETO ---
             const fixOCR = (s, t) => { if(!s) return ""; return t==='N'?s.replace(/O/g,'0').replace(/I/g,'1').replace(/S/g,'5').replace(/Z/g,'2'):s.replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S'); };
             const parseDate = (d) => { if(!d||d.length<6)return""; let y=d.substring(0,2); return (parseInt(y)>40?"19":"20")+y+"-"+d.substring(2,4)+"-"+d.substring(4,6); };
             
@@ -435,52 +361,45 @@
                 const c = document.getElementById('ocr-canvas'); const ctx = c.getContext('2d');
                 c.width = 1000; let w=src.videoWidth||src.width; let h=src.videoHeight||src.height;
                 ctx.drawImage(src,0,0,c.width,c.width*(h/w));
-                try {
-                    const { data: { text } } = await Tesseract.recognize(c, 'ita');
-                    parseCIE(text); // Semplificato per demo: usa parseCIE anche per passaporto in questa versione base
-                } catch(e) { alert(t.ocr_error); }
+                try { const { data: { text } } = await Tesseract.recognize(c, 'ita'); parseCIE(text); } catch(e) { alert(t.ocr_error); }
                 setOcrProcessing(false); setIsScanning(false);
             };
 
-            const [imgFront, setImgFront] = useState(null);
-            const [imgBack, setImgBack] = useState(null);
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0]; if (!file) return;
+                setOcrProcessing(true); const reader = new FileReader();
+                reader.onload = (ev) => { const img = new Image(); img.onload = () => runOCR(img); img.src = ev.target.result; };
+                reader.readAsDataURL(file);
+            };
 
-            // --- ADMIN ---
+            // ADMIN
             const fetchAdmin = async () => {
                 const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'checkins'));
                 let list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
                 list.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                 setAdminData(list);
             };
-
             const fetchCodes = async () => {
                 const snap = await window.FirebaseSDK.getDocs(window.FirebaseSDK.collection(window.db, 'artifacts', appId, 'public', 'data', 'properties'));
                 let codes = {}; snap.forEach(d => codes[d.id] = d.data().currentCode);
                 setPropertyCodes(codes);
             };
-
             const saveCode = async (pid) => {
                 let val = document.getElementById(`c_${pid}`).value;
                 if(pid === 'LOVE' && !val.endsWith('#')) val += '#';
                 await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'properties', pid), { currentCode: val }, { merge: true });
                 alert('OK!');
             };
-
             const addEmergency = async () => {
                 if(!selectedSession) return;
-                const dummy = { surname: "MANUALE", name: "EMERGENZA", docNumber: "MANUAL", birthDate: "2000-01-01", citizenship: "ITA", sex: "M", issuedBy: "HOST" };
+                const dummy = { surname: "MANUALE", name: "EMERGENZA", docNumber: "MANUAL", birthDate: "2000-01-01", citizenship: "ITA", sex: "M", issuedManual: "HOST" };
                 await window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', selectedSession.id), { guests: window.FirebaseSDK.arrayUnion(dummy) });
                 alert("Ospite aggiunto."); setSelectedSession(null); fetchAdmin();
             };
+            const deleteSession = async (id) => { if(confirm("ELIMINARE?")) { await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id)); fetchAdmin(); setSelectedSession(null); } };
+            const clearHistory = async () => { if(confirm("CANCELLARE TUTTO?")) { adminData.forEach(async s => await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', s.id))); setAdminData([]); } };
+            const saveGuestEdit = async () => { const up = [...selectedSession.guests]; up[editingGuestIndex] = formData; await window.FirebaseSDK.updateDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', selectedSession.id), { guests: up }); fetchAdmin(); setEditingGuestIndex(null); alert("Salvato"); };
 
-            const deleteSession = async (id) => {
-                if(confirm("ELIMINARE?")) {
-                    await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'checkins', id));
-                    fetchAdmin(); setSelectedSession(null);
-                }
-            };
-
-            // --- CODICE SBLOCCO ---
             useEffect(() => {
                 if (step === 'success' && property && window.db) {
                     window.FirebaseSDK.getDoc(window.FirebaseSDK.doc(window.db, 'artifacts', appId, 'public', 'data', 'properties', property.id))
@@ -488,41 +407,31 @@
                 }
             }, [step, property]);
 
-            const isFormComplete = () => {
-                return formData.surname && formData.name && formData.birthDate && formData.docNumber && dataTrue;
-            };
+            const checkPhotos = () => images.front && (docType === 'passport' || images.back);
+            const isFormComplete = () => formData.surname && formData.name && formData.birthDate && formData.docNumber && dataTrue;
 
-            // ================= RENDER =================
-
+            // RENDER
             if (step === 'loading') return <div className="h-screen flex items-center justify-center"><div className="loader"></div></div>;
 
-            // 1. LOGIN (Guest e Admin)
+            // 1. LOGIN
             if (step === 'login') return (
                 <div className="app-container p-8 text-center flex flex-col justify-center">
                     <div className="logo-wrapper"><div className="logo-circle"><img src="logo.png" className="logo-img"/></div></div>
-                    <form onSubmit={(e) => {
-                        e.preventDefault();
-                        const val = e.target.elements.c.value.toUpperCase().trim();
-                        if (val === 'ADMIN') setStep('admin_pass');
-                        else alert('Link non valido');
-                    }}>
-                        <input name="c" autoFocus className="input-field text-center font-bold tracking-widest mt-8" placeholder="CODICE" />
-                        <button className="btn btn-primary mt-4 w-full">ENTRA</button>
+                    <form onSubmit={(e) => { e.preventDefault(); const val = e.target.elements.c.value.toUpperCase().trim(); if (val === 'ADMIN') setStep('admin_pass'); else alert('Link invalido'); }} className="w-full">
+                        <input name="c" autoFocus className="input-field text-center uppercase font-bold tracking-widest mt-8" placeholder="CODICE" />
+                        <button type="submit" className="btn btn-primary mt-4 w-full">ENTRA</button>
                     </form>
                 </div>
             );
 
-            // 2. INIT SESSION (Link Diretto)
+            // 2. INIT LANDING
             if (step === 'init_landing') return (
                 <div className="app-container p-8 pt-20 text-center">
                     <Header setStep={()=>{}} setLang={setLang} lang={lang} />
                     <h2 className="text-xl font-bold text-slate-400 uppercase mt-10">{t.welcome}</h2>
                     <h1 className="text-3xl font-bold text-teal-800 uppercase mb-8">{property?.name}</h1>
                     <p className="mb-2 text-sm font-bold">{t.guest_q}</p>
-                    <form onSubmit={(e) => {
-                        e.preventDefault();
-                        createSession(e.target.elements.n.value, e.target.elements.c.value);
-                    }}>
+                    <form onSubmit={(e) => { e.preventDefault(); createSession(e.target.elements.n.value, e.target.elements.c.value); }}>
                         <input name="n" autoFocus className="input-field text-center font-bold" placeholder={t.name_ph} />
                         <p className="mb-2 text-sm font-bold mt-4">{t.count_ph}</p>
                         <input name="c" type="number" className="input-field text-center font-bold" placeholder="Es. 4" />
@@ -531,7 +440,7 @@
                 </div>
             );
 
-            // 3. WELCOME PERSONAL (Foto Giulia)
+            // 3. WELCOME
             if (step === 'welcome_personal') return (
                 <div className="app-container">
                     <div className="p-8 text-center flex-1 flex flex-col justify-center">
@@ -555,29 +464,29 @@
                         <div className="bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-bold">{dbGuests.length + localGuests.length} / {session.totalGuests}</div>
                     </div>
                     <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-                        {dbGuests.map((g,i) => <div key={'d'+i} className="bg-green-50 border border-green-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-green-800">{g.surname} {g.name}</span><Icon name="check"/></div>)}
-                        {localGuests.map((g,i) => <div key={'l'+i} className="bg-white border border-teal-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase">{g.surname} {g.name}</span><button onClick={()=>setLocalGuests(localGuests.filter((_,x)=>x!==i))} className="text-red-500"><Icon name="trash"/></button></div>)}
+                        {dbGuests.map((g,i) => <div key={'db'+i} className="bg-green-50 border border-green-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-green-800">{g.surname} {g.name}</span><Icon name="check"/></div>)}
+                        {localGuests.map((g,i) => <div key={'loc'+i} className="bg-white border border-teal-200 p-4 rounded-xl flex justify-between items-center"><span className="font-bold uppercase text-teal-900">{g.surname} {g.name}</span><button onClick={()=>setLocalGuests(localGuests.filter((_,x)=>x!==i))} className="text-red-500"><Icon name="trash"/></button></div>)}
                         
                         {(dbGuests.length + localGuests.length) < session.totalGuests ? 
-                            <button onClick={()=>{ setFormData({}); setImgFront(null); setImgBack(null); setStep('doc_select'); }} className="w-full py-6 border-2 border-dashed border-teal-600 rounded-2xl font-bold text-teal-600 uppercase hover:bg-teal-50 transition">+ {t.add_guest}</button> :
-                            <div className="bg-teal-600 text-white p-4 rounded-xl text-center font-bold uppercase shadow-lg">Tutti inseriti!</div>
+                            <button onClick={()=>{ setFormData({ surname: "", name: "", sex: "M", birthDate: "", birthCity: "", birthProvince: "", citizenship: "ITALIANA", citizenshipManual: "", residenceCity: "", residenceProvince: "", residenceAddress: "", houseNumber: "", issuedBy: "COMUNE DI", issuedManual: "", docNumber: "", expiryDate: "" }); setStep('doc_select'); }} className="w-full py-6 border-2 border-dashed border-teal-600 rounded-2xl font-bold text-lg hover:bg-teal-50 transition uppercase text-teal-600">+ {t.add_guest}</button> :
+                            <div className="bg-green-100 p-4 rounded-xl text-center text-green-800 font-bold uppercase shadow-inner">Tutti inseriti!</div>
                         }
                     </div>
-                    <div className="p-6 border-t bg-white">
-                        <button onClick={()=>setStep('sign')} disabled={localGuests.length===0} className="btn btn-primary w-full shadow-lg">{t.finish}</button>
-                    </div>
+                    <div className="p-6 border-t"><button onClick={()=>setStep('sign')} disabled={localGuests.length===0} className="btn btn-primary w-full uppercase font-bold shadow-lg">{t.finish}</button></div>
                 </div>
             );
 
             // 5. DOC SELECT
             if (step === 'doc_select') return (
                 <div className="app-container p-6 text-center">
-                    <div className="mb-6 flex justify-start"><button onClick={()=>setStep('guest_list')}><Icon name="chevronLeft"/></button></div>
-                    <h2 className="text-xl font-bold mb-6 text-slate-800">{t.doc_type}</h2>
-                    <div onClick={()=>{setDocType('electronic'); setStep('scan');}} className="card-select">{SVGIcons.electronic} <span className="ml-4 font-bold">{t.doc_e}</span></div>
-                    <div onClick={()=>{setDocType('paper'); setStep('manual_form');}} className="card-select">{SVGIcons.paper} <span className="ml-4 font-bold">{t.doc_p}</span></div>
-                    <div onClick={()=>{setDocType('passport'); setStep('scan');}} className="card-select">{SVGIcons.passport} <span className="ml-4 font-bold">{t.doc_pass}</span></div>
-                    <div onClick={()=>{setDocType('license'); setStep('manual_form');}} className="card-select">{SVGIcons.license} <span className="ml-4 font-bold">{t.doc_l}</span></div>
+                    <Header setStep={setStep} backStep="guest_list" setLang={setLang} lang={lang} />
+                    <h2 className="text-xl font-bold mb-6 mt-10 uppercase text-slate-800">{t.doc_type}</h2>
+                    <div className="space-y-4">
+                        <div onClick={()=>{setDocType('electronic'); setStep('scan');}} className="card-select">{SVGIcons.electronic} <span className="ml-4 font-bold">{t.doc_e}</span></div>
+                        <div onClick={()=>{setDocType('paper'); setStep('manual_form');}} className="card-select">{SVGIcons.paper} <span className="ml-4 font-bold">{t.doc_p}</span></div>
+                        <div onClick={()=>{setDocType('passport'); setStep('scan');}} className="card-select">{SVGIcons.passport} <span className="ml-4 font-bold">{t.doc_pass}</span></div>
+                        <div onClick={()=>{setDocType('license'); setStep('scan');}} className="card-select">{SVGIcons.license} <span className="ml-4 font-bold">{t.doc_l}</span></div>
+                    </div>
                 </div>
             );
 
@@ -587,15 +496,15 @@
                      {isScanning ? (
                          <div className="flex-1 bg-black flex flex-col">
                              <div className="scan-wrapper-full"><video ref={videoRef} autoPlay playsInline muted /><div className="guide-overlay"><div className="zone-residenza"></div><div className="zone-mrz"></div></div></div>
-                             <div className="p-4 bg-white flex justify-center gap-4"><button onClick={()=>setIsScanning(false)} className="btn bg-red-600 text-white w-1/3">STOP</button><button onClick={()=>runOCR(videoRef.current)} className="btn btn-primary w-1/3">SCATTA</button></div>
+                             <div className="p-4 bg-white flex justify-center gap-4"><button onClick={()=>setIsScanning(false)} className="btn btn-danger w-1/3">STOP</button><button onClick={()=>runOCR(videoRef.current)} className="btn btn-primary w-1/3">SCATTA</button></div>
                          </div>
                      ) : (
                          <div className="p-6 pt-10">
                              <h2 className="text-xl font-bold mb-4 uppercase">{t.scan_info}</h2>
                              <div className="alert-blue">{t.scan_help}</div>
                              <button onClick={()=>{setIsScanning(true); navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(s=>videoRef.current.srcObject=s);}} className="btn btn-primary w-full mb-4 flex justify-center gap-2 uppercase font-bold"><Icon name="camera"/> {t.scan_btn}</button>
-                             <button onClick={()=>fileRef.current.click()} className="btn btn-secondary w-full mb-4 uppercase font-bold">{t.file_btn}</button>
-                             <input type="file" className="hidden" ref={fileRef} onChange={e=>{const i=new Image(); i.onload=()=>runOCR(i); i.src=URL.createObjectURL(e.target.files[0]);}} />
+                             <button onClick={()=>fileInputRef.current.click()} className="btn btn-secondary w-full mb-4 uppercase font-bold">{t.file_btn}</button>
+                             <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
                              {ocrProcessing && <p className="text-teal-600 font-bold animate-pulse">{t.ocr_processing}</p>}
                              <button onClick={()=>setStep('manual_form')} className="underline mt-4 text-sm font-bold uppercase text-slate-400">{t.manual_btn}</button>
                          </div>
@@ -603,7 +512,7 @@
                 </div>
             );
 
-            // 7. MANUAL FORM (Campi completi)
+            // 7. MANUAL FORM
             if (step === 'manual_form') return (
                 <div className="app-container flex flex-col">
                     <div className="p-4 border-b flex items-center bg-white"><button onClick={()=>setStep('guest_list')}><Icon name="chevronLeft"/></button><span className="ml-4 font-bold uppercase">{t.verify}</span></div>
@@ -635,21 +544,21 @@
                         <h3 className="font-bold mt-6 mb-2 uppercase">{t.photo_req}</h3>
                         <div className="grid grid-cols-2 gap-2 mb-2">
                             <div onClick={()=>document.getElementById('f1').click()} className="h-24 bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative">
-                                {imgFront ? <img src={imgFront} className="w-full h-full object-cover"/> : <span className="text-xs font-bold text-gray-400">{t.front}</span>}
+                                {images.front ? <img src={images.front} className="w-full h-full object-cover"/> : <span className="text-xs font-bold text-gray-400">{t.front}</span>}
                             </div>
                             <div onClick={()=>document.getElementById('f2').click()} className="h-24 bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative">
-                                {imgBack ? <img src={imgBack} className="w-full h-full object-cover"/> : <span className="text-xs font-bold text-gray-400">{t.back}</span>}
+                                {images.back ? <img src={images.back} className="w-full h-full object-cover"/> : <span className="text-xs font-bold text-gray-400">{t.back}</span>}
                             </div>
                         </div>
-                        <input id="f1" type="file" className="hidden" onChange={e=>setImgFront(URL.createObjectURL(e.target.files[0]))} />
-                        <input id="f2" type="file" className="hidden" onChange={e=>setImgBack(URL.createObjectURL(e.target.files[0]))} />
+                        <input id="f1" type="file" className="hidden" onChange={e=>setImages({...images, front:URL.createObjectURL(e.target.files[0])})} />
+                        <input id="f2" type="file" className="hidden" onChange={e=>setImages({...images, back:URL.createObjectURL(e.target.files[0])})} />
 
                         <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mt-4 flex items-center">
                             <input type="checkbox" checked={dataTrue} onChange={e => setDataTrue(e.target.checked)} className="mr-3 w-5 h-5" />
                             <label className="text-xs font-bold uppercase text-yellow-900">{t.data_true_label}</label>
                         </div>
 
-                        <button onClick={()=>{ setLocalGuests([...localGuests, {...formData, imgFront, imgBack}]); setStep('guest_list'); }} disabled={!isFormComplete()} className="btn btn-success w-full mt-6 shadow-lg">{t.save_guest}</button>
+                        <button onClick={()=>{ setLocalGuests([...localGuests, {...formData, imgFront:images.front, imgBack:images.back}]); setStep('guest_list'); }} disabled={!isFormComplete() || !checkPhotos()} className="btn btn-success w-full mt-6 shadow-lg">{t.save_guest}</button>
                     </div>
                 </div>
             );
@@ -663,17 +572,16 @@
                     <div className="h-60 bg-white border-2 border-slate-200 rounded-2xl mb-6 shadow-inner"><SignaturePad canvasRef={sigRef}/></div>
                     <div className="flex gap-2">
                         <button onClick={()=>{const ctx=sigRef.current.getContext('2d'); ctx.clearRect(0,0,500,500);}} className="btn btn-secondary w-1/3">{t.clear}</button>
-                        <button onClick={saveGuest} disabled={isSaving} className="btn btn-primary w-2/3 shadow-xl">{isSaving ? t.cloud_save : t.confirm}</button>
+                        <button onClick={saveGuest} disabled={isSaving} className="btn btn-primary w-2/3 shadow-xl">{isSaving ? t.cloud_save : t.finish}</button>
                     </div>
                 </div>
             );
 
-            // 9. SUCCESS / LOCKED (Logica Lucchetto)
+            // 9. SUCCESS / LOCKED
             if (step === 'success') {
                 const totalReg = (session?.guests?.length || 0) + localGuests.length;
                 const isComplete = totalReg >= session.totalGuests;
                 const missing = session.totalGuests - totalReg;
-                // Se diretta è sempre sbloccata
                 const showCode = session.direct || isComplete; 
 
                 return (
@@ -689,8 +597,8 @@
                             </>
                         ) : (
                             <>
-                                <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-6 shadow-lg animate-pulse"><Icon name="lock"/></div>
-                                <h1 className="text-xl font-bold mb-2 uppercase text-red-600">{t.locked_title}</h1>
+                                <div className="w-24 h-24 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mb-6 shadow-lg"><Icon name="lock"/></div>
+                                <h1 className="text-xl font-bold mb-2 uppercase">{t.locked_title}</h1>
                                 <p className="mb-4 text-sm font-bold">{t.locked_msg}</p>
                                 
                                 <div className="alert-red w-full">
