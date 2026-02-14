@@ -4,163 +4,529 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tuscan Retreats - Guest Portal</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; }
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.05); }
-        .logo-circle { width: 180px; height: 180px; border-radius: 50%; overflow: hidden; border: 3px solid #d4af37; margin: 0 auto; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f1f5f9; 
+            color: #1e293b; 
+            margin: 0; 
+            padding: 0; 
+            touch-action: manipulation; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Contenitore App Mobile-First */
+        .app-container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            min-height: 100vh; 
+            background: white; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        }
+
+        /* Loghi e Header */
+        .header-sticky {
+            position: sticky; top: 0; z-index: 40; background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(5px); border-bottom: 1px solid #e2e8f0;
+            padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .logo-main-wrapper {
+            padding: 40px 20px; display: flex; justify-content: center;
+        }
+        .logo-circle { 
+            width: 160px; height: 160px; 
+            background: white; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            border: 4px solid #d4af37; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
         .logo-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
-        .scan-box { position: relative; width: 100%; height: 400px; background: #000; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .guide-mrz { position: absolute; top: 75%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 20%; border: 3px solid #00E0FF; border-radius: 8px; z-index: 10; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); }
-        .btn { width: 100%; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
-        .btn-primary { background: #0f766e; color: white; }
-        .input-field { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; }
+
+        /* Scanner Area */
+        .scanner-container {
+            position: relative; width: 100%; height: 65vh; background: #000; overflow: hidden;
+        }
+        video { 
+            width: 100%; height: 100%; object-fit: cover; 
+        }
+        .scanner-overlay {
+            position: absolute; inset: 0; z-index: 10; pointer-events: none;
+            border: 30px solid rgba(0,0,0,0.6);
+        }
+        .mrz-guide {
+            position: absolute; left: 50%; bottom: 15%; transform: translateX(-50%);
+            width: 90%; height: 15%; 
+            border: 2px solid #00E0FF; border-radius: 8px;
+            background: rgba(0, 224, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 224, 255, 0.2);
+            display: flex; align-items: flex-start; justify-content: center;
+        }
+        .mrz-label {
+            background: #00E0FF; color: #000; font-size: 10px; font-weight: 800;
+            padding: 2px 6px; border-radius: 4px; margin-top: -12px;
+        }
+
+        /* Form Elements */
+        .input-group { margin-bottom: 16px; text-align: left; }
+        .input-label { 
+            font-size: 11px; font-weight: 800; color: #64748b; 
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; 
+        }
+        .input-field { 
+            width: 100%; padding: 16px; 
+            border: 2px solid #e2e8f0; border-radius: 12px; 
+            font-size: 16px; color: #0f172a; font-weight: 600;
+            transition: all 0.2s; outline: none; -webkit-appearance: none;
+        }
+        .input-field:focus { border-color: #0f766e; box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1); }
+        
+        /* Bottoni */
+        .btn { 
+            width: 100%; padding: 18px; border-radius: 16px; 
+            font-weight: 700; font-size: 15px; letter-spacing: 0.5px;
+            border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: transform 0.1s, opacity 0.2s;
+            text-transform: uppercase;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #0f766e; color: white; box-shadow: 0 10px 20px rgba(15, 118, 110, 0.25); }
+        .btn-success { background: #10b981; color: white; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.25); }
+        .btn-outline { background: white; border: 2px solid #e2e8f0; color: #64748b; }
+        
+        /* Loading & Animations */
+        .loader { width: 20px; height: 20px; border: 3px solid #ffffff; border-bottom-color: transparent; border-radius: 50%; animation: rot 1s linear infinite; }
+        @keyframes rot { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Status Cards */
+        .status-card {
+            background: white; border-radius: 24px; padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); border: 1px solid #f1f5f9;
+            margin-bottom: 20px; position: relative; overflow: hidden;
+        }
+        .status-wait { border-left: 6px solid #f97316; }
+        .status-success { border-left: 6px solid #10b981; }
+
+        /* Firma */
+        canvas#sig-canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
     </style>
 </head>
 <body>
     <div id="root"></div>
-    <canvas id="ocr-cvs" style="display:none;"></canvas>
+    <canvas id="ocr-processing-canvas" style="display:none;"></canvas>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        window.FB = { initializeApp, getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, getDocs, getAuth, signInAnonymously };
+        // Esponi globalmente
+        window.FB = { initializeApp, getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, updateDoc, getAuth, signInAnonymously };
     </script>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const PROPERTIES = {
-            "LOVE": { id: "LOVE", name: "Love Nest", welcome: "https://welcomebooklovenest.netlify.app" },
-            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", welcome: "https://welcomebooklatartaruga.netlify.app" }
+        // --- 1. CONFIGURAZIONE E COSTANTI ---
+        const MY_FIREBASE_CONFIG = {
+          apiKey: "AIzaSyAI9ehjq0UAiYu6l_VxXiAZCV12QL0RbDk",
+          authDomain: "tuscan-retreats-9322c.firebaseapp.com",
+          projectId: "tuscan-retreats-9322c",
+          storageBucket: "tuscan-retreats-9322c.firebasestorage.app",
+          messagingSenderId: "775354595552",
+          appId: "1:775354595552:web:d527557e2a397640977885"
         };
 
+        const PROPERTIES = {
+            "LOVE": { id: "LOVE", name: "Love Nest", welcome: "https://welcomebooklovenest.netlify.app" },
+            "TARTARUGA": { id: "TARTARUGA", name: "La Tartaruga", welcome: "https://welcomebooklatartaruga.netlify.app" },
+            "REGINA": { id: "REGINA", name: "Santa Regina", welcome: "" }
+        };
+
+        const TRANSLATIONS = {
+            it: {
+                welcome_title: "Benvenuto in Toscana",
+                welcome_msg: "Ciao! Sono Giulia. Per garantirti un accesso sicuro, ti prego di scansionare il tuo documento.",
+                btn_scan: "SCANSIONA DOCUMENTO",
+                btn_manual: "INSERISCI A MANO",
+                scan_guide: "INQUADRA IL CODICE IN BASSO",
+                verify_title: "VERIFICA DATI",
+                label_surname: "Cognome",
+                label_name: "Nome",
+                label_doc: "N. Documento",
+                sign_title: "FIRMA DIGITALE",
+                btn_sign: "FIRMA E CONFERMA",
+                btn_send: "INVIA REGISTRAZIONE",
+                success_title: "GRAZIE!",
+                status_wait_title: "In attesa di approvazione",
+                status_wait_msg: "Giulia sta verificando i tuoi documenti.",
+                status_wait_sub: "Il codice apparirà qui automaticamente.",
+                status_ok_label: "CODICE D'INGRESSO",
+                status_ok_sub: "SBLOCCATO",
+                btn_welcome: "📖 APRI WELCOME BOOK",
+                btn_share: "CONDIVIDI LINK"
+            }
+        };
+
+        // --- 2. COMPONENTI UI (SVG) ---
+        const Icons = {
+            Check: () => <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>,
+            Lock: () => <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>,
+            Cam: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth="2"/></svg>,
+            Pen: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>,
+            Share: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+        };
+
+        // --- 3. APP LOGIC ---
         function App() {
-            const [step, setStep] = useState('login');
-            const [prop, setProp] = useState(null);
+            // STATE MANAGEMENT
+            const [step, setStep] = useState('login'); 
+            const [property, setProperty] = useState(null);
+            const [bookingId, setBookingId] = useState("");
             const [guestName, setGuestName] = useState("");
             const [doorCode, setDoorCode] = useState("WAIT");
-            const [formData, setFormData] = useState({ surname: "", name: "", doc: "" });
-            const [loading, setLoading] = useState(false);
+            const [formData, setFormData] = useState({ surname: "", name: "", docNumber: "" });
+            const [isScanning, setIsScanning] = useState(false);
+            const [adminList, setAdminList] = useState([]);
+            
+            // REFS
             const videoRef = useRef(null);
+            const sigRef = useRef(null);
+            const t = TRANSLATIONS.it;
 
+            // --- INIT EFFECT ---
             useEffect(() => {
-                const app = window.FB.initializeApp({
-                    apiKey: "AIzaSyAI9ehjq0UAiYu6l_VxXiAZCV12QL0RbDk",
-                    authDomain: "tuscan-retreats-9322c.firebaseapp.com",
-                    projectId: "tuscan-retreats-9322c"
-                });
+                // Avvia Firebase
+                const app = window.FB.initializeApp(MY_FIREBASE_CONFIG);
                 window.db = window.FB.getFirestore(app);
                 window.FB.signInAnonymously(window.FB.getAuth(app));
 
+                // Analizza URL per Link Statici ?d=...
                 const params = new URLSearchParams(window.location.search);
                 const d = params.get('d');
                 if (d) {
                     try {
-                        const decoded = JSON.parse(atob(d));
+                        const decoded = JSON.parse(atob(d)); // Decodifica Base64
                         if (PROPERTIES[decoded.p]) {
-                            setProp(PROPERTIES[decoded.p]);
+                            setProperty(PROPERTIES[decoded.p]);
                             setGuestName(decoded.n || "Ospite");
-                            setStep('welcome');
-                            const sid = `${decoded.p}_${(decoded.n || "Guest").replace(/\s/g, '_')}`;
+                            
+                            // Crea ID Univoco
+                            const cleanName = (decoded.n || "Guest").replace(/[^a-zA-Z0-9]/g, '_');
+                            const sid = `${decoded.p}_${cleanName}`;
+                            setBookingId(sid);
+                            setStep('welcome'); // Salta il login e vai al benvenuto
+
+                            // Ascolto Real-time per Sblocco
                             window.FB.onSnapshot(window.FB.doc(window.db, 'checkins', sid), (doc) => {
-                                if (doc.exists()) setDoorCode(doc.data().doorCode || "WAIT");
+                                if (doc.exists()) {
+                                    const data = doc.data();
+                                    if(data.doorCode) setDoorCode(data.doorCode);
+                                }
                             });
                         }
-                    } catch (e) { console.error("Link Error"); }
+                    } catch (e) {
+                        console.error("Link Error", e);
+                    }
                 }
             }, []);
 
-            const fix = (s, type) => {
-                if(!s) return "";
-                return type === 'N' ? s.replace(/O/g,'0').replace(/I/g,'1') : s.replace(/0/g,'O').replace(/1/g,'I');
+            // --- MOTORE OCR (Passaporto + CI) ---
+            const fixOCR = (str, type) => {
+                if (!str) return "";
+                // Corregge errori comuni (0 vs O, 1 vs I)
+                if (type === 'NUM') return str.replace(/O/g, '0').replace(/I/g, '1').replace(/S/g, '5').replace(/Z/g, '2');
+                if (type === 'TXT') return str.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/2/g, 'Z');
+                return str;
             };
 
-            const runOCR = async () => {
-                setLoading(true);
-                const cvs = document.getElementById('ocr-cvs');
-                const ctx = cvs.getContext('2d');
-                cvs.width = 1280; cvs.height = videoRef.current.videoHeight * (1280/videoRef.current.videoWidth);
-                ctx.filter = 'grayscale(100%) contrast(250%)';
-                ctx.drawImage(videoRef.current, 0, 0, cvs.width, cvs.height);
-                const { data: { text } } = await Tesseract.recognize(cvs, 'eng');
-                
-                const up = text.toUpperCase().replace(/\s/g, '');
-                let p = up.match(/P<([A-Z]{3})([A-Z<]+)/);
-                if(p) { // Passport
-                    let n = p[2].split('<<');
-                    setFormData({ surname: fix(n[0], 'L').replace(/</g,' '), name: fix(n[1], 'L').replace(/</g,' '), doc: up.match(/([A-Z0-9]{9})/)?.[0] || "" });
+            const startCamera = () => {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                    .then(stream => {
+                        if(videoRef.current) videoRef.current.srcObject = stream;
+                        setStep('scan');
+                    })
+                    .catch(err => alert("Errore fotocamera: " + err.message));
+            };
+
+            const stopCamera = () => {
+                if(videoRef.current && videoRef.current.srcObject) {
+                    videoRef.current.srcObject.getTracks().forEach(t => t.stop());
                 }
-                setLoading(false); setStep('manual');
             };
 
+            const captureAndRead = async () => {
+                setIsScanning(true);
+                const cvs = document.getElementById('ocr-processing-canvas');
+                const ctx = cvs.getContext('2d');
+                const video = videoRef.current;
+
+                // Setup Canvas Alta Risoluzione
+                cvs.width = 1280;
+                cvs.height = video.videoHeight * (1280 / video.videoWidth);
+                
+                // Filtri per migliorare OCR
+                ctx.filter = 'grayscale(100%) contrast(200%)';
+                ctx.drawImage(video, 0, 0, cvs.width, cvs.height);
+
+                try {
+                    const result = await Tesseract.recognize(cvs, 'eng');
+                    const text = result.data.text.toUpperCase().replace(/\s/g, '');
+
+                    // 1. LOGICA PASSAPORTO (P<...)
+                    const passMatch = text.match(/P<([A-Z]{3})([A-Z<]+)/);
+                    if (passMatch) {
+                        const names = passMatch[2].split('<<');
+                        setFormData({
+                            surname: fixOCR(names[0], 'TXT').replace(/</g, ' '),
+                            name: fixOCR(names[1], 'TXT').replace(/</g, ' '),
+                            docNumber: text.match(/([A-Z0-9]{9})/)?.[0] || ""
+                        });
+                        finishScan(); return;
+                    }
+
+                    // 2. LOGICA CARTA IDENTITÀ (I<...)
+                    const cieMatch = text.match(/I<ITA([A-Z0-9]{9})/);
+                    if (cieMatch) {
+                        setFormData(prev => ({ ...prev, docNumber: cieMatch[1] }));
+                        // La CI non ha nome/cognome nella zona MRZ in formato chiaro
+                        finishScan(); return;
+                    }
+
+                } catch (e) { console.error(e); }
+
+                // Fallback
+                setTimeout(() => {
+                    setIsScanning(false);
+                    if(confirm("Non riesco a leggere il codice. Vuoi inserire i dati a mano?")) {
+                        finishScan();
+                    }
+                }, 5000);
+            };
+
+            const finishScan = () => {
+                setIsScanning(false);
+                stopCamera();
+                setStep('manual');
+            };
+
+            // --- SALVATAGGIO CLOUD ---
+            const submitData = async () => {
+                const sid = bookingId || `B_${Date.now()}`;
+                
+                await window.FB.setDoc(window.FB.doc(window.db, 'checkins', sid), {
+                    propertyId: property?.id || "UNKNOWN",
+                    guestData: formData,
+                    doorCode: "WAIT", // Default BLOCCATO
+                    timestamp: new Date().toISOString(),
+                    status: "PENDING"
+                });
+                
+                setStep('success');
+            };
+
+            // --- VISTE (PAGINE) ---
+
+            // A. LOGIN (Per Admin o Link persi)
             if (step === 'login') return (
-                <div className="app-container p-10 flex flex-col justify-center items-center">
-                    <div className="logo-circle mb-8"><img src="logo.png" className="logo-img" /></div>
-                    <input className="input-field text-center font-bold" placeholder="CODICE" onKeyDown={e => {
-                        if(e.key === 'Enter' && e.target.value.toUpperCase() === 'ADMIN') {
-                            if(prompt("Pass:") === 'W0d@w0d@') setStep('admin');
+                <div className="app-container justify-center text-center p-8">
+                    <div className="logo-circle"><img src="logo.png" className="logo-img" /></div>
+                    <h1 className="font-bold text-slate-800 text-xl mb-6">LOGIN</h1>
+                    <input className="input-field text-center font-bold" placeholder="INSERISCI CODICE" onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                            const val = e.target.value.toUpperCase();
+                            // ADMIN CHECK
+                            if (val === 'ADMIN') {
+                                const pwd = prompt("Password Amministratore:");
+                                if (pwd === 'W0d@w0d@') setStep('admin');
+                                else alert("Password Errata");
+                            } 
+                            // PROPERTY CHECK
+                            else if (PROPERTIES[val]) {
+                                setProperty(PROPERTIES[val]);
+                                setStep('welcome');
+                            }
                         }
                     }} />
                 </div>
             );
 
+            // B. WELCOME
             if (step === 'welcome') return (
-                <div className="app-container p-10 text-center flex flex-col justify-center">
-                    <div className="logo-circle mb-6"><img src="foto.jpg" className="logo-img" /></div>
-                    <h2 className="text-xl italic mb-10">"Ciao {guestName}, completa il check-in per ricevere il codice porta."</h2>
-                    <button onClick={() => {
-                        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
-                            videoRef.current.srcObject = s; setStep('scan');
-                        });
-                    }} className="btn btn-primary shadow-xl">INIZIA SCAN DOCUMENTO</button>
+                <div className="app-container p-8 justify-center text-center">
+                    <div className="logo-circle"><img src="foto.jpg" className="logo-img" /></div>
+                    <h2 className="text-2xl font-bold text-teal-900 mb-2">{t.welcome_title}</h2>
+                    <p className="text-slate-500 mb-8 leading-relaxed">{t.welcome_msg}</p>
+                    
+                    <button onClick={startCamera} className="btn btn-primary mb-4">
+                        <Icons.Cam /> {t.btn_scan}
+                    </button>
+                    <button onClick={() => setStep('manual')} className="btn btn-outline">
+                        <Icons.Pen /> {t.btn_manual}
+                    </button>
                 </div>
             );
 
+            // C. SCANNER
             if (step === 'scan') return (
                 <div className="app-container bg-black">
-                    <div className="scan-box"><video ref={videoRef} autoPlay playsinline /><div className="guide-mrz"></div></div>
-                    <div className="p-6"><button onClick={runOCR} className="btn btn-primary">{loading ? "ANALISI..." : "SCANSIONA"}</button></div>
+                    <div className="scan-wrapper">
+                        <video ref={videoRef} autoPlay playsinline></video>
+                        <div className="scanner-overlay"></div>
+                        <div className="mrz-guide">
+                            <div className="mrz-label">{t.scan_guide}</div>
+                        </div>
+                    </div>
+                    <div className="p-6 bg-white rounded-t-3xl -mt-6 relative z-20">
+                        <button onClick={captureAndRead} className="btn btn-primary mb-4">
+                            {isScanning ? <div className="loader"></div> : "SCATTA E LEGGI"}
+                        </button>
+                        <button onClick={finishScan} className="text-slate-400 underline text-sm w-full text-center">
+                            Passa all'inserimento manuale
+                        </button>
+                    </div>
                 </div>
             );
 
+            // D. MANUALE / VERIFICA
             if (step === 'manual') return (
                 <div className="app-container p-6">
-                    <h2 className="font-bold mb-4">VERIFICA DATI</h2>
-                    <input className="input-field" value={formData.surname} onChange={e=>setFormData({...formData, surname: e.target.value.toUpperCase()})} placeholder="Cognome" />
-                    <input className="input-field" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value.toUpperCase()})} placeholder="Nome" />
-                    <input className="input-field" value={formData.doc} onChange={e=>setFormData({...formData, doc: e.target.value.toUpperCase()})} placeholder="N. Documento" />
-                    <button onClick={() => {
-                        const sid = `${prop.id}_${guestName.replace(/\s/g, '_')}`;
-                        window.FB.setDoc(window.FB.doc(window.db, 'checkins', sid), { doorCode: "WAIT", timestamp: new Date().toISOString() });
-                        setStep('success');
-                    }} className="btn btn-primary mt-4 font-bold">INVIA E FINISCI</button>
+                    <h2 className="font-bold text-teal-900 border-b pb-2 mb-6 uppercase tracking-widest">{t.verify_title}</h2>
+                    
+                    <div className="input-group">
+                        <label className="input-label">{t.label_surname}</label>
+                        <input className="input-field" value={formData.surname} onChange={e => setFormData({...formData, surname: e.target.value.toUpperCase()})} />
+                    </div>
+                    <div className="input-group">
+                        <label className="input-label">{t.label_name}</label>
+                        <input className="input-field" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} />
+                    </div>
+                    <div className="input-group">
+                        <label className="input-label">{t.label_doc}</label>
+                        <input className="input-field" value={formData.docNumber} onChange={e => setFormData({...formData, docNumber: e.target.value.toUpperCase()})} />
+                    </div>
+
+                    <button onClick={() => setStep('sign')} className="btn btn-success mt-8">{t.btn_sign} →</button>
                 </div>
             );
 
-            if (step === 'success') return (
-                <div className="app-container bg-teal-800 text-white p-10 text-center flex flex-col justify-center min-h-screen">
-                    <div className="w-20 h-20 bg-white text-teal-700 rounded-full flex items-center justify-center mb-6 mx-auto animate-bounce text-3xl font-bold">✓</div>
-                    <h1 className="text-2xl font-bold mb-6">GRAZIE, {guestName}!</h1>
-                    <div className="bg-white text-slate-900 rounded-3xl p-8 mb-6 shadow-2xl">
-                        {doorCode === "WAIT" ? (
-                            <div className="animate-pulse text-slate-500 italic">Giulia sta verificando i tuoi dati...<br/><small>Il codice apparirà qui tra poco.</small></div>
-                        ) : (
-                            <div><p className="text-[10px] text-slate-400 font-bold uppercase mb-2">CODICE PORTA</p><div className="text-5xl font-mono font-bold text-slate-800 tracking-tighter">{doorCode}</div><p className="text-xs text-teal-600 font-bold mt-4">SBLOCCATO ✅</p></div>
-                        )}
+            // E. FIRMA
+            if (step === 'sign') return (
+                <div className="app-container p-6 flex flex-col h-screen">
+                    <h2 className="font-bold text-slate-700 mb-4">{t.sign_title}</h2>
+                    <div className="flex-1 bg-white border-2 border-dashed border-slate-300 rounded-2xl mb-4 relative overflow-hidden touch-none">
+                        <canvas ref={sigRef} id="sig-canvas"
+                            onMouseDown={e => { const ctx=e.target.getContext('2d'); ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); e.target.isDrawing=true; }}
+                            onMouseMove={e => { if(e.target.isDrawing){ const ctx=e.target.getContext('2d'); ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } }}
+                            onMouseUp={e => e.target.isDrawing=false}
+                            onTouchStart={e => { const r=e.target.getBoundingClientRect(); const ctx=e.target.getContext('2d'); ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(e.touches[0].clientX-r.left, e.touches[0].clientY-r.top); e.target.isDrawing=true; }}
+                            onTouchMove={e => { if(e.target.isDrawing){ e.preventDefault(); const r=e.target.getBoundingClientRect(); const ctx=e.target.getContext('2d'); ctx.lineTo(e.touches[0].clientX-r.left, e.touches[0].clientY-r.top); ctx.stroke(); } }}
+                            onTouchEnd={e => e.target.isDrawing=false}
+                        />
+                        <div className="absolute bottom-2 right-2 text-xs text-slate-400 pointer-events-none">Disegna qui</div>
                     </div>
-                    {prop?.welcome && <a href={prop.welcome} target="_blank" className="btn bg-white text-teal-800 font-bold mb-4">📖 APRI WELCOME BOOK</a>}
+                    <button onClick={submitData} className="btn btn-primary shadow-xl">{t.btn_send}</button>
                 </div>
             );
+
+            // F. SUCCESSO (WAITING ROOM)
+            if (step === 'success') return (
+                <div className="app-container bg-teal-900 text-white p-8 text-center flex flex-col justify-center min-h-screen">
+                    <div className="w-20 h-20 bg-white text-teal-700 rounded-full flex items-center justify-center mb-6 mx-auto shadow-2xl animate-bounce">
+                        <Icons.Check />
+                    </div>
+                    <h1 className="text-3xl font-bold mb-2">{t.success_title}</h1>
+                    <p className="text-teal-200 mb-8 opacity-80">Registrazione completata.</p>
+                    
+                    <div className={`bg-white text-slate-900 rounded-3xl p-8 w-full shadow-2xl border mb-6 relative overflow-hidden ${doorCode === 'WAIT' ? 'status-wait' : 'status-success'}`}>
+                        {doorCode === "WAIT" ? (
+                            <div className="pulse-text">
+                                <div className="text-orange-500 mb-4 flex justify-center"><Icons.Lock /></div>
+                                <h3 className="font-bold text-lg mb-2 text-orange-600">{t.status_wait_title}</h3>
+                                <p className="text-sm text-slate-500 leading-relaxed">{t.status_wait_msg}</p>
+                                <div className="mt-6 pt-6 border-t border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.status_wait_sub}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">{t.status_ok_label}</p>
+                                <div className="text-6xl font-mono font-bold text-slate-800 my-6 tracking-tighter">{doorCode}</div>
+                                <div className="bg-teal-50 text-teal-700 py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2">
+                                    <span>{t.status_ok_sub}</span> <Icons.Check />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* WELCOME BOOK DINAMICO */}
+                    {property?.welcome && (
+                        <a href={property.welcome} target="_blank" className="btn bg-white text-teal-800 w-full mb-4 font-bold shadow-lg text-sm">
+                            {t.btn_welcome}
+                        </a>
+                    )}
+                    
+                    <button onClick={() => { if(navigator.share) navigator.share({url: window.location.href}); }} className="btn btn-outline border-teal-700 text-teal-200 text-xs">
+                        <Icons.Share /> {t.btn_share}
+                    </button>
+                </div>
+            );
+
+            // G. PANNELLO ADMIN (PROTETTO)
+            if (step === 'admin') return (
+                <div className="app-container p-6 overflow-y-auto bg-slate-50">
+                    <div className="header-sticky">
+                        <h2 className="font-bold text-teal-800 uppercase tracking-widest">DASHBOARD</h2>
+                        <button onClick={() => setStep('login')} className="text-xs text-slate-400 underline">ESCI</button>
+                    </div>
+
+                    <div className="p-4">
+                        <button onClick={async () => {
+                            const snap = await window.FB.getDocs(window.FB.collection(window.db, 'checkins'));
+                            const l = []; snap.forEach(d => l.push({ id: d.id, ...d.data() }));
+                            setAdminList(l.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
+                        }} className="btn btn-primary mb-6 text-xs shadow-md">
+                            🔄 AGGIORNA LISTA OSPITI
+                        </button>
+                        
+                        {adminList.map(c => (
+                            <div key={c.id} className="bg-white p-5 rounded-2xl mb-4 border border-slate-200 shadow-sm">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">{c.propertyId}</span>
+                                    <span className="text-xs text-slate-400">{new Date(c.timestamp).toLocaleTimeString()}</span>
+                                </div>
+                                <div className="mb-3">
+                                    <div className="font-bold text-lg text-slate-800">{c.guestData?.surname} {c.guestData?.name}</div>
+                                    <div className="text-xs text-slate-500 font-mono">DOC: {c.guestData?.docNumber}</div>
+                                </div>
+                                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
+                                    <input id={`code_${c.id}`} className="input-field py-2 mb-0 text-sm" defaultValue={c.doorCode === 'WAIT' ? '' : c.doorCode} placeholder="Codice Porta" />
+                                    <button onClick={() => {
+                                        const val = document.getElementById(`code_${c.id}`).value;
+                                        window.FB.updateDoc(window.FB.doc(window.db, 'checkins', c.id), { doorCode: val });
+                                        alert("Codice inviato e sbloccato!");
+                                    }} className="btn btn-success p-0 w-24 text-[10px] font-bold">INVIA</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
             return null;
         }
+
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
