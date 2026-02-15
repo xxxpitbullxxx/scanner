@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuscan Retreats - Guest Check-in</title>
+    <title>Tuscan Retreats - Guest Check-in (Local Test)</title>
     
     <!-- 1. Tailwind CSS per lo stile -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- 2. Import Map: Dice al browser dove trovare le librerie senza usare NPM -->
+    <!-- 2. Import Map: Solo React e Lucide, NIENTE Firebase per ora -->
     <script type="importmap">
     {
         "imports": {
             "react": "https://esm.sh/react@18.2.0",
             "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-            "lucide-react": "https://esm.sh/lucide-react@0.263.1",
-            "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-            "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+            "lucide-react": "https://esm.sh/lucide-react@0.263.1"
         }
     }
     </script>
@@ -49,29 +46,7 @@
             Share2, Link as LinkIcon, Bomb, CalendarDays, Info, Upload, File, MessageCircle
         } from 'lucide-react';
         
-        import { initializeApp } from 'firebase/app';
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-        import { getFirestore, collection, addDoc, query, onSnapshot, updateDoc, doc, serverTimestamp, deleteDoc, getDocs } from 'firebase/firestore';
-
-        // --- CONFIGURAZIONE FIREBASE (INSERISCI I TUOI DATI QUI SOTTO) ---
-        const firebaseConfig = {
-            apiKey: "INSERISCI_API_KEY_QUI",
-            authDomain: "INSERISCI_AUTH_DOMAIN_QUI",
-            projectId: "INSERISCI_PROJECT_ID_QUI",
-            storageBucket: "INSERISCI_STORAGE_BUCKET_QUI",
-            messagingSenderId: "INSERISCI_MESSAGING_SENDER_ID_QUI",
-            appId: "INSERISCI_APP_ID_QUI"
-        };
-
-        // Inizializzazione sicura (evita crash se config è vuota durante test)
-        let app, auth, db;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } catch (e) {
-            console.error("Firebase non configurato correttamente. Inserisci le chiavi nel file HTML.", e);
-        }
+        // --- NIENTE FIREBASE PER ORA (USIAMO LOCALSTORAGE) ---
 
         // --- COSTANTI APP ---
         const ADMIN_PASSWORD = "123"; 
@@ -141,7 +116,7 @@
                 deleteGuest: "Elimina Ospite",
                 deleteAll: "Elimina Gruppo",
                 nukeDb: "CANCELLA TUTTO DB",
-                confirmNuke: "ATTENZIONE: Stai per cancellare TUTTI i dati del database. Inserisci password:",
+                confirmNuke: "ATTENZIONE: Stai per cancellare TUTTI i dati. Inserisci password:",
                 save: "Salva",
                 cancel: "Annulla",
                 close: "CHIUDI",
@@ -279,10 +254,60 @@
                 notifyMsgOf: "of",
                 notifyMsgFor: "to get the code"
             },
-            // Altre lingue omesse per brevità, usare fallback EN o IT se mancanti o copiare da versioni precedenti
-            fr: { welcomeTitle: "Bienvenue", giuliaMessage: "Salut! Je suis Giulia.", rulesOpenExternal: "OUVRIR FORMULAIRE", searchLabel: "Code groupe?", submit: "Enregistrer", rulesAccept: "Formulaire rempli" },
-            de: { welcomeTitle: "Willkommen", giuliaMessage: "Hallo! Ich bin Giulia.", rulesOpenExternal: "FORMULAR ÖFFNEN", searchLabel: "Gruppencode?", submit: "Registrieren", rulesAccept: "Formular ausgefüllt" },
-            es: { welcomeTitle: "Bienvenido", giuliaMessage: "¡Hola! Soy Giulia.", rulesOpenExternal: "ABRIR FORMULARIO", searchLabel: "¿Código de grupo?", submit: "Registrar", rulesAccept: "Formulario completado" }
+            fr: { 
+                welcomeTitle: "Bienvenue en Toscane",
+                welcomeSubtitle: "Où chaque séjour devient une histoire inoubliable.",
+                giuliaMessage: "Salut! Je suis Giulia. Pour faciliter votre arrivée, veuillez compléter l'enregistrement en ligne.",
+                startCheckin: "COMMENCER L'ENREGISTREMENT", rulesOpenExternal: "OUVRIR FORMULAIRE", searchLabel: "Code groupe?",
+                waitingRoom: "Salle d'Attente", yourCode: "Votre Code:", copy: "COPIER", instruction: "Instructions:",
+                waitingMsgPartial: "invités sur", waitingMsgTotal: "ont terminé.", waitingMsgHidden: "Code visible à la fin.",
+                familyAdvice: "Moins de 14 ans", familyAdviceDesc: "Appel vidéo obligatoire.", callGiuliaBtn: "APPEL VIDÉO WHATSAPP",
+                callGiuliaDone: "Fait", personalData: "Données Personnelles", residence: "Résidence",
+                sameResQuestion: "Même adresse?", sameResYes: "Oui", sameResNo: "Non",
+                docFront: "Recto", docBack: "Verso", docSelfie: "Selfie", submit: "Enregistrer",
+                rulesTitle: "Règlement", rulesAccept: "Formulaire rempli", rulesDesc: "Obligatoire.",
+                uploadMode: "Mode", useCamera: "Caméra", useFile: "Fichier", guestsLabel: "Invités", checkInLabel: "Arrivée", checkOutLabel: "Départ",
+                searchPlaceholder: "Ex: LNS-1234", save: "Sauver", cancel: "Annuler", close: "FERMER",
+                editGuest: "Modifier", expiredCode: "CODE EXPIRÉ", copyGroupCode: "COPIER CODE GROUPE",
+                copyGroupDesc: "Copiez et conservez ce code pour revenir.",
+                notifyGiulia: "AVERTIR GIULIA (OBLIGATOIRE)", notifyMsgStart: "Salut Giulia, je suis", notifyGiuliaDesc: "Cliquez pour confirmer."
+            },
+            de: { 
+                welcomeTitle: "Willkommen in der Toskana",
+                welcomeSubtitle: "Wo jeder Aufenthalt zu einer unvergesslichen Geschichte wird.",
+                giuliaMessage: "Hallo! Ich bin Giulia. Um Ihre Ankunft zu erleichtern, bitte ich Sie, den Online-Check-in abzuschließen.",
+                startCheckin: "CHECK-IN STARTEN", rulesOpenExternal: "FORMULAR ÖFFNEN", searchLabel: "Gruppencode?",
+                waitingRoom: "Warteraum", yourCode: "Ihr Code:", copy: "KOPIEREN", instruction: "Anweisungen:",
+                waitingMsgPartial: "Gäste von", waitingMsgTotal: "fertig.", waitingMsgHidden: "Code erscheint am Ende.",
+                familyAdvice: "Unter 14", familyAdviceDesc: "Videoanruf erforderlich.", callGiuliaBtn: "WHATSAPP VIDEOANRUF",
+                callGiuliaDone: "Erledigt", personalData: "Persönliche Daten", residence: "Wohnsitz",
+                sameResQuestion: "Gleiche Adresse?", sameResYes: "Ja", sameResNo: "Nein",
+                docFront: "Vorderseite", docBack: "Rückseite", docSelfie: "Selfie", submit: "Registrieren",
+                rulesTitle: "Hausordnung", rulesAccept: "Formular ausgefüllt", rulesDesc: "Pflicht.",
+                uploadMode: "Modus", useCamera: "Kamera", useFile: "Datei", guestsLabel: "Gäste", checkInLabel: "Anreise", checkOutLabel: "Abreise",
+                searchPlaceholder: "Bsp: LNS-1234", save: "Speichern", cancel: "Abbrechen", close: "SCHLIESSEN",
+                editGuest: "Bearbeiten", expiredCode: "CODE ABGELAUFEN", copyGroupCode: "GRUPPENCODE KOPIEREN",
+                copyGroupDesc: "Kopieren und aufbewahren.",
+                notifyGiulia: "GIULIA BENACHRICHTIGEN (PFLICHT)", notifyMsgStart: "Hallo Giulia, ich bin", notifyGiuliaDesc: "Klicken zum Bestätigen."
+            },
+            es: { 
+                welcomeTitle: "Bienvenido a la Toscana",
+                welcomeSubtitle: "Donde cada estancia se convierte en una historia inolvidable.",
+                giuliaMessage: "¡Hola! Soy Giulia. Para facilitar tu llegada, te pido que completes el registro en línea.",
+                startCheckin: "INICIAR REGISTRO", rulesOpenExternal: "ABRIR FORMULARIO", searchLabel: "¿Código de grupo?",
+                waitingRoom: "Sala de Espera", yourCode: "Tu Código:", copy: "COPIAR", instruction: "Instrucciones:",
+                waitingMsgPartial: "huéspedes de", waitingMsgTotal: "completados.", waitingMsgHidden: "Código visible al final.",
+                familyAdvice: "Menor de 14", familyAdviceDesc: "Videollamada obligatoria.", callGiuliaBtn: "VIDEOLLAMADA WHATSAPP",
+                callGiuliaDone: "Hecho", personalData: "Datos Personales", residence: "Residencia",
+                sameResQuestion: "¿Misma dirección?", sameResYes: "Sí", sameResNo: "No",
+                docFront: "Frente", docBack: "Dorso", docSelfie: "Selfie", submit: "Registrar",
+                rulesTitle: "Normas", rulesAccept: "Formulario completado", rulesDesc: "Obligatorio.",
+                uploadMode: "Modo", useCamera: "Cámara", useFile: "Archivo", guestsLabel: "Huéspedes", checkInLabel: "Llegada", checkOutLabel: "Salida",
+                searchPlaceholder: "Ej: LNS-1234", save: "Guardar", cancel: "Cancelar", close: "CERRAR",
+                editGuest: "Editar", expiredCode: "CÓDIGO EXPIRADO", copyGroupCode: "COPIAR CÓDIGO GRUPO",
+                copyGroupDesc: "Copia y guarda este código.",
+                notifyGiulia: "AVISAR A GIULIA (OBLIGATORIO)", notifyMsgStart: "Hola Giulia, soy", notifyGiuliaDesc: "Clic para confirmar."
+            }
         };
 
         const legacyCopy = (text) => {
@@ -422,6 +447,14 @@
             
             const t = { ...TRANSLATIONS.it, ...(TRANSLATIONS[lang] || {}) };
 
+            // --- LOCAL STORAGE INIT (MOCK DATABASE) ---
+            const [allGuests, setAllGuests] = useState(() => JSON.parse(localStorage.getItem('tuscan_guests') || '[]'));
+            
+            useEffect(() => {
+                localStorage.setItem('tuscan_guests', JSON.stringify(allGuests));
+            }, [allGuests]);
+
+            // --- GLOBAL STATE ---
             const [groupId, setGroupId] = useState("");
             const [selectedProperty, setSelectedProperty] = useState('lovenest');
             const [stayDates, setStayDates] = useState({ checkIn: '', checkOut: '' });
@@ -436,36 +469,14 @@
             const [isScanning, setIsScanning] = useState(false);
             const [copyFeedback, setCopyFeedback] = useState("");
 
-            const [allGuests, setAllGuests] = useState([]);
-
-            useEffect(() => {
-                if (auth) onAuthStateChanged(auth, setUser);
-                else if (typeof __initial_auth_token === 'undefined') {
-                    // Fallback se firebase non parte
-                    console.warn("Firebase Auth non inizializzato");
-                }
-            }, []);
-
-            useEffect(() => {
-                if (!user || !db) return;
-                try {
-                    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'guests'));
-                    const unsub = onSnapshot(q, snap => {
-                        const loaded = snap.docs.map(d => ({...d.data(), id: d.id}));
-                        loaded.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                        setAllGuests(loaded);
-                    });
-                    return () => unsub();
-                } catch(e) { console.error("Err DB", e); }
-            }, [user]);
-
             const groupGuests = allGuests.filter(g => g.groupId === groupId);
             const isJollyActive = groupGuests.some(g => g.accessAuthorized === true);
             const isCompleted = groupGuests.length > 0 && groupGuests.every(g => g.approved) && groupGuests.length >= (groupGuests[0]?.totalGuests || 1);
             const isGroupUnlocked = isJollyActive || isCompleted;
             const accessCode = groupGuests[0]?.accessCode || PROPERTIES[selectedProperty].defaultCode;
 
-            // --- FUNZIONI ---
+            // --- ACTIONS ---
+
             const handleCopy = (text) => {
                 const success = legacyCopy(text);
                 if (success) { setCopyFeedback(t.copied); setTimeout(() => setCopyFeedback(""), 2000); } 
@@ -477,45 +488,42 @@
                 else { alert(t.wrongPass); }
             };
 
-            const handleNukeDb = async () => {
+            const handleNukeDb = () => {
                 const pass = prompt(t.confirmNuke);
                 if (pass === ADMIN_PASSWORD) {
-                    try {
-                        const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'guests'));
-                        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-                        await Promise.all(deletePromises);
-                        alert("Database Cancellato / Database Deleted");
-                        window.location.reload(); 
-                    } catch (error) { alert("Errore cancellazione / Error deleting"); }
+                    localStorage.removeItem('tuscan_guests');
+                    setAllGuests([]);
+                    alert("Database Cancellato / Database Deleted");
+                    window.location.reload(); 
                 } else { alert(t.wrongPass); }
             };
 
-            const handleDelete = async (id, isGroup = false) => {
+            const handleDelete = (id, isGroup = false) => {
                 const pass = prompt("Password:");
                 if (pass === ADMIN_PASSWORD) {
                     if (isGroup) {
-                        const guestsToDelete = allGuests.filter(g => g.groupId === id);
-                        for (const g of guestsToDelete) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'guests', g.id));
+                        setAllGuests(prev => prev.filter(g => g.groupId !== id));
                     } else {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'guests', id));
+                        setAllGuests(prev => prev.filter(g => g.id !== id));
                     }
+                    window.location.reload();
                 } else { alert(t.wrongPass); }
             };
 
-            const handleForceUnlock = async (gId) => {
-                const guests = allGuests.filter(g => g.groupId === gId);
-                for (const g of guests) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'guests', g.id), { accessAuthorized: true });
+            const handleForceUnlock = (gId) => {
+                setAllGuests(prev => prev.map(g => g.groupId === gId ? { ...g, accessAuthorized: true } : g));
                 alert(t.unlockedMsg);
             };
 
-            const handleEditSave = async (id, newData) => {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'guests', id), newData);
+            const handleEditSave = (id, newData) => {
+                setAllGuests(prev => prev.map(g => g.id === id ? { ...g, ...newData } : g));
                 setEditingGuest(null);
             };
 
             const startCheckin = () => {
                 const prefix = selectedProperty === 'lovenest' ? 'LNS-' : 'TRT-';
-                setGroupId(prefix + Math.floor(1000 + Math.random() * 9000));
+                const newId = prefix + Math.floor(1000 + Math.random() * 9000);
+                setGroupId(newId);
                 setFormData({...INITIAL_FORM});
                 setCurrentGuestIndex(1);
                 setHeadOfGroupAddress(null);
@@ -564,18 +572,28 @@
                 }, 1500);
             };
 
-            const saveCurrentGuest = async () => {
-                if (!user) { if(typeof signInAnonymously !== 'undefined' && auth) await signInAnonymously(auth); }
+            const saveCurrentGuest = () => {
                 if (currentGuestIndex === 1) setHeadOfGroupAddress({ address: formData.address, civico: formData.civico, city: formData.city, zip: formData.zip, country: formData.country });
                 
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'guests'), {
+                const newGuest = {
                     ...formData,
+                    id: Date.now().toString(),
                     groupId, property: selectedProperty, checkIn: stayDates.checkIn, checkOut: stayDates.checkOut,
                     guestIndex: currentGuestIndex, totalGuests: guestCount, approved: false, accessAuthorized: false,
-                    createdAt: serverTimestamp(), accessCode: null 
-                });
+                    createdAt: new Date().toISOString(), accessCode: null 
+                };
+                
+                setAllGuests(prev => [...prev, newGuest]);
                 setWaClicked(false);
                 setView('share_interstitial');
+            };
+            
+            const updateCode = (gId, newCode) => {
+                 setAllGuests(prev => prev.map(g => g.groupId === gId ? { ...g, accessCode: newCode } : g));
+            };
+
+            const approveGuest = (id, currentStatus) => {
+                 setAllGuests(prev => prev.map(g => g.id === id ? { ...g, approved: !currentStatus } : g));
             };
 
             const getWhatsAppLink = () => {
@@ -613,18 +631,12 @@
                 </div>
             );
 
-            // ... (INSERIRE QUI GLI ALTRI MODULI ADMIN, FORM, WAITING, SHARE - identici al codice precedente, ma con le correzioni applicate) ...
-            // Per brevità, qui ho omesso il resto del rendering (form, admin, waiting) che è identico all'ultima versione fornita nel thread, 
-            // ma nel file HTML finale deve essere tutto incluso. 
-            // Assicurati di copiare TUTTO il blocco `return` dalla versione precedente e incollarlo qui.
-            
-            // ADMIN LOGIN
             if (view === 'admin_login') return (
                 <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6"><div className="bg-white rounded-[2rem] p-8 w-full max-w-sm text-center"><Lock size={48} className="mx-auto text-indigo-600 mb-6"/><h2 className="text-2xl font-black text-slate-900 mb-6">{t.adminLogin}</h2><input type="password" value={adminPassInput} onChange={e => setAdminPassInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdminLogin()} placeholder={t.passwordPlaceholder} className="w-full p-4 bg-slate-100 rounded-xl mb-4 font-mono text-center text-lg outline-none focus:ring-2 focus:ring-indigo-500" /><div className="flex gap-3"><button onClick={() => setView('landing')} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-xl font-bold">{t.cancel}</button><button onClick={handleAdminLogin} className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-bold">{t.login}</button></div></div></div>
             );
 
-            // ADMIN DASHBOARD
             if (view === 'admin_dashboard') {
+                // Raggruppamento locale
                 const groups = allGuests.reduce((acc, g) => {
                     const gid = g.groupId || 'UNKNOWN';
                     if(!acc[gid]) acc[gid] = { id: gid, guests: [], property: g.property, total: g.totalGuests, dates: `${formatDateIT(g.checkIn)} > ${formatDateIT(g.checkOut)}` };
@@ -633,19 +645,34 @@
                 }, {});
 
                 return (
-                    <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans"><div className="max-w-6xl mx-auto"><div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm gap-4"><div><img src="logo.png" className="h-8 mb-2" /><h1 className="text-2xl font-black text-slate-900 uppercase italic flex items-center gap-2"><ShieldCheck className="text-indigo-600"/> {t.adminDashboard}</h1><p className="text-xs text-slate-400 font-bold mt-1">Modalità Protetta Attiva</p></div><div className="flex gap-2"><button onClick={handleNukeDb} className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-red-200 hover:bg-red-700"><Bomb size={16}/> {t.nukeDb}</button><button onClick={() => { setAdminAuth(false); setView('landing'); }} className="bg-slate-100 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-slate-200"><LogOut size={16}/> Esci</button></div></div>
+                    <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans"><div className="max-w-6xl mx-auto"><div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm gap-4"><div><img src="logo.png" className="h-8 mb-2" /><h1 className="text-2xl font-black text-slate-900 uppercase italic flex items-center gap-2"><ShieldCheck className="text-indigo-600"/> {t.adminDashboard}</h1><p className="text-xs text-slate-400 font-bold mt-1">Modalità Protetta Attiva (Locale)</p></div><div className="flex gap-2"><button onClick={handleNukeDb} className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-red-200 hover:bg-red-700"><Bomb size={16}/> {t.nukeDb}</button><button onClick={() => { setAdminAuth(false); setView('landing'); }} className="bg-slate-100 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-slate-200"><LogOut size={16}/> Esci</button></div></div>
                     <div className="grid gap-6">{Object.values(groups).map(g => {
                         const registeredCount = g.guests.length; const missingCount = g.total - registeredCount; const currentAccessCode = g.guests[0]?.accessCode || PROPERTIES[g.guests[0]?.property || 'lovenest'].defaultCode; const isForceUnlocked = g.guests.some(guest => guest.accessAuthorized);
-                        return (<div key={g.id} className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-lg border border-slate-100 relative overflow-hidden"><div className="absolute top-0 left-0 w-2 h-full bg-indigo-600"></div><div className="flex flex-col md:flex-row justify-between md:items-center gap-6 mb-8"><div className="flex items-center gap-4"><img src={PROPERTIES[g.guests[0]?.property || 'lovenest'].logo} className="w-16 h-16 rounded-full object-cover border-2 border-slate-200" /><div><h2 className="text-2xl font-black text-slate-800">{PROPERTIES[g.guests[0]?.property || 'lovenest'].name}</h2><div className="flex gap-2 mt-2"><span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-mono font-bold tracking-widest">{g.id}</span><span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-bold">{g.dates}</span></div></div></div><div className="flex flex-col items-end gap-2"><button title="Copia Gruppo" onClick={() => handleCopy(g.id)} className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200 flex items-center gap-1"><Copy size={12}/> Copia ID Gruppo</button><div className="bg-slate-50 p-2 rounded-xl border border-slate-200 flex items-center gap-2"><Key size={14} className="text-slate-400"/><span className="text-[10px] font-bold uppercase text-slate-400 mr-2">{t.accessCodeLabel}</span><input type="text" defaultValue={currentAccessCode} onChange={(e) => setEditingCode(e.target.value)} className="w-20 bg-transparent font-mono font-black text-center outline-none text-indigo-600"/><button title="Salva Codice" onClick={() => g.guests.forEach(guest => updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'guests', guest.id), { accessCode: editingCode || currentAccessCode }))} className="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700"><Save size={14}/></button><button title="Copia Codice" onClick={() => handleCopy(currentAccessCode)} className="bg-slate-200 text-slate-600 p-1 rounded hover:bg-slate-300"><Copy size={14}/></button></div></div></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{g.guests.map(guest => (<div key={guest.id} className={`p-5 rounded-2xl border-2 transition-all ${guest.approved ? 'border-green-100 bg-green-50/50' : 'border-slate-100 bg-slate-50'}`}><div className="flex justify-between items-start mb-3"><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ospite {guest.guestIndex}</span><div className="flex gap-1"><button onClick={() => setViewingDocGuest(guest)} className="p-1.5 bg-white rounded-lg shadow-sm text-blue-500 hover:scale-110 transition-transform" title={t.viewDocs}><Eye size={16}/></button><button onClick={() => setEditingGuest(guest)} className="p-1.5 bg-white rounded-lg shadow-sm text-orange-500 hover:scale-110 transition-transform" title={t.editGuest}><Pencil size={16}/></button><button onClick={() => handleDelete(guest.id)} className="p-1.5 bg-white rounded-lg shadow-sm text-red-500 hover:scale-110 transition-transform" title={t.deleteGuest}><Trash2 size={16}/></button></div></div><p className="font-black text-slate-800 uppercase text-sm truncate">{guest.nome} {guest.cognome}</p><div className="mt-4 pt-4 border-t border-slate-200/50"><button onClick={() => updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'guests', guest.id), { approved: !guest.approved })} className={`w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${guest.approved ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-green-500 text-white hover:bg-green-600 shadow-md shadow-green-200'}`}>{guest.approved ? t.revoke : t.approve}</button></div></div>))}</div><div className="mt-8 pt-6 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4"><div className="flex gap-2"><button onClick={() => handleDelete(g.id, true)} className="text-red-400 text-xs font-bold uppercase hover:text-red-600 flex items-center gap-2 px-4 py-2 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={14}/> {t.deleteAll}</button><button onClick={() => handleForceUnlock(g.id)} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase flex items-center gap-2 transition-colors ${isForceUnlocked ? 'bg-green-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}`}>{isForceUnlocked ? <CheckCircle size={14}/> : <Unlock size={14}/>} {isForceUnlocked ? "SBLOCCATO MANUALMENTE" : t.forceUnlock}</button></div></div></div>);
+                        return (<div key={g.id} className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-lg border border-slate-100 relative overflow-hidden"><div className="absolute top-0 left-0 w-2 h-full bg-indigo-600"></div><div className="flex flex-col md:flex-row justify-between md:items-center gap-6 mb-8"><div className="flex items-center gap-4"><img src={PROPERTIES[g.guests[0]?.property || 'lovenest'].logo} className="w-16 h-16 rounded-full object-cover border-2 border-slate-200" /><div><h2 className="text-2xl font-black text-slate-800">{PROPERTIES[g.guests[0]?.property || 'lovenest'].name}</h2><div className="flex gap-2 mt-2"><span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-mono font-bold tracking-widest">{g.id}</span><span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-xs font-bold">{g.dates}</span></div></div></div><div className="flex flex-col items-end gap-2"><button title="Copia Gruppo" onClick={() => handleCopy(g.id)} className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200 flex items-center gap-1"><Copy size={12}/> Copia ID Gruppo</button><div className="bg-slate-50 p-2 rounded-xl border border-slate-200 flex items-center gap-2"><Key size={14} className="text-slate-400"/><span className="text-[10px] font-bold uppercase text-slate-400 mr-2">{t.accessCodeLabel}</span><input type="text" defaultValue={currentAccessCode} onChange={(e) => setEditingCode(e.target.value)} className="w-20 bg-transparent font-mono font-black text-center outline-none text-indigo-600"/><button title="Salva Codice" onClick={() => updateCode(g.id, editingCode || currentAccessCode)} className="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700"><Save size={14}/></button><button title="Copia Codice" onClick={() => handleCopy(currentAccessCode)} className="bg-slate-200 text-slate-600 p-1 rounded hover:bg-slate-300"><Copy size={14}/></button></div></div></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{g.guests.map(guest => (<div key={guest.id} className={`p-5 rounded-2xl border-2 transition-all ${guest.approved ? 'border-green-100 bg-green-50/50' : 'border-slate-100 bg-slate-50'}`}><div className="flex justify-between items-start mb-3"><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ospite {guest.guestIndex}</span><div className="flex gap-1"><button onClick={() => setViewingDocGuest(guest)} className="p-1.5 bg-white rounded-lg shadow-sm text-blue-500 hover:scale-110 transition-transform" title={t.viewDocs}><Eye size={16}/></button><button onClick={() => setEditingGuest(guest)} className="p-1.5 bg-white rounded-lg shadow-sm text-orange-500 hover:scale-110 transition-transform" title={t.editGuest}><Pencil size={16}/></button><button onClick={() => handleDelete(guest.id)} className="p-1.5 bg-white rounded-lg shadow-sm text-red-500 hover:scale-110 transition-transform" title={t.deleteGuest}><Trash2 size={16}/></button></div></div><p className="font-black text-slate-800 uppercase text-sm truncate">{guest.nome} {guest.cognome}</p><div className="mt-4 pt-4 border-t border-slate-200/50"><button onClick={() => approveGuest(guest.id, guest.approved)} className={`w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${guest.approved ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-green-500 text-white hover:bg-green-600 shadow-md shadow-green-200'}`}>{guest.approved ? t.revoke : t.approve}</button></div></div>))}</div><div className="mt-8 pt-6 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4"><div className="flex gap-2"><button onClick={() => handleDelete(g.id, true)} className="text-red-400 text-xs font-bold uppercase hover:text-red-600 flex items-center gap-2 px-4 py-2 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={14}/> {t.deleteAll}</button><button onClick={() => handleForceUnlock(g.id)} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase flex items-center gap-2 transition-colors ${isForceUnlocked ? 'bg-green-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}`}>{isForceUnlocked ? <CheckCircle size={14}/> : <Unlock size={14}/>} {isForceUnlocked ? "SBLOCCATO MANUALMENTE" : t.forceUnlock}</button></div></div></div>);
                     })}</div></div><DocModal guest={viewingDocGuest} onClose={() => setViewingDocGuest(null)} t={t} />{editingGuest && <EditModal guest={editingGuest} onClose={() => setEditingGuest(null)} onSave={handleEditSave} t={t} />}</div>
                 );
             }
+            
+            // ... (IL RESTO DELLE VIEW: FORM, WAITING, SHARE_INTERSTITIAL SONO IDENTICHE AL CODICE PRECEDENTE E VANNO INSERITE QUI)
+            // Per brevità di output, devi copiare le view `share_interstitial`, `form` e `waiting` dal blocco di codice precedente e incollarle qui.
+            // L'unica differenza è che ora usano le funzioni locali `saveCurrentGuest` ecc.
+            
+            if (view === 'share_interstitial') { return ( <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6"><div className="bg-white p-8 rounded-[2rem] shadow-xl max-w-md w-full text-center space-y-6"><div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto"><CheckCircle size={40}/></div><h2 className="text-2xl font-black text-slate-900">{t.statusPartial}</h2><p className="text-slate-500">Hai completato la registrazione per l'ospite {currentGuestIndex}.</p><div className="space-y-3"><div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-4"><p className="text-xs font-bold text-yellow-800 uppercase mb-2">{t.notifyGiulia}</p><p className="text-xs text-yellow-700 mb-4">{t.notifyGiuliaDesc}</p><a href={getWhatsAppLink()} target="_blank" rel="noreferrer" onClick={() => setWaClicked(true)} className="w-full py-4 bg-green-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-green-600 transition-transform active:scale-95"><MessageCircle size={20}/> {t.notifyGiulia}</a></div>{currentGuestIndex < guestCount && (<><button onClick={() => { setCurrentGuestIndex(prev => prev + 1); setFormData({...INITIAL_FORM}); window.scrollTo(0,0); setView('form'); }} disabled={!waClicked} className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"><UserPlus size={20}/> {t.continueHere}</button><div className="relative py-2"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div><span className="relative bg-white px-2 text-xs text-slate-400 uppercase font-bold">OPPURE</span></div><button onClick={() => { legacyCopy(window.location.origin + window.location.pathname + '?groupId=' + groupId); alert("Link copiato! Invialo al tuo amico."); }} className="w-full py-4 bg-white border-2 border-indigo-100 text-indigo-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-50"><Share2 size={20}/> {t.shareLink}</button></>)}<button onClick={() => setView('waiting')} disabled={!waClicked} className="w-full py-4 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 disabled:opacity-50">{t.goToWaiting}</button></div></div></div> ); }
 
-            // ... FORM, WAITING E SHARE SONO IDENTICI ALL'ULTIMA VERSIONE, VENGONO RENDERIZZATI QUI
-            // (Il codice completo è troppo lungo per il messaggio, ma nel file HTML finale li includerò tutti)
-            // Per favore assicurati di includere le parti mancanti (Form, Waiting, Share) copiandole dalla mia risposta precedente.
+            if (view === 'form') { const isMinor = calculateAge(formData.dataNascita) < 14; return ( <div className="min-h-screen bg-slate-50 p-6 pb-32"><div className="max-w-xl mx-auto mb-8 sticky top-0 bg-slate-50/90 backdrop-blur-sm z-10 py-4 border-b border-slate-200 flex justify-between items-center"><button onClick={() => setView('landing')} className="p-2 bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"><ArrowLeft size={24} className="text-slate-600"/></button><span className="text-xs font-black uppercase text-indigo-600 tracking-widest">{t.guestStep} {currentGuestIndex} / {guestCount}</span></div><div className="max-w-xl mx-auto space-y-6"><div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100"><div className="flex justify-between items-center mb-6"><h3 className="text-lg font-black text-slate-800 flex items-center gap-2"><ScanLine size={20}/> {t.personalData}</h3><div className="flex gap-2 p-1 bg-slate-100 rounded-lg"><button onClick={() => setFormData(p => ({...p, uploadMethod: 'camera'}))} className={`px-3 py-1 text-xs font-bold rounded-md ${formData.uploadMethod === 'camera' ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}>{t.useCamera}</button><button onClick={() => setFormData(p => ({...p, uploadMethod: 'file'}))} className={`px-3 py-1 text-xs font-bold rounded-md ${formData.uploadMethod === 'file' ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}>{t.useFile}</button></div></div>{formData.uploadMethod === 'camera' && (<div className="grid grid-cols-2 gap-4 mb-6"><button onClick={() => handleScan('CIE')} className="p-4 border-2 border-dashed border-indigo-200 bg-indigo-50 rounded-2xl flex flex-col items-center gap-2 hover:bg-indigo-100 transition-colors"><CreditCard className="text-indigo-600"/><span className="text-[10px] font-black uppercase text-indigo-800 text-center">{t.mrzCIE}</span></button><button onClick={() => handleScan('PASS')} className="p-4 border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl flex flex-col items-center gap-2 hover:bg-slate-100 transition-colors"><Globe className="text-slate-500"/><span className="text-[10px] font-black uppercase text-slate-600 text-center">{t.mrzPass}</span></button></div>)}<div className="space-y-4"><input type="text" placeholder={t.name} value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /><input type="text" placeholder={t.surname} value={formData.cognome} onChange={e => setFormData({...formData, cognome: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /><input type="date" value={formData.dataNascita} onChange={e => setFormData({...formData, dataNascita: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /><div className="grid grid-cols-2 gap-2"><input type="text" placeholder={t.birthPlace} value={formData.luogoNascita} onChange={e => setFormData({...formData, luogoNascita: e.target.value})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /><input type="text" placeholder={t.birthProv} maxLength={2} value={formData.provinciaNascita} onChange={e => setFormData({...formData, provinciaNascita: e.target.value.toUpperCase()})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none text-center" /></div><div className="grid grid-cols-2 gap-2"><select value={formData.sesso} onChange={e => setFormData({...formData, sesso: e.target.value})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none"><option value="M">M</option><option value="F">F</option></select><select value={formData.cittadinanza} onChange={e => setFormData({...formData, cittadinanza: e.target.value})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none"><option value="">{t.citizen}</option>{COMMON_COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}</select>{formData.cittadinanza === 'Altro' && <input type="text" placeholder="Specifica Cittadinanza" className="col-span-2 p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" onChange={e => setFormData({...formData, cittadinanza: e.target.value})}/>}</div><select value={formData.tipoDocumento} onChange={e => setFormData({...formData, tipoDocumento: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none"><option>C.I. Elettronica</option><option>Passaporto</option><option>Patente</option></select><div className="grid grid-cols-2 gap-2"><input type="text" placeholder={t.docNum} value={formData.numeroDocumento} onChange={e => setFormData({...formData, numeroDocumento: e.target.value})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /><input type="text" placeholder={t.docExp} onFocus={(e) => e.target.type = 'date'} onBlur={(e) => e.target.type = 'text'} value={formData.scadenzaDocumento} onChange={e => setFormData({...formData, scadenzaDocumento: e.target.value})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /></div>{formData.cittadinanza?.toLowerCase().includes('ital') ? (<select value={formData.enteRilascio} onChange={e => setFormData({...formData, enteRilascio: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none"><option value="">{t.docAuth}</option><option value="Comune">{t.docAuthComune}</option><option value="Questura">{t.docAuthQuestura}</option><option value="UCO">{t.docAuthUCO}</option><option value="MCTC">{t.docAuthMCTC}</option><option value="MAE">{t.docAuthMAE}</option></select>) : (<input type="text" placeholder={t.docAuth} value={formData.enteRilascio} onChange={e => setFormData({...formData, enteRilascio: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" />)}</div></div><div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100"><div className="flex flex-col gap-2 mb-6"><h3 className="text-lg font-black text-slate-800 flex items-center gap-2"><MapPin size={20}/> {t.residenceData}</h3>{currentGuestIndex > 1 && headOfGroupAddress && (<div className="flex gap-2 p-1 bg-slate-100 rounded-lg"><button onClick={() => setFormData(p => ({...p, ...headOfGroupAddress}))} className="flex-1 py-2 text-[10px] font-bold uppercase rounded-md bg-white shadow-sm text-indigo-600">{t.sameResQuestion}</button></div>)}</div><div className="space-y-4"><div className="grid grid-cols-3 gap-2"><input type="text" placeholder={t.address} value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="col-span-2 p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /><input type="text" placeholder={t.streetNum} value={formData.civico} onChange={e => setFormData({...formData, civico: e.target.value})} className="col-span-1 p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /></div><div className="grid grid-cols-3 gap-2"><input type="text" placeholder={t.city} value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /><input type="text" placeholder={t.zip} value={formData.zip} onChange={e => setFormData({...formData, zip: e.target.value})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" /><select value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none"><option value="">{t.country}</option>{COMMON_COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}</select>{formData.country === 'Altro' && <input type="text" placeholder="Specifica Nazione" className="col-span-3 p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" onChange={e => setFormData({...formData, country: e.target.value})}/>}</div></div></div><div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100"><h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><Camera size={20}/> {t.uploadDocStep}</h3>{formData.uploadMethod === 'file' ? (<div className="grid grid-cols-1 gap-4"><div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:bg-slate-50 relative"><input type="file" accept="application/pdf" className="absolute inset-0 opacity-0 cursor-pointer" onChange={() => setFormData(p => ({...p, imgPdf: true}))} /><File className="mx-auto text-slate-400 mb-2"/><span className="text-xs font-bold text-slate-600 block">{t.uploadPdf}</span>{formData.imgPdf && <span className="text-green-500 text-[10px] font-bold">PDF Caricato</span>}</div><div className="text-center text-[10px] font-bold text-slate-400">- OPPURE -</div><div className="grid grid-cols-2 gap-4"><div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 relative"><input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={() => setFormData(p => ({...p, imgFront: true}))} /><span className="text-[10px] font-bold text-slate-600">{t.docFront}</span>{formData.imgFront && <CheckCircle size={12} className="text-green-500 absolute top-2 right-2"/>}</div><div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 relative"><input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={() => setFormData(p => ({...p, imgBack: true}))} /><span className="text-[10px] font-bold text-slate-600">{t.docBack}</span>{formData.imgBack && <CheckCircle size={12} className="text-green-500 absolute top-2 right-2"/>}</div></div></div>) : (<div className="grid grid-cols-2 gap-4 mb-4"><button onClick={() => setFormData(p => ({...p, imgFront: true}))} className={`aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center ${formData.imgFront ? 'bg-green-50 border-green-500' : 'bg-slate-50'}`}><span className="text-[10px] font-bold uppercase">{t.docFront}</span></button><button onClick={() => setFormData(p => ({...p, imgBack: true}))} className={`aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center ${formData.imgBack ? 'bg-green-50 border-green-500' : 'bg-slate-50'}`}><span className="text-[10px] font-bold uppercase">{t.docBack}</span></button></div>)}{isMinor ? (<div className="bg-orange-50 p-4 rounded-xl border border-orange-200 text-center mt-4"><p className="text-xs font-bold text-orange-700 mb-2">{t.familyAdviceDesc}</p><button onClick={() => setFormData(p => ({...p, videoCallDone: true}))} className="bg-green-500 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase w-full">{t.callGiuliaBtn}</button></div>) : (<button onClick={() => setFormData(p => ({...p, selfie: true}))} className={`w-full py-4 rounded-xl border-2 border-dashed flex items-center justify-center mt-4 ${formData.selfie ? 'bg-green-50 border-green-500' : 'bg-slate-50'}`}><span className="text-xs font-bold uppercase">{t.docSelfie}</span></button>)}</div><div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden"><h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2"><ScrollText size={20}/> {t.rulesTitle}</h3><div className="flex justify-center mb-6"><a href="https://form.jotform.com/260433210963046" target="_blank" rel="noreferrer" className="w-full py-4 bg-indigo-50 text-indigo-600 rounded-xl font-bold uppercase flex items-center justify-center gap-2 hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"><ExternalLink size={20}/> {t.rulesOpenExternal}</a></div><label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl cursor-pointer border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 transition-colors"><input type="checkbox" checked={formData.rulesAccepted} onChange={e => setFormData(p => ({...p, rulesAccepted: e.target.checked}))} className="w-5 h-5 accent-indigo-600"/><div><span className="block text-xs font-bold text-slate-800 uppercase">{t.rulesAccept}</span><span className="block text-[10px] text-slate-500">{t.rulesDesc}</span></div></label></div><div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100"><SignaturePad onSave={d => setFormData(p => ({...p, signature: d}))} onClear={() => setFormData(p => ({...p, signature: null}))} /><div className="flex items-center gap-2 mt-4"><input type="checkbox" checked={formData.privacy} onChange={e => setFormData(p => ({...p, privacy: e.target.checked}))} /><span className="text-xs font-bold text-slate-500">{t.privacy}</span></div></div><button onClick={saveCurrentGuest} disabled={!formData.nome || !formData.cognome || !formData.privacy || !formData.rulesAccepted} className="w-full py-5 bg-indigo-600 text-white rounded-[2rem] font-black text-lg shadow-xl hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">{t.submit} <ArrowRight className="inline ml-2"/></button></div></div> );
+            }
 
-            return <div></div>; // Placeholder
+            if (view === 'waiting') {
+                const registeredCount = groupGuests.length;
+                const total = groupGuests[0]?.totalGuests || 1;
+                const missing = total - registeredCount;
+
+                return (
+                    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center"><div className="w-full max-w-md space-y-12 animate-in zoom-in-95"><div><p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mb-2">{t.waitingRoom}</p><h1 className="text-5xl font-black tracking-tighter mb-4">{PROPERTIES[selectedProperty]?.name}</h1><div className="inline-block px-4 py-2 bg-white/10 rounded-xl font-mono text-xl font-bold tracking-widest">{groupId}</div><button onClick={() => handleCopy(groupId)} className="block mx-auto mt-2 text-[10px] text-slate-400 uppercase font-bold hover:text-white flex items-center gap-1"><Copy size={12}/> {t.copyGroupCode}</button></div><div className={`w-48 h-48 mx-auto rounded-[3rem] flex items-center justify-center border-4 ${isGroupUnlocked ? 'bg-green-500 border-green-400' : 'bg-slate-800 border-slate-700'}`}>{isGroupUnlocked ? <Unlock size={80}/> : <Lock size={80}/>}</div><div><h2 className="text-3xl font-black italic uppercase tracking-tight mb-2">{isGroupUnlocked ? t.approved : t.pending}</h2><div className="mt-4 bg-white/10 p-4 rounded-xl"><p className="text-sm font-bold">{registeredCount} {t.waitingMsgPartial} {total} {t.waitingMsgTotal}</p>{!isGroupUnlocked && <p className="text-xs text-slate-400 mt-1">{t.waitingMsgHidden}</p>}</div></div>{isGroupUnlocked && (<div className="p-8 bg-white text-slate-900 rounded-[2.5rem] shadow-2xl"><p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">{t.yourCode}</p><div className="flex items-center justify-center gap-3"><span className="text-6xl font-black font-mono tracking-tighter">{accessCode}{PROPERTIES[selectedProperty].suffix}</span></div><button onClick={() => handleCopy(accessCode)} className="w-full mt-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"><Copy size={20}/> {t.copy}</button><div className="mt-4 bg-slate-100 p-4 rounded-xl text-left border-l-4 border-indigo-600"><p className="text-[10px] font-bold uppercase text-indigo-600 mb-1 flex items-center gap-1"><Info size={12}/> {t.instruction}</p><p className="text-sm font-bold text-slate-800 leading-relaxed">{PROPERTIES[selectedProperty].accessInstruction[lang] || PROPERTIES[selectedProperty].accessInstruction.it}</p></div><div className="mt-4 bg-blue-50 p-4 rounded-xl text-left border-l-4 border-blue-500"><p className="text-[10px] font-bold uppercase text-blue-600 mb-1 flex items-center gap-1"><Info size={12}/> {t.copyGroupCode}</p><p className="text-xs font-bold text-slate-600 mb-2">{t.copyGroupDesc}</p><button onClick={() => handleCopy(groupId)} className="w-full py-2 bg-white text-blue-600 border border-blue-200 rounded-lg text-xs font-bold uppercase flex items-center justify-center gap-2 hover:bg-blue-50"><Copy size={14}/> {t.copy}</button></div></div>)}<div className="grid grid-cols-1 gap-4"><a href={PROPERTIES[selectedProperty]?.welcomeBookUrl} target="_blank" rel="noreferrer" className="w-full py-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-colors flex items-center justify-center gap-2 font-bold uppercase tracking-widest border border-white/20"><BookOpen size={20} className="text-indigo-400"/> {t.openWelcomeBook}</a><button onClick={() => setView('landing')} className="p-4 text-slate-400 hover:text-white flex items-center justify-center gap-2 text-xs font-bold uppercase"><Home size={16}/> Home</button></div>{copyFeedback && <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg animate-bounce">{copyFeedback}</div>}</div></div>
+                );
+            }
+
+            return <div></div>; // Placeholder for initial render
         };
 
         const root = createRoot(document.getElementById('root'));
