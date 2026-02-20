@@ -1244,7 +1244,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
     </div>
     <div style="display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="renderDashboard()" style="font-size:0.72rem;padding:0.4rem 0.8rem;">🔄</button>
-      <button class="back-btn" style="color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.3);" onclick="goHome()">← Esci</button>
+      <button class="back-btn" style="color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.3);" onclick="adminLogout()">← Esci</button>
     </div>
   </div>
   <div class="admin-wrap">
@@ -3890,9 +3890,21 @@ function refreshWaiting(){
 
 // Waiting entry screen
 function showWaitingEntry(){ showScreen('waiting-entry'); applyI18n(); }
-function enterWaiting(){
+async function enterWaiting(){
   const code=document.getElementById('entry-code')?.value?.trim().toUpperCase();
   if(!code){ showErr('Inserisci il codice'); return; }
+  // Try to sync from Firebase first if available
+  if(window._fbReady && window._fb?.db){
+    try{
+      const year=new Date().getFullYear().toString();
+      const snap=await window._fb.db.collection('checkins').doc(year).collection('guests')
+        .where('groupCode','==',code).limit(1).get();
+      if(!snap.empty){
+        const data=snap.docs[0].data();
+        if(!DB.guests.find(g=>g.id===data.id)) DB.guests.push(data);
+      }
+    }catch(e){}
+  }
   // Find by group code or entry ID
   let entry=DB.guests.find(g=>g.groupCode===code&&!g.checkedOut);
   if(!entry) entry=DB.guests.find(g=>g.id===code);
@@ -4517,10 +4529,11 @@ function verifyPinForReset(inputPin){
 // ── Logout ──
 async function adminLogout(){
   if(window._fb?.auth && window._fbUser){
-    await window._fb.auth.signOut().catch(()=>{});
+    try{ await window._fb.auth.signOut(); }catch(e){}
     window._fbUser = null;
+    window._fbReady = false;
   }
-  showAdminLogin();
+  showScreen('welcome');
 }
 document.addEventListener('keydown',e=>{
   const sc=document.querySelector('.screen.active');
@@ -4690,4 +4703,350 @@ function renderDocs(){
         </p>
       </div>
       <div class="adc-btns">
-   
+        <button class="tbl-btn" onclick="showDetail('${g.id}')">👁 Dettaglio</button>
+        <button class="tbl-btn tbl-btn-gold" onclick="regenContractPDF('${g.id}')">📥 PDF</button>
+      </div>
+    </div>`).join('');
+}
+
+function regenContractPDF(id){
+  const entry=DB.guests.find(function(x){ return x.id===id; });
+  if(!entry) return;
+  const p=PROPS[entry.property];
+  const gm=entry.main||{};
+  const contractFn=CONTRACTS[entry.lang]||CONTRACTS.it;
+  const text=contractFn(entry.property,itDate(entry.arrivo),itDate(entry.partenza),gm.nome,gm.cognome,gm.tipdoc,gm.numdoc);
+  const contractBody=text.replace(/\n/g,'<br>');
+  const htmlDoc='<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">'+
+    '<title>Contratto Admin — '+p.name+'</title>'+
+    '<style>@page{margin:18mm 14mm;size:A4;}body{font-family:Georgia,serif;font-size:10.5px;color:#1a1a1a;line-height:1.6;padding:10mm 14mm;}'+
+    'h1{font-size:15px;color:#1B4B43;text-align:center;border-bottom:2px solid #1B4B43;padding-bottom:10px;}'+
+    '.meta{background:#f5f0e8;padding:8px 12px;border-radius:4px;font-size:9.5px;margin:10px 0;}'+
+    '.ct{font-size:10px;line-height:1.65;margin-bottom:16px;}'+
+    '.sigs{display:flex;gap:24px;border-top:1px solid #ccc;padding-top:14px;}'+
+    '.sb{flex:1;}.sb h3{font-size:8.5px;text-transform:uppercase;color:#555;}'+
+    '.sb img{max-height:50px;max-width:180px;display:block;}'+
+    '.sn{font-size:8.5px;font-style:italic;border-top:1px solid #999;padding-top:3px;}'+
+    '.ts{background:#f5f0e8;border:1px solid #C9A254;border-radius:4px;padding:8px 12px;margin-top:14px;font-size:8.5px;}'+
+    '.topbar{background:#1B4B43;color:white;padding:10px;text-align:center;font-family:sans-serif;font-size:13px;margin-bottom:16px;}'+
+    '.topbar button{background:#C9A254;color:#1B4B43;border:none;padding:6px 14px;border-radius:4px;font-weight:700;cursor:pointer;}'+
+    '@media print{.topbar{display:none!important;}body{padding:0;}-webkit-print-color-adjust:exact;}</style></head><body>'+
+    '<div class="topbar">📋 ADMIN — Contratto Ospite &nbsp; <button onclick="window.print()">🖨 Stampa / Salva PDF</button></div>'+
+    '<h1>TUSCAN RETREATS — '+p.name+'</h1>'+
+    '<div class="meta"><strong>Ospite:</strong> '+(gm.nome||'')+' '+(gm.cognome||'')+'<br>'+
+    '<strong>Documento:</strong> '+(gm.tipdoc||'')+' n° '+(gm.numdoc||'')+' ent. da '+(gm.ente||'')+'<br>'+
+    '<strong>Check-in:</strong> '+itDate(entry.arrivo)+' &nbsp;|&nbsp; <strong>Check-out:</strong> '+itDate(entry.partenza)+'<br>'+
+    '<strong>Registrato il:</strong> '+itDateTime(entry.timestamp)+'</div>'+
+    '<div class="ct">'+contractBody+'</div>'+
+    '<div class="sigs"><div class="sb"><h3>Firma Locatore</h3>'+
+    '<img src="'+FIRMA_GIULIA+'" alt="Firma Giulia"><div class="sn">Giulia Betti</div></div>'+
+    '<div class="sb"><h3>Firma Conduttore</h3>'+
+    '<div style="min-height:45px;border-bottom:1px solid #555;"></div>'+
+    '<div class="sn">'+(gm.nome||'')+' '+(gm.cognome||'')+'</div></div></div>'+
+    '<div class="ts"><strong>📋 GDPR &amp; Timestamp</strong>'+
+    'GDPR timestamp: '+itDateTime(entry.gdprTimestamp||entry.timestamp)+'<br>'+
+    'IP timestamp: '+entry.timestamp+'</div>'+
+    '</body></html>';
+  const blob=new Blob([htmlDoc],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(function(){ URL.revokeObjectURL(url); },60000);
+}
+
+// ── ALLOGGIATI WEB ──
+// Format: codice tipo ospite (16=maggiorenne, 17=minorenne), campi a lunghezza fissa
+function buildAllogRecord(guest,property,arrivo,permanenza){
+  const pad=(s,n)=>(String(s||'').toUpperCase()+''.padEnd(n)).slice(0,n);
+  // Data arrivo ggmmaaaa
+  const dt=new Date(arrivo+'T00:00:00');
+  const ggmmaaaa=dt?`${String(dt.getDate()).padStart(2,'0')}${String(dt.getMonth()+1).padStart(2,'0')}${dt.getFullYear()}`:'00000000';
+  // Calcola permanenza in giorni
+  let perm=1;
+  if(permanenza){ const d2=new Date(permanenza+'T00:00:00'); perm=Math.max(1,Math.round((d2-dt)/(1000*60*60*24))); }
+  const tipo=guest.nascita&&new Date().getFullYear()-parseInt(guest.nascita.slice(0,4))>=18?'16':'17';
+  const cit=(guest.cit||'ITA').slice(0,3).toUpperCase();
+  const sesso=guest.sesso==='F'?'F':'M';
+  const nascGg=guest.nascita?guest.nascita.slice(8,10):'01';
+  const nascMm=guest.nascita?guest.nascita.slice(5,7):'01';
+  const nascAa=guest.nascita?guest.nascita.slice(0,4):'1900';
+  const dataNasc=nascGg+nascMm+nascAa;
+  // CIR struttura
+  const cir=property==='lovenest'?'052016LTN0141':'052032LTN1161';
+  return tipo+
+    pad(guest.cognome,50)+
+    pad(guest.nome,30)+
+    sesso+
+    dataNasc+
+    pad(guest.luogo||'000000000',9)+  // codice comune (ideale: istat, qui usiamo testo)
+    pad(cit,9)+
+    pad(guest.tipdoc||'PASS',5)+
+    pad(guest.numdoc,20)+
+    pad(guest.ente||'',9)+
+    ggmmaaaa+
+    String(perm).padStart(4,'0')+'\r\n';
+}
+
+function genAlloggiatiSingle(id){
+  const g=DB.guests.find(x=>x.id===id); if(!g) return;
+  const prop=PROPS[g.property];
+  let txt=`// Alloggiati Web - ${prop.name} - CIR: ${prop.cir}\r\n`;
+  txt+=`// Generato il ${itDateTime(new Date().toISOString())}\r\n`;
+  txt+=buildAllogRecord(g.main,g.property,g.arrivo,g.partenza);
+  g.extras?.forEach(ex=>{ txt+=buildAllogRecord(ex,g.property,g.arrivo,g.partenza); });
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`alloggiati_${g.main.cognome}_${g.arrivo}.txt`; a.click();
+}
+
+function exportAlloggiatiFiltered(){
+  const prop=document.getElementById('allog-prop')?.value;
+  const from=document.getElementById('allog-from')?.value;
+  const to=document.getElementById('allog-to')?.value;
+  const filtered=DB.guests.filter(g=>
+    g.property===prop&&
+    (!from||g.arrivo>=from)&&
+    (!to||g.arrivo<=to)
+  );
+  if(!filtered.length){ alert('Nessun ospite nel periodo selezionato.'); return; }
+  const info=PROPS[prop];
+  let txt=`// ALLOGGIATI WEB EXPORT\r\n`;
+  txt+=`// Struttura: ${info.name} - CIR: ${info.cir} - CIN: ${info.cin}\r\n`;
+  txt+=`// Periodo: ${from||'—'} / ${to||'—'} - Generato: ${itDateTime(new Date().toISOString())}\r\n`;
+  filtered.forEach(g=>{
+    txt+=buildAllogRecord(g.main,g.property,g.arrivo,g.partenza);
+    g.extras?.forEach(ex=>{ txt+=buildAllogRecord(ex,g.property,g.arrivo,g.partenza); });
+  });
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`alloggiati_${prop}_${from||'all'}_${to||'all'}.txt`; a.click();
+}
+
+function exportAlloggiati(){
+  document.querySelector('.atab:nth-child(4)').click();
+}
+
+// ── ADMIN GROUP CODE ──
+function adminCopyCode(code){
+  navigator.clipboard?.writeText(code).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=code; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  showErr('✓ Codice copiato: '+code);
+}
+function adminShareCode(code){
+  const text=`Codice check-in gruppo Tuscan Retreats: ${code}`;
+  if(navigator.share) navigator.share({title:'Codice Gruppo',text}).catch(()=>{});
+  else window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank');
+}
+
+// ── CSV ──
+function exportCSV(){
+  const h=['Data','Struttura','Cognome','Nome','Nascita','Luogo','Prov','Sesso','Cit','Via','Civico','Comune','ProvRes','TipoDoc','NumDoc','Scad','Ente','Email','Verifica','Gruppo','Ospiti','Status','GDPR'];
+  const rows=DB.guests.map(g=>[
+    g.timestamp,g.property,g.main.cognome,g.main.nome,g.main.nascita,g.main.luogo,g.main.prov,
+    g.main.sesso,g.main.cit,g.main.via,g.main.civico,g.main.comune,g.main.provres,
+    g.main.tipdoc,g.main.numdoc,g.main.scad,g.main.ente,g.email,
+    g.verifyMethod,g.groupCode||'',g.totalGuests,g.checkedOut?'checkout':'attivo',
+    g.gdprTimestamp
+  ].map(v=>`"${v||''}"`).join(','));
+  const csv=[h.join(','),...rows].join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`tuscanretreats_ospiti_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+}
+
+// ── NOTIFICHE ──
+function renderNotifs(){
+  const list=document.getElementById('notif-list');
+  if(!list) return;
+  if(!DB.notifs.length){ list.innerHTML='<div style="color:var(--muted);padding:1rem;">Nessuna notifica</div>'; return; }
+  list.innerHTML=DB.notifs.map(n=>`
+    <div class="notif-item ${n.read?'':'unread'}">
+      ${!n.read?'<div class="ndot"></div>':'<div style="width:7px"></div>'}
+      <div class="nb" style="flex:1;">
+        <h4>🏠 ${PROPS[n.property]?.name} · ${n.name}</h4>
+        <p>Arrivo: ${itDate(n.arrivo)} · Partenza: ${itDate(n.partenza||'')} · ${n.verifyMethod==='video'?'📹 Videochiamata da concordare':'🤳 Selfie caricato'}${n.groupProgress?' · Gruppo: '+n.groupProgress:''}</p>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem;">
+        <div class="ntime">${itDateTime(n.timestamp)}</div>
+        ${!n.read?`<button class="mark-btn" onclick="markRead('${n.id}')">✓ Letto</button>`:''}
+        ${n.verifyMethod==='video'?`<a href="https://wa.me/${(DB.settings.waNumber||GIULIA_WA).replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Ciao! Sono Giulia di Tuscan Retreats, organizziamo la videochiamata per il tuo check-in. Quando sei disponibile in base al tuo orario locale?')}" target="_blank" style="font-size:0.7rem;color:var(--green);text-decoration:none;">📱 WhatsApp</a>`:''}
+      </div>
+    </div>`).join('');
+}
+function markRead(id){ const n=DB.notifs.find(x=>x.id===id); if(n){n.read=true;dbSave();renderNotifs();updateBadge();} }
+function markAllRead(){ DB.notifs.forEach(n=>n.read=true); dbSave(); renderNotifs(); updateBadge(); }
+function updateBadge(){
+  const u=DB.notifs.filter(n=>!n.read).length;
+  const b=document.getElementById('notif-badge'); if(b) b.textContent=u||'';
+}
+
+// ── SETTINGS ──
+function loadSettings(){
+  document.getElementById('sc-ln').value=DB.settings.lovenest?.code||'';
+  document.getElementById('si-ln').value=DB.settings.lovenest?.inst||'';
+  document.getElementById('sc-tt').value=DB.settings.tartaruga?.code||'';
+  document.getElementById('si-tt').value=DB.settings.tartaruga?.inst||'';
+  document.getElementById('wa-num').value=DB.settings.waNumber||GIULIA_WA;
+}
+function saveSet(k){
+  if(k==='ln') DB.settings.lovenest={code:document.getElementById('sc-ln').value,inst:document.getElementById('si-ln').value};
+  else if(k==='tt') DB.settings.tartaruga={code:document.getElementById('sc-tt').value,inst:document.getElementById('si-tt').value};
+  else if(k==='wa') DB.settings.waNumber=document.getElementById('wa-num').value;
+  else if(k==='gdrive'){ DB.settings.gdriveClientId=document.getElementById('gdrive-client-id')?.value||''; }
+  else if(k==='ln-pin'){
+    if(!DB.settings.lovenest) DB.settings.lovenest={};
+    DB.settings.lovenest.manualPin=document.getElementById('ln-manual-pin')?.value||'';
+    DB.settings.lovenest.code=DB.settings.lovenest.manualPin;
+  }
+  else if(k==='tuya-func'){ DB.settings.tuyaFuncUrl=document.getElementById('tuya-func-url')?.value||''; }
+  else if(k==='tt-keybox'){
+    if(!DB.settings.tartaruga) DB.settings.tartaruga={};
+    DB.settings.tartaruga.code=document.getElementById('tt-keybox-code')?.value||'1572';
+    DB.settings.tartaruga.keyboxCode=DB.settings.tartaruga.code;
+  }
+  dbSave();
+  // Refresh any active waiting room
+  const ok=document.getElementById('sok-'+k); if(ok){ok.style.display='block';setTimeout(()=>ok.style.display='none',2500);}
+}
+function testGDriveAuth(){
+  const clientId = document.getElementById('gdrive-client-id')?.value || DB.settings.gdriveClientId || '';
+  if(!clientId){ showErr('Inserisci prima il Client ID Google Drive'); return; }
+  DB.settings.gdriveClientId = clientId;
+  _gdriveToken = null;
+  dbSave();
+  // Try to get token - will show OAuth popup
+  getGDriveToken()
+    .then(t => { if(t) showErr('✅ Google Drive autorizzato correttamente!', true); })
+    .catch(e => showErr('❌ Errore: ' + e.message));
+}
+function resetLocalDB(){
+  const pin = document.getElementById('pin-cur')?.value || '';
+  if(!pin){ showErr('Inserisci il PIN per confermare'); return; }
+  if(pin !== DB.settings.pin){ showErr('PIN non corretto'); return; }
+  if(!confirm('⚠️ Sei sicuro? Verranno cancellati tutti i check-in dal dispositivo locale.\nI dati su Firebase rimangono intatti.')) return;
+  DB.guests  = [];
+  DB.notifs  = [];
+  localStorage.removeItem('tr_g');
+  localStorage.removeItem('tr_n');
+  dbSave();
+  document.getElementById('pin-cur').value = '';
+  document.getElementById('sok-pin').style.display = 'block';
+  setTimeout(()=>document.getElementById('sok-pin').style.display='none', 3000);
+  renderDashboard();
+  showErr('✓ DB locale cancellato — Firebase intatto', true);
+}
+function changePin(){
+  const cur=document.getElementById('pin-cur').value;
+  const nw=document.getElementById('pin-new').value;
+  const err=document.getElementById('pin-err');
+  if(cur!==DB.settings.pin){err.style.display='block';return;}
+  if(nw.length<4){alert('Minimo 4 cifre');return;}
+  DB.settings.pin=nw; dbSave(); err.style.display='none';
+  document.getElementById('sok-pin').style.display='block';
+  setTimeout(()=>document.getElementById('sok-pin').style.display='none',2500);
+  document.getElementById('pin-cur').value=''; document.getElementById('pin-new').value='';
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+applyI18n();
+updateBadge();
+
+// Demo data
+if(!DB.guests.length){
+  const demo=[{
+    id:'d1',property:'lovenest',groupType:'family',totalGuests:3,verifyMethod:'video',
+    checkedOut:false,timestamp:new Date(Date.now()-172800000).toISOString(),
+    arrivo:'2026-02-21',partenza:'2026-02-24',email:'demo@email.com',lang:'it',
+    contractPDF:true,gdprTimestamp:new Date(Date.now()-172800000).toISOString(),
+    main:{cognome:'Marinetti',nome:'Carlo',nascita:'1980-05-12',luogo:'Firenze',prov:'FI',sesso:'M',cit:'Italiana',via:'Via Dante',civico:'15',comune:'Firenze',provres:'FI',tipdoc:'CI',numdoc:'FI1234567',scad:'2030-01-01',ente:'Comune di Firenze'},
+    extras:[{cognome:'Marinetti',nome:'Elena',nascita:'1983-09-20',luogo:'Roma',prov:'RM',sesso:'F',cit:'Italiana',tipdoc:'PASS',numdoc:'YA987654',scad:'2029-06-30',ente:'Ministero Interno'}]
+  },{
+    id:'d2',property:'tartaruga',groupType:'solo',totalGuests:1,verifyMethod:'selfie',
+    checkedOut:false,timestamp:new Date().toISOString(),
+    arrivo:'2026-02-19',partenza:'2026-02-22',email:'anna@example.de',lang:'de',
+    contractPDF:true,gdprTimestamp:new Date().toISOString(),
+    uploads:{selfie:'selfie_anna.jpg',doc:'passport_anna.jpg'},
+    main:{cognome:'Schmidt',nome:'Anna',nascita:'1992-03-08',luogo:'Berlin',prov:'',sesso:'F',cit:'Tedesca',via:'Hauptstraße',civico:'5',comune:'Berlin',provres:'',tipdoc:'PASS',numdoc:'DE9876543',scad:'2031-12-31',ente:'Stadt Berlin'},
+    extras:[]
+  }];
+  DB.guests=demo;
+  DB.notifs=[
+    {id:'n1',guestId:'d2',property:'tartaruga',name:'Anna Schmidt',timestamp:new Date().toISOString(),verifyMethod:'selfie',read:false,arrivo:'2026-02-19',partenza:'2026-02-22',groupProgress:''},
+    {id:'n2',guestId:'d1',property:'lovenest',name:'Carlo Marinetti',timestamp:new Date(Date.now()-172800000).toISOString(),verifyMethod:'video',read:false,arrivo:'2026-02-21',partenza:'2026-02-24',groupProgress:''},
+  ];
+  dbSave();
+}
+updateBadge();
+
+// ── Videocall WhatsApp scheduler ──
+function showLocalTime(){
+  const el = document.getElementById('vc-local-time');
+  if(!el) return;
+  try{
+    const now = new Date();
+    // Italian time = Europe/Rome
+    const italyTime = now.toLocaleString('it-IT',{timeZone:'Europe/Rome',hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
+    const localTime = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    // Show availability in local timezone
+    // Italian 10:00 and 18:00 converted to local
+    const open  = new Date(now); open.setHours(0,0,0,0);
+    // Get Italy UTC offset
+    const fmtI = t => t.toLocaleString('en-US',{timeZone:'Europe/Rome',hour:'numeric',minute:'2-digit',hour12:false});
+    const nowItalyH = parseInt(fmtI(now).split(':')[0]);
+    const open10 = new Date(now);
+    // Compute local time for 10:00 Italy
+    const italyOffset = getItalyOffset(now);
+    const localOffset = -now.getTimezoneOffset();
+    const diff = localOffset - italyOffset; // minutes
+    const local10h = 10*60 + diff;
+    const local18h = 18*60 + diff;
+    const fmt = m => `${String(Math.floor(((m%1440)+1440)%1440/60)).padStart(2,'0')}:${String(((m%1440)+1440)%60).padStart(2,'0')}`;
+    const available = nowItalyH >= 10 && nowItalyH < 18;
+    el.innerHTML = (available ? '🟢 ' : '🔴 ') +
+      `Orario italiano: <strong>${italyTime}</strong> &nbsp;|&nbsp; ` +
+      `Il tuo orario: <strong>${localTime}</strong><br>` +
+      `📅 Disponibile: ${fmt(local10h)} – ${fmt(local18h)} (ora locale)`;
+  }catch(e){ el.textContent = 'Disponibile 10:00–18:00 ora italiana'; }
+}
+
+function getItalyOffset(date){
+  // Returns Italy UTC offset in minutes
+  const s = date.toLocaleString('en-US',{timeZone:'Europe/Rome',hour:'numeric',minute:'2-digit',hour12:false,day:'2-digit'});
+  const italy = new Date(date.toLocaleString('en-US',{timeZone:'Europe/Rome'}));
+  const utc   = new Date(date.toLocaleString('en-US',{timeZone:'UTC'}));
+  return (italy - utc) / 60000;
+}
+
+function openVideocallWA(){
+  const prop = DB?.settings?.lastProp || 'lovenest';
+  const propName = prop === 'lovenest' ? 'Love Nest Monteriggioni' : 'La Tartaruga';
+  const now = new Date();
+  const italyOffset = getItalyOffset(now);
+  const localOffset = -now.getTimezoneOffset();
+  const diff = localOffset - italyOffset;
+  const fmt = m => `${String(Math.floor(((m%1440)+1440)%1440/60)).padStart(2,'0')}:${String(((m%1440)+1440)%60).padStart(2,'0')}`;
+  const local10 = fmt(10*60 + diff);
+  const local18 = fmt(18*60 + diff);
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'locale';
+  const lang = _lang || 'it';
+  const msgs = {
+    it: `Ciao Giulia! Sono un ospite di ${propName} 🏠\n\nVorrei prenotare una videocall o selfie di benvenuto.\n\n📅 Sei disponibile 10:00–18:00 ora italiana (${local10}–${local18} ora mia, ${tz}).\n\nQuando sei libera? 😊`,
+    en: `Hi Giulia! I'm a guest at ${propName} 🏠\n\nI'd like to book a welcome videocall or selfie.\n\n📅 You're available 10:00–18:00 Italian time (${local10}–${local18} my local time, ${tz}).\n\nWhen are you free? 😊`,
+    fr: `Bonjour Giulia! Je suis un hôte de ${propName} 🏠\n\nJe voudrais réserver un appel vidéo ou selfie de bienvenue.\n\n📅 Vous êtes disponible de 10h à 18h heure italienne (${local10}–${local18} heure locale, ${tz}).\n\nQuand êtes-vous libre? 😊`,
+    es: `¡Hola Giulia! Soy un huésped de ${propName} 🏠\n\nMe gustaría reservar una videollamada o selfie de bienvenida.\n\n📅 Está disponible de 10:00 a 18:00 hora italiana (${local10}–${local18} hora local, ${tz}).\n\n¿Cuándo está libre? 😊`,
+    de: `Hallo Giulia! Ich bin ein Gast in ${propName} 🏠\n\nIch möchte einen Willkommens-Videoanruf oder Selfie buchen.\n\n📅 Sie sind von 10:00–18:00 Uhr italienischer Zeit verfügbar (${local10}–${local18} Uhr Ortszeit, ${tz}).\n\nWann sind Sie frei? 😊`
+  };
+  const msg = encodeURIComponent(msgs[lang] || msgs.en);
+  const waNumber = (DB?.settings?.waNumber || '+393384845333').replace(/[^0-9]/g,'');
+  window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank');
+}
+
+// Init local time display
+setTimeout(()=>{ showLocalTime(); setInterval(showLocalTime, 30000); }, 500);
+</script>
+</body>
+</html>
