@@ -4425,6 +4425,43 @@ function setScanMode(mode) {
 // ════════════════════════════════════════
 //  MANUAL MRZ FALLBACK
 // ════════════════════════════════════════
+// ═══════════════════════════════════════
+//  ADMIN AUTH
+// ═══════════════════════════════════════
+
+function showAdminLogin(){
+  const s = document.getElementById('screen-admin-login');
+  if(s){ showScreen('admin-login'); }
+}
+
+async function adminLoginGoogle(){
+  const fb = window._fb;
+  if(!fb){ showErr('Firebase non pronto — riprova tra qualche secondo'); return; }
+  try {
+    const result = await fb.auth.signInWithPopup(fb.provider);
+    const user = result.user;
+    const allowed = ['homelatartuca@gmail.com','homelatuca@gmail.com'];
+    if(!allowed.includes(user.email)){
+      await fb.auth.signOut();
+      showErr('❌ Account non autorizzato: ' + user.email);
+      return;
+    }
+    showScreen('admin');
+    if(typeof renderDashboard === 'function') renderDashboard();
+    if(typeof renderWaiting === 'function') renderWaiting();
+  } catch(e) {
+    if(e.code !== 'auth/popup-closed-by-user'){
+      showErr('Errore login: ' + e.message);
+    }
+  }
+}
+
+async function adminLogout(){
+  const fb = window._fb;
+  if(fb) await fb.auth.signOut().catch(()=>{});
+  showScreen('welcome');
+}
+
 // ── Toggle scanner box open/closed ──
 function toggleMRZBox() {
   const body   = document.getElementById('mrz-scan-body');
