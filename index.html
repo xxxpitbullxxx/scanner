@@ -922,8 +922,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
         </div>
 
         <!-- Video + overlay -->
-        <div id="doc-video-wrap" style="display:none;position:relative;border-radius:10px;overflow:hidden;margin-bottom:0.5rem;">
+        <div id="doc-camera-wrap" style="display:none;position:relative;border-radius:10px;overflow:hidden;margin-bottom:0.5rem;">
           <video id="doc-video" autoplay playsinline muted style="width:100%;max-height:320px;object-fit:cover;display:block;border-radius:8px;"></video>
+          <canvas id="doc-canvas" style="display:none;"></canvas>
+          <div id="doc-scan-badge" style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;font-size:0.65rem;padding:0.25rem 0.8rem;border-radius:20px;white-space:nowrap;z-index:10;"></div>
           <div id="doc-anchor" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88%;height:68%;border:3px solid rgba(201,162,84,0.9);border-radius:8px;box-shadow:0 0 0 2000px rgba(0,0,0,0.45);pointer-events:none;">
             <div style="position:absolute;top:-3px;left:-3px;width:18px;height:18px;border-top:4px solid var(--gold);border-left:4px solid var(--gold);border-radius:3px 0 0 0;"></div>
             <div style="position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-top:4px solid var(--gold);border-right:4px solid var(--gold);border-radius:0 3px 0 0;"></div>
@@ -934,6 +936,12 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
             </div>
             <div id="scan-status-badge" style="position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;font-size:0.65rem;padding:0.25rem 0.7rem;border-radius:20px;white-space:nowrap;"></div>
           </div>
+        </div>
+
+        <!-- Preview after capture -->
+        <div id="doc-preview-wrap" style="display:none;margin-bottom:0.5rem;border-radius:8px;overflow:hidden;border:1.5px solid rgba(201,162,84,0.5);">
+          <img id="doc-preview-img" style="width:100%;max-height:220px;object-fit:cover;display:block;" src="" alt="">
+          <div style="padding:0.3rem 0.6rem;background:rgba(0,0,0,0.4);font-size:0.65rem;color:rgba(255,255,255,0.6);">📸 Immagine acquisita — analisi in corso...</div>
         </div>
 
         <!-- Manual MRZ fallback -->
@@ -999,96 +1007,117 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
     <!-- STEP 3 -->
     <div class="step" id="step-3" style="display:none">
       <div class="eyebrow" data-i18n="ey3">Passo 3 di 6 — Verifica Identità</div>
-      <div class="sec-title" data-i18n="t3">Verifica de visu</div>
-      <div class="ib ib-red">⚠️ <strong data-i18n="i3">Obbligatorio per legge</strong><span data-i18n="i3b"> — D.L. 113/2018. Il check-in non può essere completato senza verifica identità.</span></div>
+      <div class="sec-title" data-i18n="t3">Documenti &amp; Identità</div>
 
-      <div class="verify-cards">
-        <div class="vcard" onclick="selVerify('video',this)">
-          <div class="vi">📹</div>
-          <div>
-            <h4 data-i18n="v1">Videochiamata con la host</h4>
-            <p data-i18n="v1d">Concordiamo un appuntamento per la videochiamata. Riceverai un messaggio WhatsApp da Giulia per scegliere l'orario.</p>
-          </div>
-        </div>
-        <div class="vcard" onclick="selVerify('selfie',this)">
-          <div class="vi">🤳</div>
-          <div>
-            <h4 data-i18n="v2">Selfie con documento</h4>
-            <p data-i18n="v2d">Carica una foto di te che tieni il documento aperto in mano, leggibile.</p>
-          </div>
-        </div>
-      </div>
+      <div class="ib ib-red" style="margin-bottom:1.2rem;">⚠️ <strong>Obbligatorio per legge</strong> — D.L. 113/2018. Carica selfie + documento oppure contatta Giulia in videochiamata.</div>
 
-      <div id="selfie-section" style="display:none">
-        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem;">Le immagini sono conservate su Firebase in modo sicuro, usate solo per l'obbligo de visu (D.L. 113/2018).</p>
+      <!-- ─── UPLOAD DOCUMENTI ─── -->
+      <div style="background:var(--white);border:1.5px solid #cfc5ae;border-radius:14px;padding:1.2rem;margin-bottom:1rem;">
+        <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--gold);font-weight:700;margin-bottom:1rem;">📎 Carica i documenti</div>
 
-        <!-- SELFIE con documento -->
-        <div style="background:var(--white);border:1.5px solid #cfc5ae;border-radius:12px;padding:1rem;margin-bottom:0.8rem;">
-          <div style="font-size:0.8rem;font-weight:600;color:var(--teal);margin-bottom:0.6rem;">🤳 Selfie con documento in mano <span style="font-weight:400;color:var(--muted);font-size:0.72rem;">(obbligatorio)</span></div>
-          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
-            <button type="button" onclick="triggerCapture('selfie','cam')" style="flex:1;padding:0.65rem 0.4rem;background:var(--teal);border:none;border-radius:9px;color:white;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">📷 Fotocamera</button>
-            <button type="button" onclick="triggerCapture('selfie','file')" style="flex:1;padding:0.65rem 0.4rem;background:var(--cream2);border:1.5px solid #cfc5ae;border-radius:9px;color:var(--text);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">🖼 Galleria</button>
+        <!-- SELFIE -->
+        <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(0,0,0,0.06);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
+            <div style="font-size:0.85rem;font-weight:600;color:var(--dark);">🤳 Selfie con documento</div>
+            <span style="font-size:0.68rem;color:var(--red);font-weight:600;">OBBLIGATORIO</span>
           </div>
-          <input type="file" id="fi-selfie-cam" accept="image/*" capture="user" style="display:none" onchange="handleDocUpload('selfie',this)">
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;">Fatti un selfie tenendo il documento aperto in mano, leggibile.</div>
+          <div style="display:flex;gap:0.5rem;">
+            <button type="button" onclick="triggerCapture('selfie','cam')"
+              style="flex:1;padding:0.7rem 0.4rem;background:var(--teal);border:none;border-radius:9px;color:white;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              📷 Fotocamera
+            </button>
+            <button type="button" onclick="triggerCapture('selfie','file')"
+              style="flex:1;padding:0.7rem 0.4rem;background:var(--cream2);border:1.5px solid #cfc5ae;border-radius:9px;color:var(--text);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              🖼 Galleria
+            </button>
+          </div>
+          <input type="file" id="fi-selfie-cam"  accept="image/*" capture="user" style="display:none" onchange="handleDocUpload('selfie',this)">
           <input type="file" id="fi-selfie-file" accept="image/*,application/pdf" style="display:none" onchange="handleDocUpload('selfie',this)">
-          <div id="uz-selfie-preview" style="display:none;margin-top:0.5rem;border-radius:8px;overflow:hidden;border:1.5px solid var(--teal);">
-            <img id="uz-selfie-img" style="width:100%;max-height:160px;object-fit:cover;display:block;" src="" alt="">
+          <div id="uz-selfie-preview" style="display:none;margin-top:0.6rem;border-radius:8px;overflow:hidden;border:2px solid var(--teal);">
+            <img id="uz-selfie-img" style="width:100%;max-height:180px;object-fit:cover;display:block;" src="" alt="">
           </div>
-          <div id="uz-s-done" style="display:none;font-size:0.75rem;color:var(--green);margin-top:0.4rem;padding:0.4rem 0.6rem;background:rgba(39,174,96,0.08);border-radius:6px;border:1px solid rgba(39,174,96,0.2);">✅ <span></span></div>
+          <div id="uz-selfie-done" style="display:none;margin-top:0.4rem;padding:0.4rem 0.7rem;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.25);border-radius:7px;font-size:0.74rem;color:var(--green);font-weight:500;">✅ <span id="uz-selfie-name"></span></div>
         </div>
 
-        <!-- DOCUMENTO fronte -->
-        <div style="background:var(--white);border:1.5px solid #cfc5ae;border-radius:12px;padding:1rem;margin-bottom:0.8rem;">
-          <div style="font-size:0.8rem;font-weight:600;color:var(--teal);margin-bottom:0.6rem;">🪪 Documento — Fronte <span style="font-weight:400;color:var(--muted);font-size:0.72rem;">(obbligatorio)</span></div>
-          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
-            <button type="button" onclick="triggerCapture('docF','cam')" style="flex:1;padding:0.65rem 0.4rem;background:var(--teal);border:none;border-radius:9px;color:white;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">📷 Fotocamera</button>
-            <button type="button" onclick="triggerCapture('docF','file')" style="flex:1;padding:0.65rem 0.4rem;background:var(--cream2);border:1.5px solid #cfc5ae;border-radius:9px;color:var(--text);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">🖼 Galleria</button>
+        <!-- FRONTE -->
+        <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(0,0,0,0.06);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
+            <div style="font-size:0.85rem;font-weight:600;color:var(--dark);">🪪 Documento — Fronte</div>
+            <span style="font-size:0.68rem;color:var(--red);font-weight:600;">OBBLIGATORIO</span>
           </div>
-          <input type="file" id="fi-docF-cam" accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload('docF',this)">
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;">Fotografa o carica il lato frontale del documento (foto, nome, data nascita).</div>
+          <div style="display:flex;gap:0.5rem;">
+            <button type="button" onclick="triggerCapture('docF','cam')"
+              style="flex:1;padding:0.7rem 0.4rem;background:var(--teal);border:none;border-radius:9px;color:white;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              📷 Fotocamera
+            </button>
+            <button type="button" onclick="triggerCapture('docF','file')"
+              style="flex:1;padding:0.7rem 0.4rem;background:var(--cream2);border:1.5px solid #cfc5ae;border-radius:9px;color:var(--text);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              🖼 Galleria
+            </button>
+          </div>
+          <input type="file" id="fi-docF-cam"  accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload('docF',this)">
           <input type="file" id="fi-docF-file" accept="image/*,application/pdf" style="display:none" onchange="handleDocUpload('docF',this)">
-          <div id="uz-docF-preview" style="display:none;margin-top:0.5rem;border-radius:8px;overflow:hidden;border:1.5px solid var(--teal);">
-            <img id="uz-docF-img" style="width:100%;max-height:140px;object-fit:cover;display:block;" src="" alt="">
+          <div id="uz-docF-preview" style="display:none;margin-top:0.6rem;border-radius:8px;overflow:hidden;border:2px solid var(--teal);">
+            <img id="uz-docF-img" style="width:100%;max-height:160px;object-fit:cover;display:block;" src="" alt="">
           </div>
-          <div id="uz-docF-done" style="display:none;font-size:0.75rem;color:var(--green);margin-top:0.4rem;padding:0.4rem 0.6rem;background:rgba(39,174,96,0.08);border-radius:6px;border:1px solid rgba(39,174,96,0.2);">✅ <span></span></div>
+          <div id="uz-docF-done" style="display:none;margin-top:0.4rem;padding:0.4rem 0.7rem;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.25);border-radius:7px;font-size:0.74rem;color:var(--green);font-weight:500;">✅ <span id="uz-docF-name"></span></div>
         </div>
 
-        <!-- DOCUMENTO retro -->
-        <div style="background:var(--white);border:1.5px solid #cfc5ae;border-radius:12px;padding:1rem;margin-bottom:0.8rem;">
-          <div style="font-size:0.8rem;font-weight:600;color:var(--teal);margin-bottom:0.6rem;">🔄 Documento — Retro <span style="font-weight:400;color:var(--muted);font-size:0.72rem;">(opzionale)</span></div>
-          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
-            <button type="button" onclick="triggerCapture('docR','cam')" style="flex:1;padding:0.65rem 0.4rem;background:var(--teal);border:none;border-radius:9px;color:white;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">📷 Fotocamera</button>
-            <button type="button" onclick="triggerCapture('docR','file')" style="flex:1;padding:0.65rem 0.4rem;background:var(--cream2);border:1.5px solid #cfc5ae;border-radius:9px;color:var(--text);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">🖼 Galleria</button>
+        <!-- RETRO -->
+        <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(0,0,0,0.06);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
+            <div style="font-size:0.85rem;font-weight:600;color:var(--dark);">🔄 Documento — Retro</div>
+            <span style="font-size:0.68rem;color:var(--muted);">opzionale</span>
           </div>
-          <input type="file" id="fi-docR-cam" accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload('docR',this)">
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;">Fotografa o carica il retro (MRZ, codice fiscale, residenza).</div>
+          <div style="display:flex;gap:0.5rem;">
+            <button type="button" onclick="triggerCapture('docR','cam')"
+              style="flex:1;padding:0.7rem 0.4rem;background:var(--teal);border:none;border-radius:9px;color:white;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              📷 Fotocamera
+            </button>
+            <button type="button" onclick="triggerCapture('docR','file')"
+              style="flex:1;padding:0.7rem 0.4rem;background:var(--cream2);border:1.5px solid #cfc5ae;border-radius:9px;color:var(--text);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              🖼 Galleria
+            </button>
+          </div>
+          <input type="file" id="fi-docR-cam"  accept="image/*" capture="environment" style="display:none" onchange="handleDocUpload('docR',this)">
           <input type="file" id="fi-docR-file" accept="image/*,application/pdf" style="display:none" onchange="handleDocUpload('docR',this)">
-          <div id="uz-docR-preview" style="display:none;margin-top:0.5rem;border-radius:8px;overflow:hidden;border:1.5px solid var(--teal);">
-            <img id="uz-docR-img" style="width:100%;max-height:140px;object-fit:cover;display:block;" src="" alt="">
+          <div id="uz-docR-preview" style="display:none;margin-top:0.6rem;border-radius:8px;overflow:hidden;border:2px solid var(--teal);">
+            <img id="uz-docR-img" style="width:100%;max-height:160px;object-fit:cover;display:block;" src="" alt="">
           </div>
-          <div id="uz-docR-done" style="display:none;font-size:0.75rem;color:var(--green);margin-top:0.4rem;padding:0.4rem 0.6rem;background:rgba(39,174,96,0.08);border-radius:6px;border:1px solid rgba(39,174,96,0.2);">✅ <span></span></div>
+          <div id="uz-docR-done" style="display:none;margin-top:0.4rem;padding:0.4rem 0.7rem;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.25);border-radius:7px;font-size:0.74rem;color:var(--green);font-weight:500;">✅ <span id="uz-docR-name"></span></div>
         </div>
 
         <!-- PDF UNICO -->
-        <div style="background:var(--cream2);border:1.5px dashed #cfc5ae;border-radius:12px;padding:1rem;margin-bottom:1rem;">
-          <div style="font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:0.5rem;">📄 In alternativa: PDF unico (fronte+retro insieme)</div>
-          <button type="button" onclick="triggerCapture('docPDF','file')" style="width:100%;padding:0.65rem;background:var(--white);border:1.5px solid #cfc5ae;border-radius:9px;color:var(--text);font-size:0.82rem;cursor:pointer;font-family:Inter,sans-serif;font-weight:500;">📎 Carica PDF documento</button>
-          <input type="file" id="fi-docPDF-file" accept="application/pdf,image/*" style="display:none" onchange="handleDocUpload('docPDF',this)">
-          <div id="uz-docPDF-done" style="display:none;font-size:0.75rem;color:var(--green);margin-top:0.4rem;padding:0.4rem 0.6rem;background:rgba(39,174,96,0.08);border-radius:6px;border:1px solid rgba(39,174,96,0.2);">✅ <span></span></div>
-        </div>
-
-        <button class="btn-primary" id="btn-selfie-ok" style="display:none" onclick="goToStep(4)" data-i18n="btn_next">Continua →</button>
-      </div>
-
-      <div id="video-section" style="display:none">
-        <div style="background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.8rem;">
-          <div style="font-size:0.8rem;color:rgba(255,255,255,0.75);margin-bottom:0.7rem;" data-i18n="v_info">✅ Giulia è disponibile <strong>10:00–18:00</strong> ora italiana. Premi il pulsante per aprire WhatsApp con il messaggio già pronto nel tuo orario locale.</div>
-          <div id="vc-local-time" style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-bottom:0.7rem;padding:0.35rem 0.6rem;background:rgba(0,0,0,0.2);border-radius:6px;"></div>
-          <button onclick="openVideocallWA()" style="width:100%;padding:0.75rem;background:#25D366;color:white;border:none;border-radius:9px;font-weight:700;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-family:Inter,sans-serif;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            <span data-i18n="vc_btn">Contatta Giulia su WhatsApp</span>
+        <div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--dark);margin-bottom:0.4rem;">📄 PDF unico <span style="font-size:0.72rem;font-weight:400;color:var(--muted);">(alternativa a fronte+retro separati)</span></div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;">Se hai già un PDF con fronte e retro insieme, caricalo qui.</div>
+          <button type="button" onclick="triggerCapture('docPDF','file')"
+            style="width:100%;padding:0.7rem;background:var(--cream2);border:1.5px dashed #cfc5ae;border-radius:9px;color:var(--text);font-size:0.82rem;cursor:pointer;font-family:Inter,sans-serif;font-weight:500;">
+            📎 Carica PDF documento
           </button>
+          <input type="file" id="fi-docPDF-file" accept="application/pdf,image/*" style="display:none" onchange="handleDocUpload('docPDF',this)">
+          <div id="uz-docPDF-done" style="display:none;margin-top:0.4rem;padding:0.4rem 0.7rem;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.25);border-radius:7px;font-size:0.74rem;color:var(--green);font-weight:500;">✅ <span id="uz-docPDF-name"></span></div>
         </div>
-        <button class="btn-primary" onclick="goToStep(4)" data-i18n="btn_next">Continua →</button>
       </div>
+
+      <!-- ─── VIDEOCHIAMATA (alternativa) ─── -->
+      <div style="background:rgba(37,211,102,0.06);border:1.5px solid rgba(37,211,102,0.25);border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;">
+        <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.12em;color:#25D366;font-weight:700;margin-bottom:0.7rem;">📹 In alternativa — Videochiamata</div>
+        <div style="font-size:0.82rem;color:var(--text);margin-bottom:0.3rem;">Preferisci mostrare il documento in diretta a Giulia?</div>
+        <div id="vc-local-time" style="font-size:0.72rem;color:var(--muted);margin-bottom:0.8rem;padding:0.3rem 0.6rem;background:rgba(0,0,0,0.04);border-radius:6px;"></div>
+        <button onclick="openVideocallWA()"
+          style="width:100%;padding:0.75rem;background:#25D366;color:white;border:none;border-radius:9px;font-weight:700;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-family:Inter,sans-serif;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          <span data-i18n="vc_btn">Contatta Giulia su WhatsApp</span>
+        </button>
+      </div>
+
+      <!-- Continua -->
+      <button class="btn-primary" id="btn-selfie-ok" style="display:none" onclick="goToStep(4)" data-i18n="btn_next">Continua →</button>
+      <p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:0.5rem;">Il pulsante si attiva dopo aver caricato selfie + documento fronte</p>
     </div>
 
     <!-- STEP 4: Contract -->
@@ -2616,6 +2645,7 @@ function goToStep(n){
     else if(i===n) el.classList.add('active');
   }
   if(n===2) renderGuestForms();
+  if(n===3) { showLocalTime(); setInterval(showLocalTime,30000); }
   if(n===4) renderContract();
   if(n===5) renderGDPR();
   if(n===6) renderSummary();
@@ -3012,10 +3042,6 @@ function validateGDPR(){
 // ═══════════════════════════════════════
 function selVerify(method,el){
   S.verifyMethod=method;
-  document.querySelectorAll('.vcard').forEach(c=>c.classList.remove('sel'));
-  el.classList.add('sel');
-  document.getElementById('selfie-section').style.display=method==='selfie'?'block':'none';
-  document.getElementById('video-section').style.display=method==='video'?'block':'none';
 }
 function triggerCapture(slot, mode){
   const id = 'fi-'+slot+'-'+mode;
@@ -3036,8 +3062,8 @@ function handleDocUpload(slot, input){
 
   if(doneDiv){
     doneDiv.style.display='block';
-    const sp = doneDiv.querySelector('span');
-    if(sp) sp.textContent = f.name + ' (' + (f.size/1024).toFixed(0) + ' KB)';
+    const nameSpan = document.getElementById('uz-'+slot+'-name');
+    if(nameSpan) nameSpan.textContent = f.name + ' (' + (f.size/1024).toFixed(0) + ' KB)';
   }
 
   // Image preview
