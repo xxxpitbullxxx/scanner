@@ -4260,12 +4260,19 @@ function stopMRZCamera(){  stopDocCamera(); }
 function showAdminLogin(){ document.getElementById('admin-pin').value=''; document.getElementById('alog-err').style.display='none'; showScreen('admin-login'); }
 // ── Google Sign-In for admin ──
 async function adminLoginGoogle(){
-  if(!window._fbReady){ showErr('Firebase non pronto, riprova'); return; }
+  // signInWithPopup MUST be called synchronously in the click handler
+  // Any await before it causes browsers to block the popup
+  if(!window._fbReady || !window._fb){
+    showErr('Firebase non ancora pronto — aspetta 2 secondi e riprova');
+    return;
+  }
+  const {auth, provider} = window._fb;
+  // Open popup IMMEDIATELY — no awaits before this line
+  const popupPromise = auth.signInWithPopup(provider);
   const btn = document.getElementById('btn-google-login');
   if(btn){ btn.disabled=true; btn.textContent='⏳ Accesso...'; }
   try{
-    const {auth, provider} = window._fb;
-    const result = await auth.signInWithPopup(provider);
+    const result = await popupPromise;
     const email  = result.user.email;
     if(email !== 'homelatartuca@gmail.com'){
       await auth.signOut();
