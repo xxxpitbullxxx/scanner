@@ -916,15 +916,15 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
       <!-- MRZ SCANNER - TOP -->
       <div id="mrz-box-top" style="background:var(--teal3);border:1.5px solid rgba(201,162,84,0.4);border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;">
         <!-- Header -->
-        <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.8rem;">
+        <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.8rem;" onclick="toggleMRZBox()" style="cursor:pointer;">
           <span style="font-size:1.6rem;">📷</span>
-          <div>
+          <div style="flex:1;">
             <div style="font-size:0.9rem;font-weight:700;color:var(--gold);" data-i18n="mrz_t">Scansiona il documento</div>
             <div style="font-size:0.7rem;color:rgba(255,255,255,0.5);">I campi si compilano automaticamente</div>
           </div>
+          <button id="mrz-scan-toggle" type="button" onclick="toggleMRZBox()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);font-size:0.75rem;padding:0.3rem 0.6rem;border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;">▼ Chiudi</button>
         </div>
-
-        <!-- Guest selector -->
+        <div id="mrz-scan-body">
         <select id="mrz-target" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);color:white;padding:0.5rem 0.7rem;border-radius:8px;font-size:0.8rem;margin-bottom:0.7rem;font-family:Inter,sans-serif;">
           <option value="0">Ospite 1 (principale)</option>
         </select>
@@ -992,6 +992,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
         <div style="text-align:center;margin-top:0.5rem;">
           <span style="font-size:0.68rem;color:rgba(255,255,255,0.3);">oppure compila i campi manualmente qui sotto ↓</span>
         </div>
+        </div><!-- /mrz-scan-body -->
       </div>
 
       <div class="ib ib-teal" data-i18n="i2">Inserisci i dati come riportati sul documento d'identità. Art. 109 TULPS – comunicazione alla Questura entro 24h.</div>
@@ -1475,16 +1476,16 @@ Num doc: 20 | Luogo rilascio: 9 | Data arrivo: 8 | Permanenza: 4
           </div>
           <button class="save-btn" onclick="saveSet('ln-pin')">Salva PIN</button>
           <div class="save-ok" id="sok-ln-pin">✓ Salvato</div>
-          <div style="margin-top:0.8rem;border-top:1px solid rgba(255,255,255,0.1);padding-top:0.8rem;">
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-bottom:0.5rem;">URL Firebase Function (per Tuya automatico):</div>
-            <input type="text" id="tuya-func-url" placeholder="https://us-central1-....cloudfunctions.net" style="width:100%;font-size:0.75rem;font-family:monospace;">
-            <button class="save-btn" onclick="saveSet('tuya-func')" style="margin-top:0.4rem;">Salva URL</button>
-            <div class="save-ok" id="sok-tuya-func">✓ Salvato</div>
-          </div>
+        </div>
           <div style="margin-top:0.8rem;border-top:1px solid rgba(255,255,255,0.1);padding-top:0.8rem;">
             <button id="btn-tuya-unlock" onclick="tuyaRemoteUnlock()" style="width:100%;background:rgba(201,162,84,0.15);border:1.5px solid rgba(201,162,84,0.5);color:var(--gold);padding:0.7rem;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;font-size:0.85rem;font-weight:600;">
-              🔓 Apri Porta Adesso (5 sec)
+              🔓 Mostra PIN Porta
             </button>
+            <div id="tuya-pin-display" style="display:none;margin-top:0.7rem;background:rgba(0,0,0,0.3);border:1.5px solid rgba(201,162,84,0.4);border-radius:8px;padding:0.8rem;text-align:center;">
+              <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);margin-bottom:0.3rem;">PIN SERRATURA LOVE NEST</div>
+              <div id="tuya-pin-val" style="font-family:monospace;font-size:2rem;font-weight:900;color:var(--gold);letter-spacing:0.2em;">------</div>
+              <button onclick="copyPin()" style="margin-top:0.5rem;background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);font-size:0.72rem;padding:0.3rem 0.8rem;border-radius:5px;cursor:pointer;font-family:Inter,sans-serif;">📋 Copia PIN</button>
+            </div>
           </div>
         </div>
 
@@ -2286,7 +2287,7 @@ let DB = { guests:[], notifs:[], settings:{
   tartaruga:{code:'1572', keyboxCode:'1572', inst:''},
   waNumber:'+393384845333',
   gdriveClientId:'',
-  tuyaFuncUrl:'',
+  tuyaFuncUrl:'https://europe-west1-self-check-in-tuscan-retreats.cloudfunctions.net',
 }};
 
 function dbLoad(){
@@ -2590,6 +2591,42 @@ function dbSave(){
     localStorage.setItem('tr_n',JSON.stringify(DB.notifs));
   }catch(e){}
 }
+// ── saveSet: salva impostazioni admin ──
+function saveSet(key){
+  const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const ok = id => {
+    const el = document.getElementById('sok-'+id);
+    if(el){ el.style.opacity='1'; setTimeout(()=>{ el.style.opacity='0'; },2000); }
+  };
+  switch(key){
+    case 'ln':
+      DB.settings.lovenest.code      = v('sc-ln');
+      DB.settings.lovenest.inst      = v('si-ln');
+      ok('ln'); break;
+    case 'tt':
+      DB.settings.tartaruga.code     = v('sc-tt');
+      DB.settings.tartaruga.inst     = v('si-tt');
+      ok('tt'); break;
+    case 'wa':
+      DB.settings.waNumber           = v('wa-num');
+      ok('wa'); break;
+    case 'ln-pin':
+      DB.settings.lovenest.manualPin = v('ln-manual-pin');
+      ok('ln-pin'); break;
+    case 'tuya-func':
+      DB.settings.tuyaFuncUrl        = v('tuya-func-url');
+      ok('tuya-func'); break;
+    case 'tt-keybox':
+      DB.settings.tartaruga.keyboxCode = v('tt-keybox-code');
+      DB.settings.tartaruga.code       = v('tt-keybox-code');
+      ok('tt-keybox'); break;
+    case 'gdrive':
+      DB.settings.gdriveClientId     = v('gdrive-client-id') || v('gdrive-oauth-id');
+      ok('gdrive'); break;
+  }
+  dbSave();
+}
+
 dbLoad(); // Load from localStorage immediately
 
 // Load from Firebase when ready (non-blocking, updates if newer data found)
@@ -3369,31 +3406,29 @@ async function generateTuyaPin(entry){
 
 // ── Remote unlock (open door for 5 seconds) ──
 async function tuyaRemoteUnlock(){
-  const funcUrl = DB.settings.tuyaFuncUrl || '';
-  if(!funcUrl){
-    showErr('⚙️ URL Firebase Function non configurato nelle impostazioni');
+  const pin = (DB.settings.lovenest?.manualPin || '').trim();
+  if(!pin){
+    showErr('⚙️ Nessun PIN salvato — vai in Impostazioni → Maniglia Love Nest e inserisci il PIN Tuya');
     return;
   }
-  const btn = document.getElementById('btn-tuya-unlock');
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Apertura...'; }
-  try{
-    const resp = await fetch(funcUrl+'/unlock', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({clientId:TUYA_CLIENT_ID, secret:TUYA_SECRET, deviceId:TUYA_DEVICE_ID})
-    });
-    const data = await resp.json();
-    if(data.success){
-      showErr('✅ Porta aperta per 5 secondi!', true);
-      if(btn){ setTimeout(()=>{ btn.disabled=false; btn.textContent='🔓 Apri Porta'; },5000); }
-    } else {
-      throw new Error(data.error||'risposta non valida');
-    }
-  }catch(e){
-    showErr('❌ Errore apertura: '+e.message);
-    if(btn){ btn.disabled=false; btn.textContent='🔓 Apri Porta'; }
-  }
+  const display = document.getElementById('tuya-pin-display');
+  const valEl   = document.getElementById('tuya-pin-val');
+  const btn     = document.getElementById('btn-tuya-unlock');
+  if(valEl) valEl.textContent = pin;
+  if(display) display.style.display = 'block';
+  if(btn) btn.textContent = '✅ PIN mostrato — digita sulla serratura';
 }
+
+function copyPin(){
+  const pin = (DB.settings.lovenest?.manualPin || '').trim();
+  if(!pin) return;
+  navigator.clipboard?.writeText(pin).then(()=>{
+    showErr('✅ PIN copiato: '+pin, true);
+  }).catch(()=>{
+    showErr('PIN: '+pin, true);
+  });
+}
+
 
 // ═══════════════════════════════════════
 //  GOOGLE DRIVE INTEGRATION
@@ -4054,6 +4089,23 @@ function applyToForm(data, guestIdx) {
   if (data.comune)  setF('comune',  capitalize(data.comune));
   if (data.provres) setF('provres', data.provres.toUpperCase());
   if (data.cit)     updateCitizenshipField(guestIdx, data.cit);
+
+  // After filling fields: collapse scanner and scroll to the form
+  setTimeout(() => {
+    // Collapse the scanner box body (keep header visible)
+    const scanBody = document.getElementById('mrz-scan-body');
+    if (scanBody) scanBody.style.display = 'none';
+    const scanToggle = document.getElementById('mrz-scan-toggle');
+    if (scanToggle) scanToggle.textContent = '▶ Riapri scanner';
+
+    // Show hint to scroll down
+    const res = document.getElementById('mrz-result');
+    if (res) res.innerHTML += '<br><span style="color:var(--gold);font-size:0.75rem;">👇 Controlla e completa i campi qui sotto</span>';
+
+    // Scroll to the guest form card
+    const gc = document.getElementById('gc-'+guestIdx);
+    if (gc) gc.scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 600);
 }
 
 function updateCitizenshipField(idx, isoCode) {
@@ -4373,6 +4425,16 @@ function setScanMode(mode) {
 // ════════════════════════════════════════
 //  MANUAL MRZ FALLBACK
 // ════════════════════════════════════════
+// ── Toggle scanner box open/closed ──
+function toggleMRZBox() {
+  const body   = document.getElementById('mrz-scan-body');
+  const toggle = document.getElementById('mrz-scan-toggle');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (toggle) toggle.textContent = isOpen ? '▶ Apri scanner' : '▼ Chiudi';
+}
+
 function toggleMRZManual() {
   const box = document.getElementById('mrz-manual-wrap');
   if (box) box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
