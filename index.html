@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <!-- Tesseract.js OCR — loaded after Firebase, deferred to not block -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 (function(){
   var _cfg = {
@@ -948,9 +948,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
         <button class="mrz-btn" type="button" onclick="toggleMRZManual()" id="btn-manual-mrz" style="width:100%;margin-bottom:0.4rem;background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.15);display:none;">
           ✏️ Inserisci MRZ manualmente
         </button>
-        <div id="mrz-manual-box" style="display:none;margin-bottom:0.5rem;">
-          <textarea class="mrz-input" id="mrz-input" rows="2" placeholder="Incolla qui le 2 righe MRZ dal retro del documento..."></textarea>
-          <button class="mrz-btn" type="button" onclick="parseMRZ()" style="width:100%;">🔍 Leggi MRZ</button>
+        <div id="mrz-manual-wrap" style="display:none;margin-bottom:0.5rem;">
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-bottom:0.4rem;">Incolla le 2 righe MRZ dal retro del documento:</div>
+          <textarea class="mrz-input" id="mrz-input" rows="2" placeholder="P&lt;ITAROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&#10;AB1234567ITA8503153M3001011&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;6" style="font-family:monospace;font-size:0.7rem;"></textarea>
+          <button class="mrz-btn" type="button" onclick="parseMRZ()" style="width:100%;margin-top:0.3rem;">📋 Leggi MRZ</button>
         </div>
 
         <!-- Status / result -->
@@ -3091,17 +3092,7 @@ function handleDocUpload(slot, input){
 }
 
 // Legacy alias
-function handleUpload(type,input){
-  const f=input.files[0]; if(!f) return;
-  if(!S.uploads) S.uploads={};
-  S.uploads[type]=f.name;
-  const done=document.getElementById('uz-s-done');
-  if(done){ done.style.display='block'; const sp=done.querySelector('span')||done; if(sp.tagName==='SPAN') sp.textContent=f.name; else done.textContent='✓ '+f.name; }
-  if(S.uploads.selfie&&S.uploads.doc){
-    const btn=document.getElementById('btn-selfie-ok');
-    if(btn) btn.style.display='block';
-  }
-}
+// handleUpload replaced by handleDocUpload
 
 // ═══════════════════════════════════════
 //  STEP 4 – CONTRACT
@@ -4281,9 +4272,19 @@ async function captureDocFrame(){
 
 // ── Core OCR scan ──
 async function runOCRScan(video, canvas, isManual){
+  // Wait up to 8s for Tesseract to load
   if(typeof Tesseract==='undefined'){
-    showErr('OCR non disponibile — aggiorna la pagina');
-    return false;
+    const badge = document.getElementById('doc-scan-badge');
+    if(badge) badge.textContent = '⏳ Caricamento OCR...';
+    let waited = 0;
+    while(typeof Tesseract==='undefined' && waited < 80){
+      await new Promise(r=>setTimeout(r,100));
+      waited++;
+    }
+    if(typeof Tesseract==='undefined'){
+      showErr('OCR non disponibile — aggiorna la pagina');
+      return false;
+    }
   }
   const guestIdx = parseInt(document.getElementById('mrz-target')?.value||'0');
   const res = document.getElementById('mrz-result');
