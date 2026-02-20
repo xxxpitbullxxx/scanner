@@ -3033,6 +3033,38 @@ function renderGuestForms(){
   }
 }
 
+
+// ── Document type chips ──
+const DOC_TYPES = [
+  { val:'CI',  icon:'🪪', label:'C.I.' },
+  { val:'PP',  icon:'📕', label:'Passaporto' },
+  { val:'PT',  icon:'🛂', label:'Perm. Soggiorno' },
+  { val:'PD',  icon:'🚗', label:'Patente' },
+];
+
+function renderDocChips(guestIdx, selected){
+  return DOC_TYPES.map(dt => `
+    <div class="doc-chip${selected===dt.val?' active':''}" 
+         onclick="pickDocType(${guestIdx},'${dt.val}')" 
+         title="${dt.label}">
+      ${dt.icon}<span>${dt.label}</span>
+    </div>
+  `).join('');
+}
+
+function pickDocType(guestIdx, val){
+  // Update hidden field
+  const hidden = document.getElementById(`g${guestIdx}-tipdoc`);
+  if(hidden) hidden.value = val;
+  // Update chip active state
+  const chips = document.getElementById(`chips-${guestIdx}`);
+  if(chips){
+    chips.querySelectorAll('.doc-chip').forEach(c => c.classList.remove('active'));
+    const target = [...chips.querySelectorAll('.doc-chip')].find(c => c.onclick?.toString().includes(`'${val}'`));
+    if(target) target.classList.add('active');
+  }
+}
+
 function collectGuests(){
   const n=S.groupType==='family'?S.guestCount:1;
   S.guestData=[];
