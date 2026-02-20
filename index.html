@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <!-- Firebase SDKs (module) -->
 <!-- Firebase compat SDKs (works in all contexts including iframes) -->
+<!-- Tesseract.js OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -711,6 +713,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
 </style>
 </head>
 <body>
+<div id="https-warning" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:white;padding:0.8rem 1rem;font-family:Inter,sans-serif;font-size:0.85rem;text-align:center;">
+  ⚠️ <strong>Apri su HTTPS</strong> — Firebase non funziona su file:// locale. Carica su <a href="https://xxxpitbullxxx.github.io/scanner" target="_blank" style="color:white;font-weight:700;">GitHub Pages</a>
+</div>
+<script>if(location.protocol==="file:") document.getElementById("https-warning").style.display="block";</script>
 
 <!-- ERROR POPUP -->
 <div class="err-popup" id="err-popup"></div>
@@ -848,33 +854,50 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
       <div class="sec-title" data-i18n="t2">Dati personali</div>
 
       <!-- MRZ SCANNER - TOP -->
-      <div class="mrz-box" id="mrz-box-top">
-        <h4>📷 <span data-i18n="mrz_t">Scansiona documento (MRZ) — opzionale</span></h4>
-        <p style="font-size:0.73rem;color:rgba(255,255,255,0.55);margin-bottom:0.8rem;" data-i18n="mrz_d">Puoi compilare i campi automaticamente scansionando la riga MRZ sul retro del documento o sul passaporto. Seleziona prima a quale ospite si riferisce.</p>
+      <div class="mrz-box" id="mrz-box-top" style="display:none;">
+        <h4>📷 <span data-i18n="mrz_t">Scansiona documento</span></h4>
+        <p style="font-size:0.73rem;color:rgba(255,255,255,0.55);margin-bottom:0.6rem;">Seleziona l'ospite e il lato da scansionare — i campi si compilano automaticamente.</p>
         <select id="mrz-target" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);color:white;padding:0.5rem 0.7rem;border-radius:6px;font-size:0.8rem;margin-bottom:0.7rem;width:100%;">
           <option value="0">Ospite 1 (principale)</option>
         </select>
-        <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap;">
-          <button class="mrz-btn" onclick="startMRZCamera()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:0.4rem;">
-            📷 <span data-i18n="mrz_cam">Apri fotocamera</span>
-          </button>
-          <button class="mrz-btn" onclick="toggleMRZManual()" style="flex:1;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;gap:0.4rem;">
-            ⌨️ <span data-i18n="mrz_manual">Incolla MRZ manuale</span>
-          </button>
+        <div style="display:flex;gap:0.4rem;margin-bottom:0.6rem;">
+          <button id="tab-front" onclick="setScanMode('front')" style="flex:1;padding:0.5rem 0.3rem;border-radius:7px;border:2px solid var(--gold);background:rgba(201,162,84,0.2);color:var(--gold);font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+            🪪 FRONTE<br><span style="font-size:0.65rem;font-weight:400;opacity:0.8;">Dati anagrafici</span></button>
+          <button id="tab-back" onclick="setScanMode('back')" style="flex:1;padding:0.5rem 0.3rem;border-radius:7px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">
+            🔄 RETRO<br><span style="font-size:0.65rem;font-weight:400;opacity:0.8;">MRZ + residenza</span></button>
         </div>
-        <!-- Camera view -->
-        <div id="mrz-camera-wrap" style="display:none;margin-bottom:0.7rem;">
-          <video id="mrz-video" autoplay playsinline style="width:100%;border-radius:8px;max-height:220px;object-fit:cover;background:#000;"></video>
-          <canvas id="mrz-canvas" style="display:none;"></canvas>
-          <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
-            <button class="mrz-btn" onclick="captureMRZFrame()" style="flex:1;">📸 Acquisisci</button>
-            <button class="mrz-btn" onclick="stopMRZCamera()" style="flex:1;background:rgba(200,50,50,0.7);">✕ Chiudi</button>
+        <div id="scan-instructions" style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-bottom:0.5rem;padding:0.4rem 0.6rem;background:rgba(255,255,255,0.04);border-radius:6px;">
+          📌 <strong>FRONTE:</strong> inquadra il lato con la foto — nome, nascita, scadenza.
+        </div>
+        <div style="display:flex;gap:0.4rem;margin-bottom:0.5rem;">
+          <button class="mrz-btn" onclick="startDocCamera()" style="flex:1;">📷 Avvia</button>
+          <button class="mrz-btn" onclick="captureDocFrame()" id="btn-capture" style="flex:1;display:none;background:rgba(37,211,102,0.3);border-color:rgba(37,211,102,0.6);">📸 Acquisisci</button>
+          <button class="mrz-btn" onclick="stopDocCamera()" id="btn-stop-cam" style="flex:1;display:none;background:rgba(200,50,50,0.4);">✕</button>
+        </div>
+        <button class="mrz-btn" onclick="toggleMRZManual()" id="btn-manual-mrz" style="width:100%;background:rgba(255,255,255,0.08);font-size:0.72rem;display:none;">⌨️ Incolla MRZ manualmente</button>
+        <div id="doc-camera-wrap" style="display:none;margin-bottom:0.5rem;">
+          <div style="position:relative;border-radius:10px;overflow:hidden;background:#000;">
+            <video id="doc-video" autoplay playsinline muted style="width:100%;max-height:240px;object-fit:cover;display:block;"></video>
+            <div id="doc-anchor" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88%;height:68%;border:3px solid rgba(201,162,84,0.9);border-radius:8px;box-shadow:0 0 0 2000px rgba(0,0,0,0.45);pointer-events:none;">
+              <div style="position:absolute;top:-3px;left:-3px;width:18px;height:18px;border-top:4px solid var(--gold);border-left:4px solid var(--gold);border-radius:3px 0 0 0;"></div>
+              <div style="position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-top:4px solid var(--gold);border-right:4px solid var(--gold);border-radius:0 3px 0 0;"></div>
+              <div style="position:absolute;bottom:-3px;left:-3px;width:18px;height:18px;border-bottom:4px solid var(--gold);border-left:4px solid var(--gold);border-radius:0 0 0 3px;"></div>
+              <div style="position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;border-bottom:4px solid var(--gold);border-right:4px solid var(--gold);border-radius:0 0 3px 0;"></div>
+              <div id="mrz-zone-indicator" style="display:none;position:absolute;bottom:0;left:0;right:0;height:28%;background:rgba(201,162,84,0.12);border-top:2px dashed rgba(201,162,84,0.7);">
+                <span style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:rgba(201,162,84,0.85);color:#1B4B43;font-size:0.58rem;font-weight:800;padding:1px 7px;border-radius:3px;white-space:nowrap;font-family:Inter,sans-serif;">ZONA MRZ</span>
+              </div>
+            </div>
+            <div id="doc-scan-badge" style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;font-size:0.68rem;padding:3px 10px;border-radius:12px;white-space:nowrap;font-family:Inter,sans-serif;pointer-events:none;">📷 Inquadra il documento nell'ancora dorata</div>
           </div>
-          <div id="mrz-ocr-status" style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:0.4rem;text-align:center;"></div>
+          <canvas id="doc-canvas" style="display:none;"></canvas>
         </div>
-        <!-- Manual MRZ input -->
+        <div id="doc-preview-wrap" style="display:none;margin-bottom:0.5rem;">
+          <img id="doc-preview-img" style="width:100%;border-radius:8px;max-height:130px;object-fit:cover;opacity:0.8;">
+          <div id="doc-ocr-status" style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:0.4rem;text-align:center;"></div>
+        </div>
         <div id="mrz-manual-wrap" style="display:none;">
-          <textarea class="mrz-input" id="mrz-input" rows="2" placeholder="P<ITAROSSI<<MARIO<<<<<<<<<<<<<<<<<<<<<<&#10;AB1234567ITA8503153M3001011<<<<<<<<<6"></textarea>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-bottom:0.4rem;">Incolla le 2 righe MRZ dal retro del documento:</div>
+          <textarea class="mrz-input" id="mrz-input" rows="2" placeholder="P&lt;ITAROSSI&lt;&lt;MARIO&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&#10;AB1234567ITA8503153M3001011&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;6" style="font-family:monospace;font-size:0.7rem;"></textarea>
           <button class="mrz-btn" onclick="parseMRZ()" style="width:100%;margin-top:0.3rem;">📋 Leggi dati MRZ</button>
         </div>
         <div class="mrz-result" id="mrz-result"></div>
@@ -2738,11 +2761,12 @@ function renderGuestForms(){
       <div class="divider"><div class="divider-line"></div><div class="divider-label">Documento</div><div class="divider-line"></div></div>
       <div class="fg fg2">
         <div class="field"><label><span class="req-star">*</span>${tr('f_tipdoc')}</label>
-          <select id="g${i}-tipdoc">
+          <select id="g${i}-tipdoc" onchange="onTipdocChange(${i},this.value)">
             <option value="">—</option>
-            <option value="CI" ${d.tipdoc==='CI'?'selected':''}>Carta d'Identità / ID Card</option>
-            <option value="PASS" ${d.tipdoc==='PASS'?'selected':''}>Passaporto / Passport</option>
-            <option value="PATENTE" ${d.tipdoc==='PATENTE'?'selected':''}>Patente / Driving Licence</option>
+            <option value="CI_EL" ${d.tipdoc==='CI_EL'?'selected':''}>🪪 Carta d'Identità Elettronica (CIE)</option>
+            <option value="CI" ${d.tipdoc==='CI'?'selected':''}>📄 Carta d'Identità Cartacea</option>
+            <option value="PASS" ${d.tipdoc==='PASS'?'selected':''}>📕 Passaporto / Passport</option>
+            <option value="PATENTE" ${d.tipdoc==='PATENTE'?'selected':''}>🚗 Patente di Guida</option>
             <option value="PERMESSO" ${d.tipdoc==='PERMESSO'?'selected':''}>Permesso di Soggiorno / Residence Permit</option>
           </select>
         </div>
@@ -3701,118 +3725,534 @@ function enterWaiting(){
 //  MRZ CAMERA + PARSER
 // ═══════════════════════════════════════
 let mrzStream=null;
-function startMRZCamera(){
-  const wrap=document.getElementById('mrz-camera-wrap');
-  const video=document.getElementById('mrz-video');
-  if(!wrap||!video) return;
-  if(!navigator.mediaDevices?.getUserMedia){ showErr('Fotocamera non disponibile su questo browser'); return; }
-  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}})
-    .then(stream=>{
-      mrzStream=stream;
-      video.srcObject=stream;
-      wrap.style.display='block';
-      document.getElementById('mrz-manual-wrap').style.display='none';
-      document.getElementById('mrz-ocr-status').textContent='Inquadra la riga MRZ del documento...';
-    })
-    .catch(err=>{ showErr('Impossibile accedere alla fotocamera: '+err.message); });
-}
-function stopMRZCamera(){
-  if(mrzStream){ mrzStream.getTracks().forEach(t=>t.stop()); mrzStream=null; }
-  const wrap=document.getElementById('mrz-camera-wrap');
-  if(wrap) wrap.style.display='none';
-}
-function captureMRZFrame(){
-  const video=document.getElementById('mrz-video');
-  const canvas=document.getElementById('mrz-canvas');
-  if(!video||!canvas) return;
-  canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-  canvas.getContext('2d').drawImage(video,0,0);
-  const status=document.getElementById('mrz-ocr-status');
-  if(status) status.textContent='📸 Immagine acquisita. Analisi in corso...';
-  // Convert to data URL for manual extraction
-  const dataUrl=canvas.toDataURL('image/jpeg',0.85);
-  stopMRZCamera();
-  // Show the image and prompt user to enter MRZ manually if OCR not available
-  toggleMRZManual();
-  if(status) status.textContent='';
-  const res=document.getElementById('mrz-result');
-  if(res) res.innerHTML='📸 Immagine acquisita. <strong>Incolla manualmente le righe MRZ</strong> dal documento qui sotto (riga di caratteri < sul retro):';
-  // Try to show thumbnail
-  const thumb=document.createElement('img');
-  thumb.src=dataUrl; thumb.style.cssText='width:100%;border-radius:6px;margin:0.5rem 0;max-height:120px;object-fit:cover;';
-  const manual=document.getElementById('mrz-manual-wrap');
-  if(manual) manual.prepend(thumb);
-}
-function toggleMRZManual(){
-  const manual=document.getElementById('mrz-manual-wrap');
-  const camera=document.getElementById('mrz-camera-wrap');
-  if(!manual) return;
-  const isVisible=manual.style.display!=='none';
-  manual.style.display=isVisible?'none':'block';
-  if(camera&&camera.style.display!=='none') stopMRZCamera();
+// ═══════════════════════════════════════
+//  DOCUMENT SCANNER — Fronte + Retro CIE / Passaporto
+// ═══════════════════════════════════════
+
+let _docStream    = null;
+let _docScanLoop  = null;
+let _scanMode     = 'front'; // 'front' | 'back'
+let _docType      = 'CI_EL'; // current doc type for active guest
+
+// ── Image pre-processing for OCR ──
+function preprocessForOCR(srcCanvas, mode){
+  // mode: 'text' for front (normal text), 'mrz' for MRZ zone
+  const dst = document.createElement('canvas');
+  const scale = mode === 'mrz' ? 2.5 : 2.0; // upscale for OCR
+  dst.width  = srcCanvas.width  * scale;
+  dst.height = srcCanvas.height * scale;
+  const ctx = dst.getContext('2d');
+
+  // Upscale with smoothing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(srcCanvas, 0, 0, dst.width, dst.height);
+
+  // Apply contrast + grayscale
+  const imgData = ctx.getImageData(0, 0, dst.width, dst.height);
+  const d = imgData.data;
+  for(let i = 0; i < d.length; i += 4){
+    // Grayscale
+    let g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+    // Contrast stretch + slight sharpen
+    g = Math.min(255, Math.max(0, (g - 128) * 1.6 + 128));
+    if(mode === 'mrz'){
+      // For MRZ: hard threshold
+      g = g > 140 ? 255 : 0;
+    } else {
+      // For text: softer threshold
+      g = g > 160 ? 255 : Math.max(0, g - 40);
+    }
+    d[i] = d[i+1] = d[i+2] = g;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return dst;
 }
 
-function parseMRZ(){
-  const raw=document.getElementById('mrz-input')?.value?.trim()||'';
-  const lines=raw.split('\n').map(l=>l.trim().replace(/\s/g,''));
-  const res=document.getElementById('mrz-result');
-  const idx=parseInt(document.getElementById('mrz-target')?.value||'0');
+// ── Extract document region from full frame ──
+function cropDocumentRegion(video, canvas, zone){
+  // zone: 'full' | 'top70' (residenza area) | 'bottom30' (MRZ) | 'front'
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if(!vw || !vh) return null;
+
+  // The anchor covers ~88% W x 68% H centered
+  const anchorX = vw * 0.06;
+  const anchorY = vh * 0.16;
+  const anchorW = vw * 0.88;
+  const anchorH = vh * 0.68;
+
+  let cropX = anchorX, cropY = anchorY, cropW = anchorW, cropH = anchorH;
+  if(zone === 'top70'){
+    cropH = anchorH * 0.72;
+  } else if(zone === 'bottom30'){
+    cropY = anchorY + anchorH * 0.70;
+    cropH = anchorH * 0.30;
+  }
+
+  canvas.width  = cropW;
+  canvas.height = cropH;
+  canvas.getContext('2d').drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+  return canvas;
+}
+
+// ── Clean OCR text line ──
+function cleanLine(s){ return s.replace(/[^a-zA-Z\u00C0-\u024F\s''-]/g,'').replace(/\s+/g,' ').trim(); }
+function cleanDate(s){
+  // Try to find DD/MM/YYYY or DD.MM.YYYY
+  const m = s.match(/(\d{1,2})[\/.\-\s](\d{1,2})[\/.\-\s](\d{2,4})/);
+  if(!m) return '';
+  const d = m[1].padStart(2,'0'), mo = m[2].padStart(2,'0');
+  const y = m[3].length===2 ? (parseInt(m[3])>30?'19'+m[3]:'20'+m[3]) : m[3];
+  return `${y}-${mo}-${d}`;
+}
+function cleanCity(s){
+  return s.replace(/[^a-zA-Z\u00C0-\u024F\s''-]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+}
+
+// ── Parse FRONT of CIE ──
+function parseFrontCIE(text, guestIdx){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>2);
+  const result = {};
+
+  // Strategy: look for labeled fields
+  const fullText = lines.join(' ').toUpperCase();
+
+  // COGNOME — usually after "COGNOME" label or first prominent line
+  const cogMatch = fullText.match(/COGNOME[:\s]+([A-Z\u00C0-\u024F]+(?:\s+[A-Z\u00C0-\u024F]+)?)/);
+  if(cogMatch) result.cognome = cogMatch[1].trim();
+
+  // NOME
+  const nomeMatch = fullText.match(/NOME[:\s]+([A-Z\u00C0-\u024F]+(?:\s+[A-Z\u00C0-\u024F]+)?)/);
+  if(nomeMatch) result.nome = nomeMatch[1].trim();
+
+  // DATA DI NASCITA
+  const nascMatch = fullText.match(/NASC[A-Z]*[:\s]+(\d{1,2}[\/.\s]\d{1,2}[\/.\s]\d{2,4})/);
+  if(nascMatch) result.nascita = cleanDate(nascMatch[1]);
+  // Also try raw date pattern if label not found
+  if(!result.nascita){
+    const dateM = text.match(/(\d{2}[\/.\-]\d{2}[\/.\-]\d{4})/);
+    if(dateM) result.nascita = cleanDate(dateM[1]);
+  }
+
+  // LUOGO DI NASCITA
+  const luogoMatch = fullText.match(/LUOGO DI NASC[A-Z]*[:\s]+([A-Z\u00C0-\u024F\s]+)/);
+  if(luogoMatch) result.luogo = cleanCity(luogoMatch[1].split(/\d/)[0]);
+
+  // SESSO
+  if(fullText.includes(' M ') || fullText.match(/\bM\b/)) result.sesso = 'M';
+  if(fullText.includes(' F ') || fullText.match(/SESSO[:\s]+F/)) result.sesso = 'F';
+
+  // SCADENZA
+  const scadMatch = fullText.match(/SCAD[A-Z]*[:\s]+(\d{1,2}[\/.\s]\d{1,2}[\/.\s]\d{2,4})/);
+  if(scadMatch) result.scad = cleanDate(scadMatch[1]);
+
+  return result;
+}
+
+// ── Parse BACK of CIE (upper zone — residenza) ──
+function parseBackCIEUpper(text, guestIdx){
+  const fullText = text.toUpperCase();
+  const result  = {};
+
+  // INDIRIZZO / VIA
+  const viaMatch = fullText.match(/(VIA|VIALE|PIAZZA|CORSO|LARGO|VICOLO|STRADA)[:\s]+([A-Z0-9\u00C0-\u024F\s]+\d+)/i);
+  if(viaMatch){
+    const parts = viaMatch[0].match(/(VIA|VIALE|PIAZZA|CORSO|LARGO|VICOLO|STRADA)[:\s]+(.*?)(\d+)/i);
+    if(parts){
+      result.via    = (viaMatch[1]+' '+parts[2]).trim().replace(/\s+/g,' ');
+      result.civico = parts[3].trim();
+    }
+  }
+
+  // COMUNE
+  const comMatch = fullText.match(/COMUNE[:\s]+([A-Z\u00C0-\u024F\s]+)/);
+  if(comMatch) result.comune = cleanCity(comMatch[1].split(/\n|\d/)[0]);
+
+  // PROVINCIA (2 lettere in parentesi o dopo comune)
+  const provMatch = text.match(/\(([A-Z]{2})\)/);
+  if(provMatch) result.provres = provMatch[1];
+
+  return result;
+}
+
+// ── Apply extracted data to form ──
+function applyToForm(data, guestIdx){
+  const set = (field, val) => {
+    if(!val) return;
+    const el = document.getElementById(`g${guestIdx}-${field}`);
+    if(el && el.value === '') el.value = val; // don't overwrite existing
+  };
+  const setForce = (field, val) => {
+    if(!val) return;
+    const el = document.getElementById(`g${guestIdx}-${field}`);
+    if(el) el.value = val;
+  };
+
+  if(data.cognome) setForce('cognome', capitalize(data.cognome));
+  if(data.nome)    setForce('nome',    capitalize(data.nome));
+  if(data.nascita) setForce('nascita', data.nascita);
+  if(data.luogo)   setForce('luogo',   capitalize(data.luogo));
+  if(data.sesso)   setForce('sesso',   data.sesso);
+  if(data.scad)    setForce('scad',    data.scad);
+  if(data.numdoc)  setForce('numdoc',  data.numdoc);
+  if(data.cit)     updateCitizenshipField(guestIdx, data.cit);
+  if(data.via)     set('via',    capitalize(data.via));
+  if(data.civico)  set('civico', data.civico);
+  if(data.comune)  set('comune', capitalize(data.comune));
+  if(data.provres) set('provres', data.provres.toUpperCase());
+}
+
+function capitalize(s){
+  return s.toLowerCase().replace(/(?:^|\s|-|')[a-z\u00c0-\u024f]/g, c=>c.toUpperCase());
+}
+
+function updateCitizenshipField(idx, isoCode){
+  const natMap={ITA:'Italiana',DEU:'Tedesca',FRA:'Francese',ESP:'Spagnola',GBR:'Inglese',
+    USA:'Americana',CHE:'Svizzera',AUT:'Austriaca',NLD:'Olandese',BEL:'Belga',
+    PRT:'Portoghese',GRC:'Greca',SWE:'Svedese',NOR:'Norvegese',DNK:'Danese',
+    FIN:'Finlandese',POL:'Polacca',CZE:'Ceca',HUN:'Ungherese',ROU:'Rumena',
+    RUS:'Russa',UKR:'Ucraina',TUR:'Turca',CHN:'Cinese',JPN:'Giapponese',
+    KOR:'Coreana',IND:'Indiana',AUS:'Australiana',BRA:'Brasiliana',ARG:'Argentina',
+    CAN:'Canadese',MEX:'Messicana',ZAF:'Sudafricana',ISR:'Israeliana',
+  };
+  const nat = natMap[isoCode]||isoCode;
+  const sel = document.getElementById(`g${idx}-cit-sel`);
+  const txt = document.getElementById(`g${idx}-cit`);
+  if(sel){ const opts=Array.from(sel.options).map(o=>o.value); sel.value=opts.includes(nat)?nat:''; }
+  if(txt) txt.value = nat;
+  if(typeof updateForeignVisibility==='function') updateForeignVisibility(idx);
+}
+
+// ── Scan mode UI ──
+function setScanMode(mode){
+  _scanMode = mode;
+  const tabFront  = document.getElementById('tab-front');
+  const tabBack   = document.getElementById('tab-back');
+  const instr     = document.getElementById('scan-instructions');
+  const mrzZone   = document.getElementById('mrz-zone-indicator');
+  const btnManual = document.getElementById('btn-manual-mrz');
+
+  const activeStyle   = 'border:2px solid var(--gold);background:rgba(201,162,84,0.2);color:var(--gold);';
+  const inactiveStyle = 'border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);';
+
+  if(tabFront) tabFront.style.cssText = tabFront.style.cssText.replace(/border[^;]+;/g,'').replace(/background[^;]+;/g,'').replace(/color[^;]+;/g,'') + (mode==='front'?activeStyle:inactiveStyle);
+  if(tabBack)  tabBack.style.cssText  = tabBack.style.cssText.replace(/border[^;]+;/g,'').replace(/background[^;]+;/g,'').replace(/color[^;]+;/g,'')  + (mode==='back' ?activeStyle:inactiveStyle);
+
+  if(instr){
+    instr.innerHTML = mode==='front'
+      ? '📌 <strong>FRONTE:</strong> inquadra il lato con la foto — nome, nascita, scadenza.'
+      : '📌 <strong>RETRO:</strong> inquadra il retro — residenza (zona alta) + MRZ (zona bassa con &lt;&lt;&lt;).';
+  }
+  if(mrzZone) mrzZone.style.display = mode==='back'?'block':'none';
+  if(btnManual) btnManual.style.display = mode==='back'?'flex':'none';
+}
+
+// ── Camera open/close ──
+function startDocCamera(){
+  if(!navigator.mediaDevices?.getUserMedia){ showErr('Fotocamera non disponibile'); return; }
+  const constraints = {
+    video:{
+      facingMode:{ideal:'environment'},
+      width:{ideal:1920}, height:{ideal:1080},
+      focusMode: 'continuous',
+    }
+  };
+  navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
+    _docStream = stream;
+    const video = document.getElementById('doc-video');
+    video.srcObject = stream;
+    document.getElementById('doc-camera-wrap').style.display = 'block';
+    document.getElementById('doc-preview-wrap').style.display = 'none';
+    document.getElementById('btn-capture').style.display = 'block';
+    document.getElementById('btn-stop-cam').style.display = 'block';
+    setScanMode(_scanMode); // refresh UI
+    // Start auto-scan loop
+    video.onloadedmetadata = () => startDocScanLoop();
+  }).catch(err=>{ showErr('Fotocamera: '+err.message); });
+}
+
+function stopDocCamera(){
+  stopDocScanLoop();
+  if(_docStream){ _docStream.getTracks().forEach(t=>t.stop()); _docStream=null; }
+  document.getElementById('doc-camera-wrap').style.display = 'none';
+  document.getElementById('btn-capture').style.display    = 'none';
+  document.getElementById('btn-stop-cam').style.display   = 'none';
+}
+
+// ── Auto-scan loop ──
+function startDocScanLoop(){
+  stopDocScanLoop();
+  let attempts = 0;
+  const MAX = 6;
+  async function attempt(){
+    attempts++;
+    const badge = document.getElementById('doc-scan-badge');
+    if(badge) badge.textContent = `🔍 Analisi automatica ${attempts}/${MAX}...`;
+
+    const video  = document.getElementById('doc-video');
+    const canvas = document.getElementById('doc-canvas');
+    if(!video?.videoWidth) { _docScanLoop=setTimeout(attempt,1500); return; }
+
+    const success = await runOCRScan(video, canvas, false);
+    if(success){
+      stopDocCamera();
+      return;
+    }
+    if(attempts < MAX){
+      _docScanLoop = setTimeout(attempt, 2000);
+    } else {
+      stopDocScanLoop();
+      if(badge) badge.textContent = '⚠️ Premi 📸 manualmente o migliora l\'illuminazione';
+    }
+  }
+  _docScanLoop = setTimeout(attempt, 1800);
+}
+
+function stopDocScanLoop(){
+  if(_docScanLoop){ clearTimeout(_docScanLoop); _docScanLoop=null; }
+}
+
+// ── Manual capture button ──
+async function captureDocFrame(){
+  stopDocScanLoop();
+  const video  = document.getElementById('doc-video');
+  const canvas = document.getElementById('doc-canvas');
+  const badge  = document.getElementById('doc-scan-badge');
+  if(badge) badge.textContent = '📸 Acquisizione in corso...';
+  const ok = await runOCRScan(video, canvas, true);
+  if(!ok && _scanMode==='back'){
+    // Show manual MRZ fallback
+    toggleMRZManual();
+    const res = document.getElementById('mrz-result');
+    if(res) res.innerHTML = '⚠️ OCR non riuscito — incolla le righe MRZ manualmente';
+  }
+  stopDocCamera();
+}
+
+// ── Core OCR scan ──
+async function runOCRScan(video, canvas, isManual){
+  if(typeof Tesseract==='undefined'){
+    showErr('OCR non disponibile — aggiorna la pagina');
+    return false;
+  }
+  const guestIdx = parseInt(document.getElementById('mrz-target')?.value||'0');
+  const res = document.getElementById('mrz-result');
+  if(res) res.innerHTML = '<em style="opacity:0.5">⏳ OCR in corso...</em>';
 
   try{
-    if(lines.length<2||lines[0].length<44||lines[1].length<44){
-      res.textContent='⚠️ MRZ non valido. Incolla le 2 righe complete.'; return;
+    if(_scanMode === 'front'){
+      return await scanFront(video, canvas, guestIdx, isManual);
+    } else {
+      return await scanBack(video, canvas, guestIdx, isManual);
     }
-    const L2=lines[1];
-    const numdoc=L2.slice(0,9).replace(/</g,'');
-    const cit=L2.slice(10,13).replace(/</g,'');
-    const nasc=L2.slice(13,19);
-    const sesso=L2.slice(20,21);
-    const scad=L2.slice(21,27);
-    const dd=y=>`20${y.slice(0,2)}-${y.slice(2,4)}-${y.slice(4,6)}`;
-    const nascDate=parseInt(nasc.slice(0,2))>30?`19${nasc.slice(0,2)}-${nasc.slice(2,4)}-${nasc.slice(4,6)}`:dd(nasc);
-    const scadDate=dd(scad);
-
-    // Name from line 1
-    const L1=lines[0];
-    const nameStr=L1.slice(5).replace(/</g,' ').trim();
-    const nameParts=nameStr.split('  ').map(s=>s.trim());
-    const cognomeMRZ=(nameParts[0]||'').replace(/</g,' ').trim();
-    const nomeMRZ=(nameParts[1]||'').replace(/</g,' ').trim();
-
-    // Set values
-    const setVal=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=val; };
-    setVal(`g${idx}-cognome`,cognomeMRZ);
-    setVal(`g${idx}-nome`,nomeMRZ);
-    setVal(`g${idx}-nascita`,nascDate);
-    setVal(`g${idx}-numdoc`,numdoc);
-    setVal(`g${idx}-scad`,scadDate);
-    setVal(`g${idx}-sesso`,sesso==='F'?'F':'M');
-
-    // Nationality mapping
-    const natMap={ITA:'Italiana',DEU:'Tedesca',FRA:'Francese',ESP:'Spagnola',GBR:'Inglese',
-      USA:'Americana',CHE:'Svizzera',AUT:'Austriaca',NLD:'Olandese',BEL:'Belga',
-      PRT:'Portoghese',GRC:'Greca',SWE:'Svedese',NOR:'Norvegese',DNK:'Danese',
-      FIN:'Finlandese',POL:'Polacca',CZE:'Ceca',HUN:'Ungherese',ROU:'Rumena',
-      RUS:'Russa',UKR:'Ucraina',TUR:'Turca',CHN:'Cinese',JPN:'Giapponese',
-      KOR:'Coreana',IND:'Indiana',AUS:'Australiana',BRA:'Brasiliana',ARG:'Argentina',
-      CAN:'Canadese',MEX:'Messicana',ZAF:'Sudafricana',ISR:'Israeliana',
-    };
-    const natNat=natMap[cit]||cit;
-    // Set both select and text for citizenship combo
-    const citSel=document.getElementById(`g${idx}-cit-sel`);
-    const citTxt=document.getElementById(`g${idx}-cit`);
-    if(citSel){
-      const opts=Array.from(citSel.options).map(o=>o.value);
-      citSel.value=opts.includes(natNat)?natNat:'';
-    }
-    if(citTxt) citTxt.value=natNat;
-    updateForeignVisibility(idx);
-
-    res.textContent=`✅ Dati estratti: ${cognomeMRZ} ${nomeMRZ} · Doc: ${numdoc} · Nascita: ${nascDate}`;
   }catch(e){
-    res.textContent='⚠️ Errore lettura MRZ: '+e.message;
+    console.warn('OCR error:', e);
+    return false;
   }
 }
+
+// ── Scan FRONT ──
+async function scanFront(video, canvas, guestIdx, isManual){
+  // Crop full document region
+  const cropped = cropDocumentRegion(video, canvas, 'front');
+  if(!cropped) return false;
+
+  // Show preview
+  showDocPreview(cropped.toDataURL('image/jpeg',0.85));
+
+  // Pre-process and OCR
+  const processed = preprocessForOCR(cropped, 'text');
+  const result = await Tesseract.recognize(processed, 'ita+eng', {
+    tessedit_pageseg_mode: '6',
+  });
+  const text = result.data.text;
+  console.log('FRONT OCR:', text);
+
+  const data = parseFrontCIE(text, guestIdx);
+  const fieldsFilled = Object.keys(data).length;
+  if(fieldsFilled >= 2 || isManual){
+    applyToForm(data, guestIdx);
+    const res = document.getElementById('mrz-result');
+    if(res){
+      const filled = Object.entries(data).filter(([,v])=>v).map(([k,v])=>`${k}: ${v}`).join(' · ');
+      res.innerHTML = fieldsFilled >= 2
+        ? `<span style="color:#4ade80;">✅ Fronte acquisito: ${filled}</span>`
+        : `<span style="color:orange;">⚠️ Dati parziali: ${filled||'nessuno'} — controlla i campi</span>`;
+    }
+    // Auto-switch to back scan suggestion
+    if(fieldsFilled >= 2){
+      setTimeout(()=>{
+        const res2 = document.getElementById('mrz-result');
+        if(res2) res2.innerHTML += '<br><em style="opacity:0.6;font-size:0.7rem;">👉 Ora scansiona il RETRO per residenza e numero documento</em>';
+      }, 1200);
+    }
+    return fieldsFilled >= 2;
+  }
+  return false;
+}
+
+// ── Scan BACK ──
+async function scanBack(video, canvas, guestIdx, isManual){
+  // Capture full document
+  const fullCanvas = document.createElement('canvas');
+  const cropped = cropDocumentRegion(video, fullCanvas, 'full');
+  if(!cropped) return false;
+
+  showDocPreview(cropped.toDataURL('image/jpeg',0.85));
+
+  // === ZONE 1: Upper 70% — residenza text ===
+  const upperCanvas = document.createElement('canvas');
+  upperCanvas.width  = cropped.width;
+  upperCanvas.height = Math.floor(cropped.height * 0.72);
+  upperCanvas.getContext('2d').drawImage(cropped, 0, 0, cropped.width, upperCanvas.height, 0, 0, cropped.width, upperCanvas.height);
+
+  const processedUpper = preprocessForOCR(upperCanvas, 'text');
+  const upperResult = await Tesseract.recognize(processedUpper, 'ita', {
+    tessedit_pageseg_mode: '6',
+  });
+  const upperText = upperResult.data.text;
+  console.log('BACK UPPER OCR:', upperText);
+
+  // === ZONE 2: Lower 30% — MRZ ===
+  const mrzCanvas = document.createElement('canvas');
+  mrzCanvas.width  = cropped.width;
+  mrzCanvas.height = Math.floor(cropped.height * 0.30);
+  mrzCanvas.getContext('2d').drawImage(
+    cropped, 0, Math.floor(cropped.height * 0.70),
+    cropped.width, mrzCanvas.height,
+    0, 0, cropped.width, mrzCanvas.height
+  );
+
+  const processedMRZ = preprocessForOCR(mrzCanvas, 'mrz');
+  const mrzResult = await Tesseract.recognize(processedMRZ, 'eng', {
+    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+    tessedit_pageseg_mode: '6',
+  });
+  const mrzText = mrzResult.data.text.toUpperCase();
+  console.log('BACK MRZ OCR:', mrzText);
+
+  // Parse residenza
+  const residenza = parseBackCIEUpper(upperText, guestIdx);
+
+  // Parse MRZ
+  const mrzLines = (mrzText.match(/[A-Z0-9<]{30,}/g)||[]).filter(l=>l.includes('<'));
+  let mrzData = {};
+  if(mrzLines.length >= 2){
+    document.getElementById('mrz-input').value = mrzLines[0]+'\n'+mrzLines[1];
+    mrzData = extractMRZData(mrzLines[0], mrzLines[1]);
+  }
+
+  // Merge and apply
+  const allData = {...mrzData, ...residenza};
+  const fieldsFilled = Object.keys(allData).filter(k=>allData[k]).length;
+
+  if(fieldsFilled >= 1 || isManual){
+    applyToForm(allData, guestIdx);
+    const res = document.getElementById('mrz-result');
+    if(res){
+      const parts = [];
+      if(Object.keys(mrzData).length) parts.push(`MRZ ✅`);
+      if(Object.keys(residenza).length) parts.push(`Residenza ✅`);
+      res.innerHTML = fieldsFilled >= 2
+        ? `<span style="color:#4ade80;">✅ Retro acquisito: ${parts.join(' · ')}</span>`
+        : `<span style="color:orange;">⚠️ Dati parziali — verifica i campi</span>`;
+    }
+    return fieldsFilled >= 2;
+  }
+
+  // If MRZ failed, offer manual
+  if(isManual){
+    toggleMRZManual();
+    const res = document.getElementById('mrz-result');
+    if(res) res.innerHTML = '⚠️ MRZ non letto — incolla manualmente le righe qui sotto';
+  }
+  return false;
+}
+
+// ── Extract data from MRZ lines ──
+function extractMRZData(L1, L2){
+  try{
+    const data = {};
+    // L2: numdoc[0-8] check[9] cit[10-12] nascita[13-18] check[19] sesso[20] scad[21-26] check[27]
+    data.numdoc = L2.slice(0,9).replace(/</g,'');
+    data.cit    = L2.slice(10,13).replace(/</g,'');
+    const nasc  = L2.slice(13,19);
+    const scad  = L2.slice(21,27);
+    const fmtY  = y => parseInt(y.slice(0,2))>30?'19'+y.slice(0,2):'20'+y.slice(0,2);
+    data.nascita = `${fmtY(nasc)}-${nasc.slice(2,4)}-${nasc.slice(4,6)}`;
+    data.scad    = `20${scad.slice(0,2)}-${scad.slice(2,4)}-${scad.slice(4,6)}`;
+    data.sesso   = L2.slice(20,21)==='F'?'F':'M';
+    // Name from L1 (type P or ID)
+    const nameStr = (L1.length>5?L1.slice(L1[1]==='<'?5:5):'').replace(/</g,' ').trim();
+    const nameParts = nameStr.split('  ').map(s=>s.trim().replace(/<$/,'').trim());
+    if(nameParts[0]) data.cognome = nameParts[0].replace(/</g,' ').trim();
+    if(nameParts[1]) data.nome    = nameParts[1].replace(/</g,' ').trim();
+    return data;
+  }catch(e){ return {}; }
+}
+
+// ── Show document preview ──
+function showDocPreview(dataUrl){
+  const wrap = document.getElementById('doc-preview-wrap');
+  const img  = document.getElementById('doc-preview-img');
+  if(wrap && img){ img.src=dataUrl; wrap.style.display='block'; }
+}
+
+// ── Toggle manual MRZ input ──
+function toggleMRZManual(){
+  const manual = document.getElementById('mrz-manual-wrap');
+  const cameraWrap = document.getElementById('doc-camera-wrap');
+  if(manual){
+    const show = manual.style.display==='none'||!manual.style.display;
+    manual.style.display = show?'block':'none';
+  }
+}
+
+// ── Called when doc type changes ──
+function onTipdocChange(guestIdx, val){
+  _docType = val;
+  const mrzBox = document.getElementById('mrz-box-top');
+  const showScanner = (val==='PASS'||val==='CI_EL');
+  if(mrzBox) mrzBox.style.display = showScanner?'block':'none';
+  if(!showScanner) stopDocCamera();
+  // For passport: only back scan makes sense
+  if(val==='PASS'){
+    setScanMode('back');
+    // Hide front tab
+    const tabFront = document.getElementById('tab-front');
+    if(tabFront) tabFront.style.display='none';
+  } else {
+    const tabFront = document.getElementById('tab-front');
+    if(tabFront) tabFront.style.display='block';
+    setScanMode('front');
+  }
+}
+
+// ── parseMRZ (manual input fallback) ──
+function parseMRZ(){
+  const raw   = document.getElementById('mrz-input')?.value?.trim()||'';
+  const lines = raw.split('\n').map(l=>l.trim().replace(/\s/g,''));
+  const res   = document.getElementById('mrz-result');
+  const idx   = parseInt(document.getElementById('mrz-target')?.value||'0');
+  try{
+    if(lines.length<2||lines[0].length<44||lines[1].length<44){
+      if(res) res.textContent='⚠️ MRZ non valido. Servono 2 righe da 44+ caratteri.';
+      return;
+    }
+    const data = extractMRZData(lines[0], lines[1]);
+    applyToForm(data, idx);
+    if(res) res.innerHTML=`<span style="color:#4ade80;">✅ MRZ letto: ${data.cognome||''} ${data.nome||''} · Doc: ${data.numdoc||''}</span>`;
+  }catch(e){
+    if(res) res.textContent='⚠️ Errore lettura MRZ: '+e.message;
+  }
+}
+
+// Compat alias
+function startMRZCamera(){ setScanMode('back'); startDocCamera(); }
+function stopMRZCamera(){  stopDocCamera(); }
+
+
 
 // ═══════════════════════════════════════
 //  ADMIN
