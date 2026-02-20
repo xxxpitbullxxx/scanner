@@ -1371,13 +1371,15 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
         </select>
         <button class="save-btn" onclick="exportCSV()" style="font-size:0.75rem;">⬇ CSV</button>
         <button class="save-btn" onclick="exportAlloggiati()" style="font-size:0.75rem;background:var(--blue);">📋 Alloggiati TXT</button>
+        <button class="save-btn" onclick="deleteSelected()" style="font-size:0.75rem;background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);color:#fca5a5;">🗑️ Elimina selezionati</button>
       </div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
+            <th><input type="checkbox" id="sel-all" onchange="selectAllGuests(this.checked)" style="cursor:pointer;"></th>
             <th>Data/Ora</th><th>Struttura</th><th>Cognome</th><th>Nome</th>
             <th>Nascita</th><th>Cittad.</th><th>Documento</th>
-            <th>Verifica</th><th>Ospiti</th><th>Gruppo</th><th>Azioni</th>
+            <th>Verifica</th><th>Ospiti</th><th>Azioni</th>
           </tr></thead>
           <tbody id="guests-tbody"></tbody>
         </table>
@@ -1479,7 +1481,7 @@ Num doc: 20 | Luogo rilascio: 9 | Data arrivo: 8 | Permanenza: 4
         </div>
           <div style="margin-top:0.8rem;border-top:1px solid rgba(255,255,255,0.1);padding-top:0.8rem;">
             <button id="btn-tuya-unlock" onclick="tuyaRemoteUnlock()" style="width:100%;background:rgba(201,162,84,0.15);border:1.5px solid rgba(201,162,84,0.5);color:var(--gold);padding:0.7rem;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;font-size:0.85rem;font-weight:600;">
-              🔓 Mostra PIN Porta
+              🔓 Apri Porta 5 sec
             </button>
             <div id="tuya-pin-display" style="display:none;margin-top:0.7rem;background:rgba(0,0,0,0.3);border:1.5px solid rgba(201,162,84,0.4);border-radius:8px;padding:0.8rem;text-align:center;">
               <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);margin-bottom:0.3rem;">PIN SERRATURA LOVE NEST</div>
@@ -3406,17 +3408,30 @@ async function generateTuyaPin(entry){
 
 // ── Remote unlock (open door for 5 seconds) ──
 async function tuyaRemoteUnlock(){
-  const pin = (DB.settings.lovenest?.manualPin || '').trim();
-  if(!pin){
-    showErr('⚙️ Nessun PIN salvato — vai in Impostazioni → Maniglia Love Nest e inserisci il PIN Tuya');
+  const url = (DB.settings.tuyaFuncUrl || '').trim();
+  const btn = document.getElementById('btn-tuya-unlock');
+  if(!url){
+    showErr('⚙️ URL Firebase Function non configurato — vai in Impostazioni → Tuya');
     return;
   }
-  const display = document.getElementById('tuya-pin-display');
-  const valEl   = document.getElementById('tuya-pin-val');
-  const btn     = document.getElementById('btn-tuya-unlock');
-  if(valEl) valEl.textContent = pin;
-  if(display) display.style.display = 'block';
-  if(btn) btn.textContent = '✅ PIN mostrato — digita sulla serratura';
+  if(btn){ btn.textContent = '⏳ Apertura in corso...'; btn.disabled = true; }
+  try{
+    const res = await fetch(url + '/unlock', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if(data.success){
+      if(btn){ btn.textContent = '✅ Porta aperta! (5 sec)'; }
+      setTimeout(()=>{ if(btn){ btn.textContent = '🔓 Apri Porta 5 sec'; btn.disabled=false; } }, 8000);
+    } else {
+      throw new Error(data.error || 'Risposta negativa dal server');
+    }
+  } catch(e){
+    showErr('❌ Errore apertura porta: ' + e.message);
+    if(btn){ btn.textContent = '🔓 Apri Porta 5 sec'; btn.disabled = false; }
+  }
 }
 
 function copyPin(){
@@ -4506,8 +4521,9 @@ function renderDashboard(){
   }
 }
 
-// ── Guest list ──
-function renderGuests(){
+// ── Guest list (also aliased as renderTable for filter bar) ──
+function renderGuests(){ renderTable(); }
+function renderTable(){
   const prop   = document.getElementById('fil-prop')?.value   || '';
   const search = (document.getElementById('fil-search')?.value || '').toLowerCase();
   const status = document.getElementById('fil-status')?.value  || '';
@@ -4520,36 +4536,124 @@ function renderGuests(){
     (g.main?.nome||'').toLowerCase().includes(search) ||
     (g.groupCode||'').toLowerCase().includes(search)
   );
-  if(status === 'active')   guests = guests.filter(g => g.arrivo <= today && g.partenza > today);
-  if(status === 'checkedout') guests = guests.filter(g => g.checkedOut);
-  if(status === 'pending')  guests = guests.filter(g => !g.checkedOut);
+  if(status === 'active') guests = guests.filter(g => g.arrivo <= today && g.partenza > today);
+  if(status === 'out')    guests = guests.filter(g => g.checkedOut);
 
   guests = [...guests].sort((a,b) => (b.arrivo||'').localeCompare(a.arrivo||''));
 
   const tbody = document.getElementById('guests-tbody');
   if(!tbody) return;
   if(guests.length === 0){
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">Nessun ospite</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:2rem;">Nessun ospite</td></tr>';
     return;
   }
   tbody.innerHTML = guests.map(g => `
-    <tr style="font-size:0.8rem;border-bottom:1px solid #f0ebe0;">
-      <td style="padding:0.5rem 0.8rem;font-weight:600">${g.main?.cognome||'?'} ${g.main?.nome||''}</td>
-      <td style="padding:0.5rem 0.8rem">${g.property==='lovenest'?'❤️ Love Nest':'🐢 Tartaruga'}</td>
-      <td style="padding:0.5rem 0.8rem">${g.arrivo||'?'}</td>
-      <td style="padding:0.5rem 0.8rem">${g.partenza||'?'}</td>
-      <td style="padding:0.5rem 0.8rem">${g.totalGuests||1}</td>
-      <td style="padding:0.5rem 0.8rem">
-        <span style="background:${g.checkedOut?'#e8f5e9':'#fff8e1'};color:${g.checkedOut?'#388e3c':'#f57f17'};padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600;">
-          ${g.checkedOut ? '✓ Out' : '● In'}
-        </span>
-      </td>
-      <td style="padding:0.5rem 0.8rem">
-        <button onclick="adminViewGuest('${g.id}')" style="background:var(--teal);color:white;border:none;padding:3px 10px;border-radius:5px;font-size:0.7rem;cursor:pointer;">Dettagli</button>
-        ${g.tuyaPin ? `<span style="margin-left:0.4rem;font-size:0.7rem;color:var(--gold)">🔑 ${g.tuyaPin}</span>` : ''}
+    <tr style="font-size:0.79rem;border-bottom:1px solid #f0ebe0;" id="row-${g.id}">
+      <td style="padding:0.4rem 0.6rem;"><input type="checkbox" class="guest-chk" value="${g.id}" style="cursor:pointer;"></td>
+      <td style="padding:0.4rem 0.6rem;white-space:nowrap">${(g.timestamp||g.arrivo||'').slice(0,16).replace('T',' ')}</td>
+      <td style="padding:0.4rem 0.6rem">${g.property==='lovenest'?'❤️ LN':'🐢 TT'}</td>
+      <td style="padding:0.4rem 0.6rem;font-weight:600">${g.main?.cognome||'?'}</td>
+      <td style="padding:0.4rem 0.6rem">${g.main?.nome||'?'}</td>
+      <td style="padding:0.4rem 0.6rem;white-space:nowrap">${g.main?.nascita||''}</td>
+      <td style="padding:0.4rem 0.6rem">${g.main?.cittadinanza||g.main?.cit||''}</td>
+      <td style="padding:0.4rem 0.6rem;font-family:monospace">${g.main?.numdoc||''}</td>
+      <td style="padding:0.4rem 0.6rem">${g.verifyMethod||''}</td>
+      <td style="padding:0.4rem 0.6rem;text-align:center">${g.totalGuests||1}</td>
+      <td style="padding:0.4rem 0.6rem;white-space:nowrap">
+        <button onclick="editGuest('${g.id}')" style="background:var(--teal);color:white;border:none;padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;margin-right:2px;">✏️ Modifica</button>
+        <button onclick="deleteGuest('${g.id}')" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;">🗑️</button>
+        ${g.tuyaPin ? `<span style="margin-left:3px;font-size:0.7rem;color:var(--gold)">🔑${g.tuyaPin}</span>` : ''}
       </td>
     </tr>
   `).join('');
+}
+
+function selectAllGuests(checked){
+  document.querySelectorAll('.guest-chk').forEach(cb => cb.checked = checked);
+}
+
+function deleteSelected(){
+  const selected = [...document.querySelectorAll('.guest-chk:checked')].map(cb => cb.value);
+  if(selected.length === 0){ alert('Seleziona almeno un ospite'); return; }
+  if(!confirm(`Eliminare ${selected.length} ospite/i selezionati? Questa azione è irreversibile.`)) return;
+  selected.forEach(id => {
+    DB.guests = DB.guests.filter(g => g.id !== id);
+    // Delete from Firebase too
+    const g = DB.guests.find(x => x.id === id);
+    if(g?._firebaseId && window._fb){
+      const year = g._firebaseYear || new Date().getFullYear().toString();
+      window._fb.db.collection('checkins').doc(year).collection('guests').doc(g._firebaseId).delete().catch(()=>{});
+    }
+  });
+  dbSave();
+  renderTable();
+  renderDashboard();
+}
+
+function deleteGuest(id){
+  const g = DB.guests.find(x => x.id === id);
+  const name = g ? `${g.main?.cognome||''} ${g.main?.nome||''}`.trim() : id;
+  if(!confirm(`Eliminare ${name}? Questa azione è irreversibile.`)) return;
+  // Delete from Firebase
+  if(g?._firebaseId && window._fb){
+    const year = g._firebaseYear || new Date().getFullYear().toString();
+    window._fb.db.collection('checkins').doc(year).collection('guests').doc(g._firebaseId).delete().catch(()=>{});
+  }
+  DB.guests = DB.guests.filter(x => x.id !== id);
+  dbSave();
+  renderTable();
+  renderDashboard();
+}
+
+function editGuest(id){
+  const g = DB.guests.find(x => x.id === id);
+  if(!g) return;
+  const m = g.main || {};
+  // Simple modal-style prompt editing
+  const cognome  = prompt('Cognome:', m.cognome||'');
+  if(cognome === null) return;
+  const nome     = prompt('Nome:', m.nome||'');
+  if(nome === null) return;
+  const nascita  = prompt('Data nascita (YYYY-MM-DD):', m.nascita||'');
+  if(nascita === null) return;
+  const numdoc   = prompt('Numero documento:', m.numdoc||'');
+  if(numdoc === null) return;
+  const arrivo   = prompt('Data arrivo (YYYY-MM-DD):', g.arrivo||'');
+  if(arrivo === null) return;
+  const partenza = prompt('Data partenza (YYYY-MM-DD):', g.partenza||'');
+  if(partenza === null) return;
+
+  g.main = { ...m, cognome, nome, nascita, numdoc };
+  g.arrivo   = arrivo;
+  g.partenza = partenza;
+  dbSaveGuest(g);
+  renderTable();
+  renderDashboard();
+  alert('✅ Ospite aggiornato');
+}
+
+function resetLocalDB(){
+  const pin = document.getElementById('pin-cur')?.value || '';
+  const correctPin = DB.settings.resetPin || '1234';
+  if(pin !== correctPin){ alert('❌ PIN errato'); return; }
+  if(!confirm('Cancellare tutti i check-in dal database locale? I dati su Firebase rimangono intatti.')) return;
+  DB.guests = [];
+  DB.notifs = [];
+  dbSave();
+  renderTable();
+  renderDashboard();
+  const ok = document.getElementById('sok-pin');
+  if(ok){ ok.style.opacity='1'; setTimeout(()=>{ok.style.opacity='0';},2500); }
+  document.getElementById('pin-cur').value = '';
+}
+
+function changePin(){
+  const newPin = document.getElementById('pin-new')?.value || '';
+  if(newPin.length < 4){ alert('Il PIN deve essere di almeno 4 cifre'); return; }
+  DB.settings.resetPin = newPin;
+  dbSave();
+  alert('✅ PIN aggiornato');
+  document.getElementById('pin-new').value = '';
 }
 
 function adminViewGuest(id){
