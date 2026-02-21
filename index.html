@@ -1583,11 +1583,11 @@ Num doc: 20 | Luogo rilascio: 9 | Data arrivo: 8 | Permanenza: 4
         <div class="set-card">
           <h3>🗝️ Keybox La Tartaruga</h3>
           <div class="sf">
-            <label>Codice Keybox (4 cifre)</label>
-            <input type="text" id="tt-keybox-code" placeholder="1572" maxlength="6" style="font-family:monospace;font-size:1.4rem;letter-spacing:.2em;text-align:center;">
+            <label>Codice Keybox (solo numeri)</label>
+            <input type="text" id="tt-keybox-code" placeholder="1572" maxlength="6" inputmode="numeric" pattern="[0-9]*" style="font-family:monospace;font-size:1.4rem;letter-spacing:.2em;text-align:center;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
           </div>
           <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin:0.3rem 0 0.6rem;">
-            Questo codice viene mostrato agli ospiti di La Tartaruga nella sala d'attesa.
+            Solo numeri — il sistema mostra il codice agli ospiti nella sala d'attesa con le istruzioni per aprire la keybox.
           </div>
           <button class="save-btn" onclick="saveSet('tt-keybox')">Salva Codice</button>
           <div class="save-ok" id="sok-tt-keybox">✓ Salvato</div>
@@ -2028,223 +2028,356 @@ de:{
 
 function tr(k){ return T[S.lang]?.[k] || T.it[k] || k; }
 
-// Contracts in all 5 languages
+// Contracts in all 5 languages — full bilingual text
 const CONTRACTS = {
-it:(p,arr,par,nome,cog,tipdoc,numdoc)=>`CONTRATTO DI LOCAZIONE TURISTICA
-Art. 1 comma 2 lett. c, L. 431/1998 – Art. 109 TULPS – L.R. Toscana 86/2016
 
-LOCATORE: Giulia Betti, nata a Siena il 15 dicembre 1972, C.F. BTTGLI72T55I726O
+it:(p,arr,par,nome,cog,tipdoc,numdoc,signDateTime)=>{
+const isLN = p==='lovenest';
+const prop = PROPS[p];
+return `CONTRATTO DI LOCAZIONE TURISTICA
+Art. 1, comma 2 lett. c, L. 431/1998 – Art. 109 TULPS – L.R. Toscana 86/2016
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LOCATORE: Giulia Betti, nata a Siena il 15/12/1972, C.F. BTTGLI72T55I726O
 
 CONDUTTORE: ${nome} ${cog}
 Documento: ${tipdoc} n. ${numdoc}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 1. OGGETTO
-Il Locatore concede in locazione l'immobile "${PROPS[p].name}" sito in ${PROPS[p].address}.
-Dati Catastali: ${PROPS[p].catasto}
-CIN: ${PROPS[p].cin} | CIR: ${PROPS[p].cir}
+Il Locatore concede in locazione l'immobile "${prop.name}" sito in ${prop.address}.
+Dati Catastali: ${prop.catasto}
+CIN: ${prop.cin} | CIR: ${prop.cir}
 
 2. PERIODO
 Dal: ${arr} (dalle ore 15:00)
-Al: ${par} (entro le ore 10:00)
+Al:  ${par} (entro le ore 10:00)
 
 3. USO E RICONSEGNA
-L'immobile è concesso esclusivamente per finalità turistiche. Il Conduttore si impegna a riconsegnarlo pulito e nelle stesse condizioni.
+L'immobile e' concesso esclusivamente per finalita' turistiche. Il Conduttore si impegna a riconsegnare l'immobile pulito, ordinato e nel medesimo stato in cui lo ha ricevuto.
 
 4. REGOLAMENTO INTERNO
 
-CHECK-IN: 15:00–18:00. Chiamare 15 minuti prima. ${p==='lovenest'?'Dopo le 18:00: self check-in con codice maniglia.':'Dopo le 18:00: self check-in con keybox.'}
+CHECK-IN
+• Orario: 15:00 - 18:00
+• In presenza: solo su richiesta anticipata — chiamare 15 minuti prima dell'arrivo
+• Dalle 18:00: self check-in ${isLN ? 'con codice maniglia elettronica' : 'con keybox'}
+• OBBLIGATORIO: documento d'identita' valido
 
-CHECK-OUT: 8:00–10:00 (max 10:15). Oltre le 10:15: penale giornata intera. Stoviglie sporche: penale €30. ${p==='lovenest'?'Lasciare chiave dove trovata.':'Lasciare chiavi sul tavolo cucina.'} Spegnere luci ed elettrodomestici.
+CHECK-OUT
+• Orario: 8:00 - 10:00 (max 10:15)
+• ATTENZIONE Oltre le 10:15: penale pari a una giornata intera
+• ATTENZIONE Stoviglie sporche: penale €30,00
+• ${isLN ? 'Lasciare la chiave dove trovata' : 'Lasciare le chiavi sul tavolo della cucina'}
+• Spegnere luci ed elettrodomestici
 
-SILENZIO: 23:00–8:00
+SILENZIO: 23:00 - 8:00
 
-FUMO: Vietato all'interno. ${p==='lovenest'?'Consentito solo nel resede (usare i portacenere).':'Consentito solo sui balconi (usare portacenere, NON buttare cicche!).'} E-cig/IQOS: consentiti dentro (uso moderato).
+FUMO
+• Sigarette: VIETATE all'interno
+• ${isLN ? 'Consentite solo nel resede (usare i 2 portacenere)' : 'Consentite solo sui balconi — usare portacenere, NON buttare cicche!'}
+• E-cig/IQOS: consentiti all'interno (uso moderato)
 
-OSPITI: Vietati ospiti non registrati e feste.
+OSPITI: ospiti non registrati e feste VIETATI
 
-ANIMALI: Ammessi. Eventuali danni saranno addebitati.
+ANIMALI: ammessi — eventuali danni saranno addebitati
 
-PULIZIE: Incluse a fine soggiorno. Cambio biancheria gratuito ogni 7 giorni.
+PULIZIE: incluse a fine soggiorno — cambio biancheria gratuito ogni 7 giorni
 
-MINIBAR: Segnalare al check-out. Pagamento solo contanti.
+MINIBAR: segnalare al check-out — pagamento SOLO in contanti
 
-5. NORMATIVA E PRIVACY
-Il Locatore provvederà alla comunicazione dei dati alla Questura tramite Alloggiati Web (Art. 109 TULPS). I dati saranno trattati ai sensi del GDPR 679/2016 esclusivamente per obblighi di legge.
+5. NORME DI LEGGE E PRIVACY
+Il Locatore provvedera' alla comunicazione dei dati degli ospiti alla Questura tramite il portale Alloggiati Web (Art. 109 TULPS). I dati saranno trattati esclusivamente per obblighi di legge ai sensi del GDPR 679/2016 e conservati per il tempo strettamente necessario. Per quanto non previsto si rimanda agli Art. 1571 e seg. del Codice Civile.
 
-Firma del Locatore: Giulia Betti`,
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-en:(p,arr,par,nome,cog,tipdoc,numdoc)=>`TOURIST LEASE AGREEMENT
-Art. 1 para. 2 let. c, L. 431/1998 – Art. 109 TULPS – Regional Law Tuscany 86/2016
+Firma del Locatore: Giulia Betti
+Data e ora firma: ${signDateTime}
 
-LANDLORD: Giulia Betti, born in Siena on 15 December 1972, Tax Code BTTGLI72T55I726O
+Firma del Conduttore: ${nome} ${cog}
+Data e ora firma: ${signDateTime}`;
+},
+
+en:(p,arr,par,nome,cog,tipdoc,numdoc,signDateTime)=>{
+const isLN = p==='lovenest';
+const prop = PROPS[p];
+return `TOURIST LEASE AGREEMENT
+Art. 1, para. 2 let. c, Law 431/1998 - Art. 109 TULPS - Regional Law Tuscany 86/2016
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LANDLORD: Giulia Betti, born in Siena on 15/12/1972, Tax Code BTTGLI72T55I726O
 
 TENANT: ${nome} ${cog}
-Document: ${tipdoc} No. ${numdoc}
+ID Document: ${tipdoc} No. ${numdoc}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. OBJECT
-The Landlord leases the property "${PROPS[p].name}" located at ${PROPS[p].address}.
-Cadastral Data: ${PROPS[p].catasto}
-CIN: ${PROPS[p].cin} | CIR: ${PROPS[p].cir}
+The Landlord leases the property "${prop.name}" located at ${prop.address}.
+Cadastral Data: ${prop.catasto}
+CIN: ${prop.cin} | CIR: ${prop.cir}
 
 2. PERIOD
 From: ${arr} (from 3:00 PM)
-To: ${par} (by 10:00 AM)
+To:   ${par} (by 10:00 AM)
 
 3. USE AND RETURN
-The property is leased exclusively for tourist purposes. The Tenant agrees to return it clean and in the same condition.
+The property is leased exclusively for tourist purposes. The Tenant agrees to return the property clean, tidy, and in the same condition as received.
 
 4. HOUSE RULES
 
-CHECK-IN: 3:00–6:00 PM. Call 15 minutes before arrival. ${p==='lovenest'?'After 6 PM: self check-in with electronic lock code.':'After 6 PM: self check-in with keybox.'}
+CHECK-IN
+• Hours: 3:00 PM - 6:00 PM
+• In-person check-in: upon advance request only — call 15 minutes before arrival
+• After 6:00 PM: self check-in ${isLN ? 'with electronic lock code' : 'with keybox'}
+• MANDATORY: valid identity document
 
-CHECK-OUT: 8:00–10:00 AM (max 10:15 AM). After 10:15 AM: full day penalty. Dirty dishes: €30 penalty. ${p==='lovenest'?'Leave key where found.':'Leave keys on the kitchen table.'} Turn off lights and appliances.
+CHECK-OUT
+• Hours: 8:00 AM - 10:00 AM (max 10:15 AM)
+• WARNING After 10:15 AM: penalty charge equal to one full extra day
+• WARNING Dirty dishes: EUR 30.00 penalty
+• ${isLN ? 'Leave the key exactly where found' : 'Leave keys on the kitchen table'}
+• Turn off all lights and appliances
 
-QUIET HOURS: 11:00 PM–8:00 AM
+QUIET HOURS: 11:00 PM - 8:00 AM
 
-SMOKING: Forbidden inside. ${p==='lovenest'?'Allowed only in the courtyard (use ashtrays).':'Allowed only on balconies (use ashtrays, DO NOT throw butts!).'} E-cigs/IQOS: allowed inside (moderate use).
+SMOKING
+• Cigarettes: FORBIDDEN inside
+• ${isLN ? 'Allowed only in the courtyard (use the 2 ashtrays provided)' : 'Allowed only on balconies — use ashtrays, DO NOT throw butts!'}
+• E-cigarettes/IQOS: allowed inside (moderate use)
 
-GUESTS: Unregistered guests and parties are forbidden.
+GUESTS: unregistered guests and parties are FORBIDDEN
 
-PETS: Allowed. Any damage will be charged.
+PETS: allowed — any damage will be charged to the tenant
 
-CLEANING: Included at end of stay. Free linen change every 7 days.
+CLEANING: included at end of stay — free linen change every 7 days
 
-MINIBAR: Report at check-out. Cash payment only.
+MINIBAR: report items at check-out — CASH payment only
 
-5. LAW & PRIVACY
-The Landlord will report guest data to police authorities via Alloggiati Web (Art. 109 TULPS). Data processed under GDPR 679/2016 exclusively for legal obligations.
+5. LAW AND PRIVACY
+The Landlord will report guest data to the Police via the Alloggiati Web portal (Art. 109 TULPS). Data will be processed exclusively for legal obligations under GDPR 679/2016 and retained for the minimum period required by law. For matters not covered herein, reference is made to Articles 1571 et seq. of the Italian Civil Code.
 
-Landlord's Signature: Giulia Betti`,
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-fr:(p,arr,par,nome,cog,tipdoc,numdoc)=>`CONTRAT DE LOCATION TOURISTIQUE
-Art. 1 al. 2 let. c, L. 431/1998 – Art. 109 TULPS – L.R. Toscane 86/2016
+Landlord's Signature: Giulia Betti
+Date & time signed: ${signDateTime}
 
-BAILLEUR: Giulia Betti, née à Sienne le 15 décembre 1972, CF BTTGLI72T55I726O
+Tenant's Signature: ${nome} ${cog}
+Date & time signed: ${signDateTime}`;
+},
 
-LOCATAIRE: ${nome} ${cog}
-Document: ${tipdoc} n° ${numdoc}
+de:(p,arr,par,nome,cog,tipdoc,numdoc,signDateTime)=>{
+const isLN = p==='lovenest';
+const prop = PROPS[p];
+return `TOURISTISCHER MIETVERTRAG
+Art. 1 Abs. 2 lit. c, Gesetz 431/1998 - Art. 109 TULPS - Regionalgesetz Toskana 86/2016
 
-1. OBJET
-Le Bailleur loue le bien "${PROPS[p].name}" situé à ${PROPS[p].address}.
-Données cadastrales: ${PROPS[p].catasto}
-CIN: ${PROPS[p].cin} | CIR: ${PROPS[p].cir}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-2. PÉRIODE
-Du: ${arr} (à partir de 15h00)
-Au: ${par} (avant 10h00)
-
-3. USAGE ET RESTITUTION
-Le bien est loué exclusivement à des fins touristiques. Le Locataire s'engage à le restituer propre et dans le même état.
-
-4. RÈGLEMENT INTÉRIEUR
-
-CHECK-IN: 15h00–18h00. Appeler 15 minutes avant. ${p==='lovenest'?'Après 18h: self check-in avec code électronique.':'Après 18h: self check-in avec keybox.'}
-
-CHECK-OUT: 8h00–10h00 (max 10h15). Au-delà: pénalité d'une journée. Vaisselle sale: €30 de pénalité. ${p==='lovenest'?'Laisser la clé où trouvée.':'Laisser les clés sur la table cuisine.'} Éteindre lumières et appareils.
-
-SILENCE: 23h00–8h00
-
-TABAC: Interdit à l'intérieur. ${p==='lovenest'?'Autorisé uniquement dans la cour (utiliser les cendriers).':'Autorisé uniquement sur les balcons (cendriers, NE PAS jeter les mégots!).'} E-cig/IQOS: autorisés à l'intérieur (usage modéré).
-
-VISITEURS: Visiteurs non enregistrés et fêtes interdits.
-
-ANIMAUX: Admis. Les dégâts seront facturés.
-
-NETTOYAGE: Inclus en fin de séjour. Changement de linge gratuit tous les 7 jours.
-
-MINIBAR: Signaler au check-out. Paiement en espèces uniquement.
-
-5. DROIT ET CONFIDENTIALITÉ
-Le Bailleur communiquera les données à la police via Alloggiati Web (Art. 109 TULPS). Traitement selon RGPD 679/2016.
-
-Signature du Bailleur: Giulia Betti`,
-
-es:(p,arr,par,nome,cog,tipdoc,numdoc)=>`CONTRATO DE ARRENDAMIENTO TURÍSTICO
-Art. 1 apdo. 2 let. c, L. 431/1998 – Art. 109 TULPS – L.R. Toscana 86/2016
-
-ARRENDADOR: Giulia Betti, nacida en Siena el 15 de diciembre de 1972, NIF BTTGLI72T55I726O
-
-ARRENDATARIO: ${nome} ${cog}
-Documento: ${tipdoc} nº ${numdoc}
-
-1. OBJETO
-El Arrendador arrienda la propiedad "${PROPS[p].name}" sita en ${PROPS[p].address}.
-Datos catastrales: ${PROPS[p].catasto}
-CIN: ${PROPS[p].cin} | CIR: ${PROPS[p].cir}
-
-2. PERÍODO
-Desde: ${arr} (a partir de las 15:00 h)
-Hasta: ${par} (antes de las 10:00 h)
-
-3. USO Y DEVOLUCIÓN
-El inmueble se arrienda exclusivamente para uso turístico. El arrendatario se compromete a devolverlo limpio y en el mismo estado.
-
-4. NORMATIVA INTERNA
-
-CHECK-IN: 15:00–18:00. Llamar 15 minutos antes. ${p==='lovenest'?'Después de las 18:00: self check-in con código electrónico.':'Después de las 18:00: self check-in con keybox.'}
-
-CHECK-OUT: 8:00–10:00 (máx. 10:15). Después: penalización de un día. Vajilla sucia: €30 de penalización. ${p==='lovenest'?'Dejar la llave donde se encontró.':'Dejar las llaves en la mesa de la cocina.'} Apagar luces y electrodomésticos.
-
-SILENCIO: 23:00–8:00
-
-FUMADORES: Prohibido en el interior. ${p==='lovenest'?'Solo en el patio (usar ceniceros).':'Solo en los balcones (ceniceros, ¡NO tirar colillas!).'} E-cig/IQOS: permitidos dentro (uso moderado).
-
-VISITAS: Visitantes no registrados y fiestas prohibidos.
-
-MASCOTAS: Admitidas. Los daños serán facturados.
-
-LIMPIEZA: Incluida al final de la estancia. Cambio de ropa de cama gratuito cada 7 días.
-
-MINIBAR: Indicar al check-out. Pago solo en efectivo.
-
-5. LEY Y PRIVACIDAD
-Los datos se comunicarán a la policía vía Alloggiati Web (Art. 109 TULPS). Tratamiento según RGPD 679/2016.
-
-Firma del Arrendador: Giulia Betti`,
-
-de:(p,arr,par,nome,cog,tipdoc,numdoc)=>`TOURISTISCHER MIETVERTRAG
-Art. 1 Abs. 2 lit. c, L. 431/1998 – Art. 109 TULPS – Regionalgesetz Toskana 86/2016
-
-VERMIETER: Giulia Betti, geboren in Siena am 15. Dezember 1972, StNr. BTTGLI72T55I726O
+VERMIETER: Giulia Betti, geboren in Siena am 15.12.1972, StNr. BTTGLI72T55I726O
 
 MIETER: ${nome} ${cog}
-Dokument: ${tipdoc} Nr. ${numdoc}
+Ausweis: ${tipdoc} Nr. ${numdoc}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. MIETGEGENSTAND
-Der Vermieter vermietet die Unterkunft "${PROPS[p].name}" in ${PROPS[p].address}.
-Katasterdaten: ${PROPS[p].catasto}
-CIN: ${PROPS[p].cin} | CIR: ${PROPS[p].cir}
+Der Vermieter vermietet die Unterkunft "${prop.name}" in ${prop.address}.
+Katasterdaten: ${prop.catasto}
+CIN: ${prop.cin} | CIR: ${prop.cir}
 
-2. ZEITRAUM
+2. MIETDAUER
 Von: ${arr} (ab 15:00 Uhr)
 Bis: ${par} (bis 10:00 Uhr)
 
-3. NUTZUNG UND RÜCKGABE
-Die Unterkunft wird ausschließlich für touristische Zwecke vermietet. Der Mieter verpflichtet sich zur Rückgabe in sauberem Zustand.
+3. NUTZUNG UND RUECKGABE
+Die Unterkunft wird ausschliesslich fuer touristische Zwecke vermietet. Der Mieter verpflichtet sich, die Unterkunft sauber, ordentlich und im selben Zustand zurueckzugeben.
 
 4. HAUSORDNUNG
 
-CHECK-IN: 15:00–18:00 Uhr. 15 Minuten vorher anrufen. ${p==='lovenest'?'Nach 18 Uhr: Self check-in mit elektronischem Schloss.':'Nach 18 Uhr: Self check-in mit Keybox.'}
+CHECK-IN
+• Zeiten: 15:00 - 18:00 Uhr
+• Persoenlicher Empfang: nur auf vorherige Anfrage — 15 Minuten vor Ankunft anrufen
+• Nach 18:00 Uhr: Self check-in ${isLN ? 'mit elektronischem Tuerscode' : 'mit Keybox'}
+• PFLICHT: gueltiger Personalausweis oder Reisepass
 
-CHECK-OUT: 8:00–10:00 Uhr (max. 10:15 Uhr). Danach: Strafgebühr eines Tages. Schmutziges Geschirr: €30 Strafe. ${p==='lovenest'?'Schlüssel dort lassen, wo gefunden.':'Schlüssel auf dem Küchentisch lassen.'} Lichter und Geräte ausschalten.
+CHECK-OUT
+• Zeiten: 8:00 - 10:00 Uhr (max. 10:15 Uhr)
+• ACHTUNG Nach 10:15 Uhr: Strafgebuehr in Hoehe eines vollen Tages
+• ACHTUNG Schmutziges Geschirr: 30 Euro Strafgebuehr
+• ${isLN ? 'Schluessel dort lassen, wo er gefunden wurde' : 'Schluessel auf dem Kuechentisch hinterlassen'}
+• Alle Lichter und Geraete ausschalten
 
-NACHTRUHE: 23:00–8:00 Uhr
+NACHTRUHE: 23:00 - 8:00 Uhr
 
-RAUCHEN: Im Inneren verboten. ${p==='lovenest'?'Nur im Innenhof erlaubt (Aschenbecher nutzen).':'Nur auf Balkonen (Aschenbecher nutzen, KEINE Kippen wegwerfen!).'} E-Zigaretten/IQOS: drinnen erlaubt (mäßiger Gebrauch).
+RAUCHEN
+• Zigaretten: VERBOTEN im Inneren
+• ${isLN ? 'Nur im Innenhof erlaubt (die 2 bereitgestellten Aschenbecher nutzen)' : 'Nur auf den Balkonen — Aschenbecher nutzen, KEINE Kippen wegwerfen!'}
+• E-Zigaretten/IQOS: drinnen erlaubt (maessiger Gebrauch)
 
-GÄSTE: Nicht registrierte Gäste und Partys verboten.
+GAESTE: nicht registrierte Gaeste und Partys sind VERBOTEN
 
-HAUSTIERE: Erlaubt. Schäden werden in Rechnung gestellt.
+HAUSTIERE: erlaubt — Schaeden werden dem Mieter in Rechnung gestellt
 
-REINIGUNG: Am Ende des Aufenthalts inklusive. Kostenloser Wäschewechsel alle 7 Tage.
+REINIGUNG: am Ende des Aufenthalts inklusive — kostenloser Waeschewechsel alle 7 Tage
 
-MINIBAR: Beim Check-out angeben. Nur Barzahlung.
+MINIBAR: beim Check-out angeben — ausschliesslich BARZAHLUNG
 
 5. RECHT UND DATENSCHUTZ
-Der Vermieter meldet die Daten über Alloggiati Web an die Behörden (Art. 109 TULPS). Verarbeitung gemäß DSGVO 679/2016.
+Der Vermieter meldet die Gaestdaten ueber das Portal Alloggiati Web an die Polizei (Art. 109 TULPS). Die Daten werden ausschliesslich fuer gesetzliche Verpflichtungen gemaess DSGVO 679/2016 verarbeitet.
 
-Unterschrift des Vermieters: Giulia Betti`,
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Unterschrift des Vermieters: Giulia Betti
+Datum und Uhrzeit: ${signDateTime}
+
+Unterschrift des Mieters: ${nome} ${cog}
+Datum und Uhrzeit: ${signDateTime}`;
+},
+
+fr:(p,arr,par,nome,cog,tipdoc,numdoc,signDateTime)=>{
+const isLN = p==='lovenest';
+const prop = PROPS[p];
+return `CONTRAT DE LOCATION TOURISTIQUE
+Art. 1, al. 2 let. c, Loi 431/1998 - Art. 109 TULPS - Loi Regionale Toscane 86/2016
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BAILLEUR: Giulia Betti, nee a Sienne le 15/12/1972, Code Fiscal BTTGLI72T55I726O
+
+LOCATAIRE: ${nome} ${cog}
+Piece d'identite: ${tipdoc} n. ${numdoc}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. OBJET
+Le Bailleur loue le bien "${prop.name}" sis a ${prop.address}.
+Donnees cadastrales: ${prop.catasto}
+CIN: ${prop.cin} | CIR: ${prop.cir}
+
+2. PERIODE
+Du: ${arr} (a partir de 15h00)
+Au: ${par} (avant 10h00)
+
+3. USAGE ET RESTITUTION
+Le bien est loue exclusivement a des fins touristiques. Le Locataire s'engage a restituer le bien propre, range et dans le meme etat.
+
+4. REGLEMENT INTERIEUR
+
+CHECK-IN
+• Horaires: 15h00 - 18h00
+• Accueil en personne: uniquement sur demande prealable — appeler 15 minutes avant l'arrivee
+• Apres 18h00: self check-in ${isLN ? 'avec code de serrure electronique' : 'avec boite a cles (keybox)'}
+• OBLIGATOIRE: piece d'identite valide
+
+CHECK-OUT
+• Horaires: 8h00 - 10h00 (max 10h15)
+• ATTENTION Au-dela de 10h15: penalite equivalente a une journee complete
+• ATTENTION Vaisselle sale: penalite de 30 EUR
+• ${isLN ? 'Laisser la cle la ou elle a ete trouvee' : 'Laisser les cles sur la table de la cuisine'}
+• Eteindre toutes les lumieres et les appareils
+
+SILENCE: 23h00 - 8h00
+
+TABAC
+• Cigarettes: INTERDITES a l'interieur
+• ${isLN ? 'Autorisees uniquement dans la cour (utiliser les 2 cendriers fournis)' : 'Autorisees uniquement sur les balcons — cendriers obligatoires, NE PAS jeter les megots!'}
+• E-cigarettes/IQOS: autorises a l'interieur (usage modere)
+
+VISITEURS: visiteurs non enregistres et fetes INTERDITS
+
+ANIMAUX: admis — tout dommage sera facture au locataire
+
+NETTOYAGE: inclus en fin de sejour — changement de linge gratuit tous les 7 jours
+
+MINIBAR: declarer au check-out — paiement en ESPECES uniquement
+
+5. DROIT ET CONFIDENTIALITE
+Le Bailleur communiquera les donnees des clients a la police via le portail Alloggiati Web (Art. 109 TULPS). Les donnees seront traitees exclusivement pour des obligations legales conformement au RGPD 679/2016.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Signature du Bailleur: Giulia Betti
+Date et heure: ${signDateTime}
+
+Signature du Locataire: ${nome} ${cog}
+Date et heure: ${signDateTime}`;
+},
+
+es:(p,arr,par,nome,cog,tipdoc,numdoc,signDateTime)=>{
+const isLN = p==='lovenest';
+const prop = PROPS[p];
+return `CONTRATO DE ARRENDAMIENTO TURISTICO
+Art. 1, apdo. 2 let. c, Ley 431/1998 - Art. 109 TULPS - Ley Regional Toscana 86/2016
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARRENDADOR: Giulia Betti, nacida en Siena el 15/12/1972, NIF BTTGLI72T55I726O
+
+ARRENDATARIO: ${nome} ${cog}
+Documento de identidad: ${tipdoc} n. ${numdoc}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. OBJETO
+El Arrendador arrienda el inmueble "${prop.name}" sito en ${prop.address}.
+Datos catastrales: ${prop.catasto}
+CIN: ${prop.cin} | CIR: ${prop.cir}
+
+2. PERIODO
+Desde: ${arr} (a partir de las 15:00 h)
+Hasta: ${par} (antes de las 10:00 h)
+
+3. USO Y DEVOLUCION
+El inmueble se arrienda exclusivamente para uso turistico. El Arrendatario se compromete a devolverlo limpio, ordenado y en el mismo estado en que fue recibido.
+
+4. NORMATIVA INTERNA
+
+CHECK-IN
+• Horario: 15:00 - 18:00 h
+• Recepcion en persona: solo bajo solicitud previa — llamar 15 minutos antes de la llegada
+• Despues de las 18:00 h: self check-in ${isLN ? 'con codigo de cerradura electronica' : 'con caja de llaves (keybox)'}
+• OBLIGATORIO: documento de identidad valido
+
+CHECK-OUT
+• Horario: 8:00 - 10:00 h (max. 10:15 h)
+• ATENCION Despues de las 10:15 h: penalizacion equivalente a un dia completo
+• ATENCION Vajilla sucia: penalizacion de 30 EUR
+• ${isLN ? 'Dejar la llave exactamente donde se encontro' : 'Dejar las llaves sobre la mesa de la cocina'}
+• Apagar todas las luces y electrodomesticos
+
+SILENCIO: 23:00 - 8:00 h
+
+FUMAR
+• Cigarrillos: PROHIBIDOS en el interior
+• ${isLN ? 'Permitidos unicamente en el patio (usar los 2 ceniceros disponibles)' : 'Permitidos unicamente en los balcones — usar ceniceros, NO tirar colillas!'}
+• Cigarrillos electronicos/IQOS: permitidos en el interior (uso moderado)
+
+VISITAS: visitantes no registrados y fiestas PROHIBIDOS
+
+MASCOTAS: admitidas — cualquier dano sera facturado al arrendatario
+
+LIMPIEZA: incluida al final de la estancia — cambio de ropa de cama gratuito cada 7 dias
+
+MINIBAR: declarar al check-out — pago UNICAMENTE en efectivo
+
+5. LEY Y PRIVACIDAD
+El Arrendador comunicara los datos de los huespedes a la policia a traves del portal Alloggiati Web (Art. 109 TULPS). Los datos seran tratados exclusivamente para obligaciones legales segun el RGPD 679/2016.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Firma del Arrendador: Giulia Betti
+Fecha y hora: ${signDateTime}
+
+Firma del Arrendatario: ${nome} ${cog}
+Fecha y hora: ${signDateTime}`;
+},
+
 };
+
 
 // GDPR text
 const GDPR = {
@@ -3314,8 +3447,9 @@ function renderContract(){
   const p=S.property;
   const arrIT=itDate(S.arrivo);
   const parIT=itDate(S.partenza);
+  const signDateTime=itDateTime(new Date().toISOString());
   const contractFn=CONTRACTS[S.lang]||CONTRACTS.it;
-  const text=contractFn(p,arrIT,parIT,g.nome||'——',g.cognome||'——',g.tipdoc||'——',g.numdoc||'——');
+  const text=contractFn(p,arrIT,parIT,g.nome||'——',g.cognome||'——',g.tipdoc||'——',g.numdoc||'——',signDateTime);
   const box=document.getElementById('contract-box');
   if(box){
     box.innerHTML='<pre style="white-space:pre-wrap;font-family:Inter,sans-serif;font-size:0.78rem;line-height:1.75;color:#2C3E35">'+
@@ -3832,7 +3966,8 @@ async function saveCheckinToGDrive(entryId){
     
     // 2. Genera contenuto contratto HTML
     const contractFn  = CONTRACTS[entry.lang] || CONTRACTS.it;
-    const contractTxt = contractFn(entry.property, itDate(entry.arrivo), itDate(entry.partenza), gm.nome, gm.cognome, gm.tipdoc, gm.numdoc);
+    const signDT = itDateTime(entry.timestamp || new Date().toISOString());
+    const contractTxt = contractFn(entry.property, itDate(entry.arrivo), itDate(entry.partenza), gm.nome, gm.cognome, gm.tipdoc, gm.numdoc, signDT);
     const contractHtml = buildCheckinDocument(entry, gm, p, contractTxt, year, folderName);
     
     // 3. Dati ospite JSON completo
@@ -4029,8 +4164,9 @@ function exportContractToFile(entryId){
   
   const contractFn  = CONTRACTS[entry?.lang||S.lang||'it'] || CONTRACTS.it;
   const fakeEntry   = entry || {id:'—',arrivo:S.arrivo,partenza:S.partenza,property:S.property,gdprTimestamp:'—',timestamp:new Date().toISOString(),verifyMethod:S.verifyMethod,extras:[]};
+  const signDT2 = itDateTime((entry||fakeEntry).timestamp || new Date().toISOString());
   const contractTxt = entry
-    ? contractFn(entry.property, itDate(entry.arrivo), itDate(entry.partenza), gm.nome, gm.cognome, gm.tipdoc, gm.numdoc)
+    ? contractFn(entry.property, itDate(entry.arrivo), itDate(entry.partenza), gm.nome, gm.cognome, gm.tipdoc, gm.numdoc, signDT2)
     : (S._contractText||'');
   
   const htmlDoc = buildCheckinDocument(fakeEntry, gm, p, contractTxt, year, folderName);
@@ -4166,7 +4302,11 @@ function completeCheckin(){
   });
   dbSave();
 
-  // WhatsApp notification to Giulia
+  // Show waiting room PRIMA — poi WhatsApp (così su mobile non blocca)
+  S.currentWaitId=entry.id;
+  showWaitingRoom(entry);
+
+  // WhatsApp notification to Giulia — apre in background dopo 800ms
   const prop=PROPS[S.property];
   const isRemote=S.groupType==='remote';
   let waMsg=`Ciao Giulia! Sono ${main.nome} ${main.cognome}, soggiornerò a ${prop.name} con check-in il ${itDate(S.arrivo)} e check-out il ${itDate(S.partenza)}. Ho terminato il check-in online.`;
@@ -4178,11 +4318,7 @@ function completeCheckin(){
 
   setTimeout(()=>{
     window.open(`https://wa.me/${(DB.settings.waNumber||GIULIA_WA).replace(/[^0-9]/g,'')}?text=${encodeURIComponent(waMsg)}`,'_blank');
-  },600);
-
-  // Show waiting room
-  S.currentWaitId=entry.id;
-  showWaitingRoom(entry);
+  },800);
 }
 
 // ═══════════════════════════════════════
@@ -4225,7 +4361,7 @@ function showWaitingRoom(entry){
     document.getElementById('wait-code').style.fontSize = accessCode.length > 6 ? '2.6rem' : '3.2rem';
     document.getElementById('wait-code').style.color = 'var(--gold)';
     document.getElementById('wait-code-type').textContent = entry.property==='lovenest'
-      ? '🔐 Inserisci il codice e premi # per confermare'
+      ? '🔐 Digita il codice sulla maniglia, poi premi # per confermare'
       : '🗝️ Codice KeyBox — ruota la ghiera e premi il pulsante';
     document.getElementById('wait-code-inst').textContent = settings?.inst || '';
     document.getElementById('wait-access-code').textContent = accessCodeDisplay;
@@ -4890,21 +5026,22 @@ function renderTable(){
       : `<span style="color:var(--muted);font-size:0.7rem;">— non impostato</span>`;
 
     return `
-    <tr style="font-size:0.79rem;cursor:pointer;border-bottom:1px solid #f0ebe0;" id="row-${g.id}" onclick="toggleRowExpand('${g.id}')">
-      <td style="padding:0.4rem 0.6rem;" onclick="event.stopPropagation()"><input type="checkbox" class="guest-chk" value="${g.id}" style="cursor:pointer;"></td>
-      <td style="padding:0.4rem 0.6rem;white-space:nowrap">${(g.timestamp||g.arrivo||'').slice(0,16).replace('T',' ')}</td>
-      <td style="padding:0.4rem 0.6rem">${g.property==='lovenest'?'❤️ LN':'🐢 TT'}</td>
-      <td style="padding:0.4rem 0.6rem;font-weight:600">${m.cognome||'?'}</td>
-      <td style="padding:0.4rem 0.6rem">${m.nome||'?'}</td>
-      <td style="padding:0.4rem 0.6rem;white-space:nowrap">${m.nascita||''}</td>
-      <td style="padding:0.4rem 0.6rem">${m.cittadinanza||m.cit||''}</td>
-      <td style="padding:0.4rem 0.6rem;font-family:monospace">${m.tipdoc||''} ${m.numdoc||''}</td>
-      <td style="padding:0.4rem 0.6rem">${g.verifyMethod||''}</td>
-      <td style="padding:0.4rem 0.6rem;text-align:center">${g.totalGuests||1}</td>
-      <td style="padding:0.4rem 0.6rem">${statusBadge}</td>
-      <td style="padding:0.4rem 0.6rem;white-space:nowrap;" onclick="event.stopPropagation()">
+    <tr style="font-size:0.79rem;border-bottom:1px solid #f0ebe0;" id="row-${g.id}">
+      <td style="padding:0.4rem 0.6rem;"><input type="checkbox" class="guest-chk" value="${g.id}" style="cursor:pointer;"></td>
+      <td style="padding:0.4rem 0.6rem;white-space:nowrap;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${(g.timestamp||g.arrivo||'').slice(0,16).replace('T',' ')}</td>
+      <td style="padding:0.4rem 0.6rem;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${g.property==='lovenest'?'❤️ LN':'🐢 TT'}</td>
+      <td style="padding:0.4rem 0.6rem;font-weight:600;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${m.cognome||'?'}</td>
+      <td style="padding:0.4rem 0.6rem;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${m.nome||'?'}</td>
+      <td style="padding:0.4rem 0.6rem;white-space:nowrap;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${m.nascita||''}</td>
+      <td style="padding:0.4rem 0.6rem;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${m.cittadinanza||m.cit||''}</td>
+      <td style="padding:0.4rem 0.6rem;font-family:monospace;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${m.tipdoc||''} ${m.numdoc||''}</td>
+      <td style="padding:0.4rem 0.6rem;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${g.verifyMethod||''}</td>
+      <td style="padding:0.4rem 0.6rem;text-align:center;cursor:pointer;" onclick="toggleRowExpand('${g.id}')">${g.totalGuests||1}</td>
+      <td style="padding:0.4rem 0.6rem;">${statusBadge}</td>
+      <td style="padding:0.4rem 0.6rem;white-space:nowrap;">
         ${pinDisplay}
-        <button onclick="deleteGuest('${g.id}')" style="background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:3px 7px;border-radius:5px;font-size:0.7rem;cursor:pointer;margin-left:4px;">🗑️</button>
+        <button onclick="toggleRowExpand('${g.id}')" style="background:rgba(27,75,67,0.1);color:var(--teal);border:1px solid rgba(27,75,67,0.25);padding:3px 7px;border-radius:5px;font-size:0.7rem;cursor:pointer;" title="Espandi/chiudi dettagli">👁️</button>
+        <button onclick="deleteGuest('${g.id}')" style="background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:3px 7px;border-radius:5px;font-size:0.7rem;cursor:pointer;margin-left:2px;">🗑️</button>
       </td>
     </tr>
     <tr class="row-expand-tr" id="expand-${g.id}" style="display:none;">
@@ -4988,7 +5125,7 @@ function buildExpandRow(g){
       <div style="flex:1;min-width:200px;">
         <label>🔑 PIN accesso — inserisci e approva</label>
         <div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.4rem;flex-wrap:wrap;">
-          <input class="rex-pin-input" id="pin-input-${g.id}" type="text" placeholder="es. 1234" value="${g.tuyaPin||g.manualPin||''}" maxlength="12">
+          <input class="rex-pin-input" id="pin-input-${g.id}" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="es. 1234" value="${g.tuyaPin||g.manualPin||''}" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="font-family:monospace;font-size:1.2rem;letter-spacing:0.2em;width:130px;text-align:center;background:#f9f6ef;border:1.5px solid #cfc5ae;color:var(--dark);padding:0.5rem 0.8rem;border-radius:7px;">
           <button class="rex-approve-btn${approved?' approved':''}" id="approve-btn-${g.id}" onclick="approveGuest('${g.id}')">
             ${approved ? '✅ Approvato' : '🔓 Approva e sblocca'}
           </button>
