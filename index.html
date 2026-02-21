@@ -1230,20 +1230,15 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
     <div class="step" id="step-4" style="display:none">
       <div class="eyebrow" data-i18n="ey4">Passo 4 di 6 — Contratto</div>
       <div class="sec-title" data-i18n="t4">Contratto di Locazione</div>
-      <div class="ib ib-gold" data-i18n="i4">Leggi il contratto. <strong>Scarica prima il PDF</strong>, poi firma e accetta per continuare.</div>
+      <div class="ib ib-gold" data-i18n="i4">Leggi il contratto, <strong>firma</strong> e poi <strong>scarica il PDF</strong> per continuare.</div>
 
       <div class="contract-read-label" id="read-pct">0% letto</div>
       <div class="contract-read-bar"><div class="contract-read-fill" id="read-bar"></div></div>
       <div class="contract-scroll" id="contract-box" onscroll="trackScroll(this)"></div>
 
-      <!-- DOWNLOAD OBBLIGATORIO prima -->
-      <button class="btn-download" id="btn-dl-contract" onclick="downloadContract()" style="margin-top:1rem;">📥 Scarica contratto PDF (obbligatorio prima di firmare)</button>
-      <div id="dl-done-note" style="display:none;text-align:center;font-size:0.78rem;color:#27ae60;margin-top:0.4rem;font-weight:600;">✅ PDF scaricato — ora puoi firmare</div>
-      <div class="ib ib-red" style="font-size:0.75rem;display:none;" id="dl-warning" data-i18n="dl_warn">⚠️ Devi scaricare il contratto per poter continuare.</div>
-
-      <!-- Sezione firma: bloccata finché non si scarica il PDF -->
-      <div id="sig-section" style="opacity:0.35;pointer-events:none;transition:all 0.3s;">
-        <div class="divider"><div class="divider-line"></div><div class="divider-label" data-i18n="sign_here">Firma qui sotto (dopo il download)</div><div class="divider-line"></div></div>
+      <!-- FIRMA — sempre accessibile -->
+      <div id="sig-section" style="transition:all 0.3s;">
+        <div class="divider"><div class="divider-line"></div><div class="divider-label" data-i18n="sign_here">Firma qui sotto</div><div class="divider-line"></div></div>
         <div class="sig-wrap">
           <div class="sig-header">
             <span data-i18n="sig_lbl">Firma del conduttore</span>
@@ -1255,6 +1250,13 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:opacity(0.5);}
           <input type="checkbox" id="chk-contract">
           <label for="chk-contract" data-i18n="chk_contract">Ho letto integralmente il contratto e il regolamento e li accetto senza riserve.</label>
         </div>
+      </div>
+
+      <!-- DOWNLOAD — appare dopo che ha firmato -->
+      <div id="dl-section" style="margin-top:1rem;">
+        <button class="btn-download" id="btn-dl-contract" onclick="downloadContract()">📥 Scarica contratto PDF firmato</button>
+        <div id="dl-done-note" style="display:none;text-align:center;font-size:0.78rem;color:#27ae60;margin-top:0.4rem;font-weight:600;">✅ PDF scaricato — puoi continuare</div>
+        <div class="ib ib-red" style="font-size:0.75rem;display:none;" id="dl-warning" data-i18n="dl_warn">⚠️ Devi scaricare il contratto firmato per poter continuare.</div>
       </div>
 
       <button class="btn-primary" id="btn-contract-next" onclick="validateContractStep()" data-i18n="btn_next">Continua →</button>
@@ -3369,8 +3371,14 @@ function validateAndGoTo(step){
 
 function validateContractStep(){
   if(!S.signatureDrawn){ showErr(tr('err_sig')); return; }
-  if(!S.contractDownloaded){ showErr(tr('err_download')); document.getElementById('dl-warning').style.display='block'; return; }
   if(!document.getElementById('chk-contract')?.checked){ showErr(tr('err_chk_contract')); return; }
+  if(!S.contractDownloaded){
+    showErr(tr('err_download'));
+    document.getElementById('dl-warning').style.display='block';
+    document.getElementById('btn-dl-contract').style.boxShadow='0 0 0 3px rgba(201,162,84,0.5)';
+    document.getElementById('btn-dl-contract').scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
   goToStep(5);
 }
 function validateGDPR(){
@@ -3650,10 +3658,8 @@ function downloadContract(){
 
     S.contractDownloaded = true;
     document.getElementById('dl-warning').style.display = 'none';
+    document.getElementById('btn-dl-contract').style.boxShadow = 'none';
     S._contractPdfGenerated = true;
-    // Sblocca sezione firma
-    const sigSec = document.getElementById('sig-section');
-    if(sigSec){ sigSec.style.opacity='1'; sigSec.style.pointerEvents='auto'; }
     const dlNote = document.getElementById('dl-done-note');
     if(dlNote) dlNote.style.display = 'block';
     const dlBtn = document.getElementById('btn-dl-contract');
@@ -5074,7 +5080,7 @@ function buildExpandRow(g){
     ['Ente di rilascio',m.ente||'—'],
     ['Arrivo',         g.arrivo||'—'],
     ['Partenza',       g.partenza||'—'],
-    ['Email',          g.email||'—'],
+    ['Email',          g.email||m.email||'—'],
     ['Metodo verifica',g.verifyMethod||'—'],
     ['Struttura',      g.property==='lovenest'?'Love Nest':'La Tartaruga'],
     ['N° ospiti',      String(g.totalGuests||1)],
@@ -5084,74 +5090,123 @@ function buildExpandRow(g){
   // Campi extra ospiti
   let extrasHtml = '';
   if(g.extras && g.extras.length){
-    extrasHtml = `<div style="margin-bottom:0.5rem;">
-      <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;margin-bottom:0.4rem;">👥 Altri ospiti</div>
-      ${g.extras.map((ex,i)=>`<div style="font-size:0.8rem;padding:0.3rem 0.5rem;background:white;border-radius:6px;margin-bottom:0.3rem;border:1px solid #e0d5c0;">
-        ${i+2}. <strong>${ex.cognome||''} ${ex.nome||''}</strong> · Nato: ${ex.nascita||'—'} · ${ex.cit||'—'} · ${ex.tipdoc||''} ${ex.numdoc||'—'}
+    extrasHtml = `<div style="margin-bottom:0.8rem;">
+      <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;margin-bottom:0.4rem;">👥 Altri ospiti del gruppo</div>
+      ${g.extras.map((ex,i)=>`<div style="font-size:0.8rem;padding:0.4rem 0.6rem;background:white;border-radius:6px;margin-bottom:0.3rem;border:1px solid #e0d5c0;">
+        <strong>${i+2}. ${ex.cognome||''} ${ex.nome||''}</strong> &nbsp;·&nbsp; Nato: ${ex.nascita||'—'} &nbsp;·&nbsp; ${ex.cit||'—'} &nbsp;·&nbsp; ${ex.tipdoc||''} ${ex.numdoc||'—'}
       </div>`).join('')}
     </div>`;
   }
 
-  // Documenti caricati
+  // Raccolta immagini — salva nel registro globale, mai base64 inline nell'onclick
   const imgs = [];
-  if(m.selfie)     imgs.push({src:m.selfie,     label:'📸 Selfie'});
-  if(m.fotoSelfie) imgs.push({src:m.fotoSelfie, label:'📸 Selfie'});
-  if(m.docFronte)  imgs.push({src:m.docFronte,  label:'🪪 Fronte doc'});
-  if(m.docRetro)   imgs.push({src:m.docRetro,   label:'🔄 Retro doc'});
+  const addImg = (src, label) => {
+    if(!src) return;
+    const key = regImg(src);
+    imgs.push({key, label, hasSrc: !!src});
+  };
+  addImg(m.selfie     || m.fotoSelfie, '📸 Selfie con documento');
+  addImg(m.docFronte, '🪪 Fronte documento');
+  addImg(m.docRetro,  '↩️ Retro documento');
+  addImg(m.firma,     '✍️ Firma ospite');
   if(g.docFileUrls){
     Object.entries(g.docFileUrls).forEach(([slot,url])=>{
-      if(url&&url.startsWith('http')) imgs.push({src:url,label:'📎 '+slot});
+      if(url && url.startsWith('http')) addImg(url, '📎 '+slot);
     });
   }
 
-  const firmaHtml = m.firma
-    ? `<div style="margin-top:0.6rem;"><div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px;">✍️ Firma ospite</div>
-       <img src="${m.firma}" class="rex-sig-thumb" onclick="showLightbox('${m.firma}','Firma — ${m.cognome||''} ${m.nome||''}')" style="background:white;border:2px solid var(--gold);border-radius:8px;padding:5px;max-height:70px;cursor:pointer;"></div>`
-    : '';
+  // Contratto
+  const contractSrc = g._contractHtml || g.contractUrl || null;
+  const contractKey = contractSrc ? regImg(contractSrc) : null;
+
+  const hasAnyDoc = imgs.length > 0 || contractKey;
 
   const thumbsHtml = imgs.length ? imgs.map(im=>`
-    <div class="rex-doc-thumb" onclick="showLightbox('${im.src.substring(0,500)}','${im.label}')">
-      <img src="${im.src.substring(0,500)}" onerror="this.parentNode.innerHTML='<div style=\'font-size:0.6rem;text-align:center;color:#999;padding:4px\'>${im.label}<br>⚠️</div>'">
-      <div class="rex-doc-lbl">${im.label}</div>
-    </div>`).join('') : '<span style="color:#bbb;font-size:0.75rem;font-style:italic;">Nessun documento caricato</span>';
+    <div onclick="showLightbox('${im.key}','${im.label.replace(/'/g,"\\'")} — ${(m.cognome||'').replace(/'/g,"\\'")} ${(m.nome||'').replace(/'/g,"\\'")} ')"
+         style="cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid #e8e0d0;width:100px;height:90px;flex-shrink:0;background:#f5f0e8;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:border-color 0.15s;"
+         onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e8e0d0'"
+         title="${im.label}">
+      <img src="${window._imgReg[im.key]||''}" style="width:100%;height:100%;object-fit:cover;"
+           onerror="this.parentNode.innerHTML='<div style=\\'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;\\'><span style=\\'font-size:1.4rem;\\'>${im.label.split(' ')[0]}</span><span style=\\'font-size:0.6rem;color:#999;text-align:center;padding:2px;\\'>${im.label.replace(im.label.split(' ')[0]+' ','')}</span></div>'">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.6rem;text-align:center;padding:3px 2px;">${im.label}</div>
+    </div>`).join('') : '';
+
+  const contractThumb = contractKey ? `
+    <div onclick="showLightbox('${contractKey}','📄 Contratto — ${(m.cognome||'').replace(/'/g,"\\'")} ${(m.nome||'').replace(/'/g,"\\'")} ')"
+         style="cursor:pointer;border-radius:8px;border:2px solid #e8e0d0;width:100px;height:90px;flex-shrink:0;background:#f5f0e8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:border-color 0.15s;"
+         onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e8e0d0'"
+         title="Visualizza contratto">
+      <span style="font-size:1.8rem;">📄</span>
+      <span style="font-size:0.62rem;color:#666;text-align:center;font-family:Inter,sans-serif;">Contratto<br>firmato</span>
+    </div>` : '';
+
+  const noDocHtml = !hasAnyDoc ? `
+    <div style="width:100%;padding:0.8rem;background:#f9f6ef;border-radius:8px;border:1.5px dashed #d4c8ae;text-align:center;">
+      <span style="font-size:0.78rem;color:#bbb;font-style:italic;">Nessun documento ancora caricato</span>
+      ${window._fbReady ? `<br><button onclick="loadGuestDocsAndRefresh('${g.id}')" style="margin-top:0.4rem;background:none;border:1px solid var(--teal);color:var(--teal);border-radius:5px;padding:3px 10px;font-size:0.72rem;cursor:pointer;font-family:Inter,sans-serif;">🔄 Carica da Firebase</button>` : ''}
+    </div>` : '';
 
   const reloadBtn = window._fbReady
-    ? `<button onclick="loadGuestDocs('${g.id}');setTimeout(()=>renderTable(),1500);" style="background:none;border:1px solid #ccc;border-radius:5px;padding:2px 7px;font-size:0.7rem;cursor:pointer;color:var(--muted);">🔄 Ricarica da Firebase</button>`
+    ? `<button onclick="loadGuestDocsAndRefresh('${g.id}')" style="background:none;border:1px solid #ccc;border-radius:5px;padding:3px 9px;font-size:0.72rem;cursor:pointer;color:var(--muted);font-family:Inter,sans-serif;">🔄 Ricarica documenti</button>`
     : '';
 
   const approved = !!g.adminApproved;
+  const pinVal = g.tuyaPin||g.manualPin||'';
+
+  const whatsappBtn = approved && pinVal && (g.email||g.main?.email||g.waNumber) ? '' : '';
+
   const approveBox = `
     <div class="rex-approve-box">
-      <div style="flex:1;min-width:200px;">
-        <label>🔑 PIN accesso — inserisci e approva</label>
-        <div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.4rem;flex-wrap:wrap;">
-          <input class="rex-pin-input" id="pin-input-${g.id}" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="es. 1234" value="${g.tuyaPin||g.manualPin||''}" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="font-family:monospace;font-size:1.2rem;letter-spacing:0.2em;width:130px;text-align:center;background:#f9f6ef;border:1.5px solid #cfc5ae;color:var(--dark);padding:0.5rem 0.8rem;border-radius:7px;">
+      <div style="flex:1;min-width:220px;">
+        <label style="font-size:0.8rem;font-weight:600;color:var(--dark);display:block;margin-bottom:0.5rem;">
+          🔑 PIN di accesso — ${g.property==='lovenest'?'codice maniglia (solo numeri, poi # per confermare)':'codice keybox (solo numeri)'}
+        </label>
+        <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
+          <input class="rex-pin-input" id="pin-input-${g.id}" type="text" inputmode="numeric" pattern="[0-9]*"
+                 placeholder="${g.property==='lovenest'?'es. 1234':'es. 1572'}"
+                 value="${pinVal}" maxlength="12"
+                 oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                 style="font-family:monospace;font-size:1.4rem;letter-spacing:0.25em;width:140px;text-align:center;background:#f9f6ef;border:2px solid ${approved?'#22c55e':'#cfc5ae'};color:var(--dark);padding:0.5rem 0.8rem;border-radius:8px;">
+          ${g.property==='lovenest' ? '<span style="font-size:1.2rem;font-family:monospace;font-weight:700;color:var(--muted);">#</span>' : ''}
           <button class="rex-approve-btn${approved?' approved':''}" id="approve-btn-${g.id}" onclick="approveGuest('${g.id}')">
-            ${approved ? '✅ Approvato' : '🔓 Approva e sblocca'}
+            ${approved ? '✅ Approvato — modifica PIN' : '🔓 Approva e invia codice'}
           </button>
-          ${approved ? '<span style="font-size:0.75rem;color:#22c55e;font-weight:600;">✓ Ospite notificato</span>' : ''}
         </div>
-        ${approved ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem;">PIN impostato: <strong style="font-family:monospace;color:var(--teal);">${g.tuyaPin||g.manualPin||'—'}</strong></div>` : '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem;">L\'ospite vedrà il PIN nella sala d\'attesa non appena approvi.</div>'}
+        <div style="font-size:0.72rem;color:${approved?'#22c55e':'var(--muted)'};margin-top:0.4rem;font-weight:${approved?600:400};">
+          ${approved
+            ? `✓ Approvato — PIN <strong style="font-family:monospace;color:var(--teal);">${pinVal}${g.property==='lovenest'?'#':''}</strong> — ospite vede il codice in sala d'attesa e riceve WhatsApp`
+            : `Inserisci il codice e clicca Approva — l'ospite lo vedrà in sala d'attesa e riceverà un messaggio WhatsApp`}
+        </div>
       </div>
-      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
-        <button onclick="editGuest('${g.id}')" style="background:var(--teal);color:white;border:none;padding:5px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;">✏️ Modifica dati</button>
-        ${g.contractUrl||g._contractHtml ? `<button onclick="exportContractToFile('${g.id}')" style="background:var(--gold3);color:white;border:none;padding:5px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;">📄 PDF</button>` : ''}
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-self:flex-start;">
+        <button onclick="editGuest('${g.id}')" style="background:var(--teal);color:white;border:none;padding:6px 13px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:Inter,sans-serif;">✏️ Modifica dati</button>
+        ${contractKey ? `<button onclick="showLightbox('${contractKey}','Contratto — ${(m.cognome||'').replace(/'/g,"\\'")}')" style="background:var(--gold3);color:white;border:none;padding:6px 13px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:Inter,sans-serif;">📄 Vedi contratto</button>` : ''}
         ${reloadBtn}
       </div>
     </div>`;
 
   return `
-    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--teal);font-weight:700;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.5rem;">
+    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--teal);font-weight:700;margin-bottom:0.7rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
       👤 ${m.cognome||''} ${m.nome||''} — Dati completi
-      <button onclick="copyGuestDataCSV('${g.id}')" style="background:none;border:1px solid var(--gold);color:var(--gold3);padding:2px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;font-weight:normal;text-transform:none;letter-spacing:0;">📋 Copia per Moturist</button>
+      <button onclick="copyGuestDataCSV('${g.id}')" style="background:none;border:1px solid var(--gold);color:var(--gold3);padding:2px 9px;border-radius:5px;font-size:0.7rem;cursor:pointer;font-weight:normal;text-transform:none;letter-spacing:0;font-family:Inter,sans-serif;">📋 Copia per Moturist</button>
     </div>
+
     <div class="rex-grid">
       ${fields.map(([lbl,val])=>`<div class="rex-field" onclick="copyToClipboard('${val.replace(/'/g,"\\'")}','${lbl}')"><span class="rex-lbl">${lbl}</span><span class="rex-val">${val}</span></div>`).join('')}
     </div>
+
     ${extrasHtml}
-    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;margin-bottom:0.5rem;">📎 Documenti caricati</div>
-    <div class="rex-docs">${thumbsHtml}</div>
-    ${firmaHtml}
+
+    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;margin:0.8rem 0 0.5rem;display:flex;align-items:center;gap:0.5rem;">
+      📎 Documenti e contratto
+      <span style="font-size:0.68rem;font-weight:400;text-transform:none;letter-spacing:0;color:#bbb;">(clicca per ingrandire)</span>
+    </div>
+    <div class="rex-docs" style="flex-wrap:wrap;">
+      ${thumbsHtml}
+      ${contractThumb}
+      ${noDocHtml}
+    </div>
+
     ${approveBox}
   `;
 }
@@ -5167,15 +5222,31 @@ function toggleRowExpand(id){
   if(!isOpen){
     expandTr.style.display = 'table-row';
     inner.classList.add('open');
-    // Carica documenti da Firebase se non presenti
-    const g = DB.guests.find(x=>x.id===id);
-    if(g && window._fbReady && !g.main?.selfie && !g.main?.docFronte){
-      loadGuestDocs(id).then(()=>{
-        const newInner = document.getElementById('expand-inner-'+id);
-        if(newInner){ const g2 = DB.guests.find(x=>x.id===id); if(g2) newInner.innerHTML = buildExpandRow(g2); }
-      }).catch(()=>{});
+    inner.innerHTML = buildExpandRow(DB.guests.find(x=>x.id===id)||{id});
+    // Carica SEMPRE documenti da Firebase (aggiorna la riga dopo)
+    if(window._fbReady){
+      loadGuestDocsAndRefresh(id);
     }
   }
+}
+
+// Carica documenti da Firebase e ricostruisce la riga espansa
+async function loadGuestDocsAndRefresh(id){
+  const g = DB.guests.find(x=>x.id===id);
+  if(!g) return;
+  const inner = document.getElementById('expand-inner-'+id);
+  if(inner){
+    // Mostra indicatore caricamento nella sezione documenti
+    const docsDiv = inner.querySelector('.rex-docs');
+    if(docsDiv && (!g.main?.selfie && !g.main?.docFronte && !g.main?.firma)){
+      docsDiv.innerHTML = '<div style="font-size:0.75rem;color:var(--muted);padding:0.5rem;">⏳ Carico documenti da Firebase...</div>';
+    }
+  }
+  await loadGuestDocs(id);
+  // Ricostruisci riga con dati aggiornati
+  const innerAfter = document.getElementById('expand-inner-'+id);
+  const gAfter = DB.guests.find(x=>x.id===id);
+  if(innerAfter && gAfter) innerAfter.innerHTML = buildExpandRow(gAfter);
 }
 
 function copyToClipboard(text, label){
@@ -5238,7 +5309,22 @@ async function approveGuest(id){
   }
 
   dbSave();
-  showErr('✅ Approvato! L\'ospite può ora vedere il PIN nella sala d\'attesa.', true);
+  showErr('✅ Approvato! Apri WhatsApp per inviare il codice all\'ospite.', true);
+
+  // Manda WhatsApp all'ospite col PIN — apre in nuova tab
+  const m = g.main || {};
+  const prop = PROPS[g.property];
+  const isLN = g.property === 'lovenest';
+  const pinDisplay = isLN ? pin + '#' : pin;
+  const pinInstr = isLN
+    ? `Digita ${pinDisplay} sulla maniglia e premi # per aprire.`
+    : `Inserisci il codice ${pinDisplay} nella keybox per recuperare la chiave.`;
+  const guestPhone = g.waNumber || m.waNumber || m.telefono || '';
+  const waMsg = `Ciao ${m.nome||''}! 🏡 Il tuo check-in a ${prop.name} è stato approvato.\n\n🔑 Codice di accesso: *${pinDisplay}*\n${pinInstr}\n\nBuon soggiorno! — Giulia`;
+  const waUrl = guestPhone
+    ? `https://wa.me/${guestPhone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(waMsg)}`
+    : `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+  setTimeout(()=>{ window.open(waUrl, '_blank'); }, 500);
 
   // Ricostruisci la riga espansa
   const inner = document.getElementById('expand-inner-'+id);
@@ -5337,15 +5423,51 @@ function closeMod(e){
   document.getElementById('mod-title').textContent='—';
 }
 
-function showLightbox(src, caption){
+// Registro globale immagini — evita di passare base64 enormi negli onclick
+window._imgReg = {};
+let _imgRegIdx = 0;
+
+function regImg(src){
+  // Se già registrata, ritorna chiave esistente
+  for(const [k,v] of Object.entries(window._imgReg)){ if(v===src) return k; }
+  const key = 'img_'+(++_imgRegIdx);
+  window._imgReg[key] = src;
+  return key;
+}
+
+function showLightbox(keyOrSrc, caption){
+  // Accetta sia chiave registro che src diretto
+  const src = window._imgReg[keyOrSrc] || keyOrSrc;
+  if(!src){ alert('Immagine non disponibile — clicca 🔄 per ricaricare'); return; }
+
+  const isContract = src.startsWith('<!DOCTYPE') || src.startsWith('<html') || src.length > 100000 && src.includes('<body');
+  const isBase64   = src.startsWith('data:');
+  const isUrl      = src.startsWith('http');
+
   document.getElementById('mod-title').textContent = caption||'Documento';
-  document.getElementById('mod-body').innerHTML = `
-    <div style="text-align:center;">
-      <img src="${src}" style="max-width:100%;max-height:68vh;border-radius:8px;object-fit:contain;cursor:zoom-in;display:block;margin:0 auto;" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'68vh':'none'">
-      <div style="margin-top:0.8rem;">
-        <a href="${src}" download="documento.jpg" style="background:var(--teal);color:white;padding:0.45rem 1.2rem;border-radius:7px;text-decoration:none;font-size:0.82rem;font-family:Inter,sans-serif;display:inline-block;">⬇ Scarica</a>
-      </div>
-    </div>`;
+
+  if(isContract){
+    // Mostra contratto HTML in iframe
+    const blob = new Blob([src], {type:'text/html;charset=utf-8'});
+    const blobUrl = URL.createObjectURL(blob);
+    document.getElementById('mod-body').innerHTML = `
+      <iframe src="${blobUrl}" style="width:100%;height:72vh;border:none;border-radius:8px;background:white;"></iframe>
+      <div style="text-align:center;margin-top:0.6rem;">
+        <a href="${blobUrl}" download="contratto.html" style="background:var(--teal);color:white;padding:0.45rem 1.2rem;border-radius:7px;text-decoration:none;font-size:0.82rem;font-family:Inter,sans-serif;display:inline-block;">⬇ Scarica contratto</a>
+      </div>`;
+  } else {
+    const ext = (isBase64 && src.includes('image/pdf')) ? 'pdf' : 'documento.jpg';
+    document.getElementById('mod-body').innerHTML = `
+      <div style="text-align:center;">
+        <img src="${src}" style="max-width:100%;max-height:68vh;border-radius:8px;object-fit:contain;cursor:zoom-in;display:block;margin:0 auto;"
+             onclick="this.style.maxHeight=this.style.maxHeight==='none'?'68vh':'none'"
+             onerror="this.outerHTML='<div style=\\'padding:2rem;color:#999;text-align:center;\\'>⚠️ Impossibile caricare l\\'immagine.<br>Prova a cliccare 🔄 nella riga ospite.</div>'">
+        <div style="margin-top:0.8rem;display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;">
+          <a href="${src}" download="${ext}" style="background:var(--teal);color:white;padding:0.45rem 1.2rem;border-radius:7px;text-decoration:none;font-size:0.82rem;font-family:Inter,sans-serif;display:inline-block;">⬇ Scarica</a>
+          <button onclick="this.closest('.modal-ov')?.classList.remove('open')" style="background:none;border:1.5px solid #ccc;color:var(--muted);padding:0.4rem 1rem;border-radius:7px;font-size:0.82rem;cursor:pointer;font-family:Inter,sans-serif;">✕ Chiudi</button>
+        </div>
+      </div>`;
+  }
   document.getElementById('modal-ov').classList.add('open');
 }
 
@@ -5400,31 +5522,40 @@ function renderDocs(){
   }
   list.innerHTML = guests.map(g => {
     const m = g.main || {};
-    // Collect all available image sources
+    // Raccolta immagini con registro globale
     const imgs = [];
-    if(m.selfie)     imgs.push({src:m.selfie,     label:'📸 Selfie'});
-    if(m.fotoSelfie) imgs.push({src:m.fotoSelfie, label:'📸 Selfie'});
-    if(m.docFronte)  imgs.push({src:m.docFronte,  label:'🪪 Fronte'});
-    if(m.docRetro)   imgs.push({src:m.docRetro,   label:'🔄 Retro'});
-    if(m.firma)      imgs.push({src:m.firma,       label:'✍️ Firma'});
-    // URL docs from Firebase Storage
+    const addI = (src,label) => { if(src){ imgs.push({key:regImg(src),label}); } };
+    addI(m.selfie||m.fotoSelfie, '📸 Selfie');
+    addI(m.docFronte, '🪪 Fronte');
+    addI(m.docRetro,  '↩️ Retro');
+    addI(m.firma,     '✍️ Firma');
     if(g.docFileUrls){
       Object.entries(g.docFileUrls).forEach(([slot,url])=>{
-        if(url && url.startsWith('http')) imgs.push({src:url, label:'📎 '+slot});
+        if(url && url.startsWith('http')) addI(url, '📎 '+slot);
       });
     }
-    const hasContract = !!(g.contractUrl || g._contractHtml);
+    const contractSrc = g._contractHtml || g.contractUrl || null;
+    const contractKey = contractSrc ? regImg(contractSrc) : null;
+
+    const hasContract = !!contractKey;
     const thumbs = imgs.map(im => `
-      <div onclick="showLightbox('${im.src.substring(0,6000)}','${im.label} — ${m.cognome||''} ${m.nome||''}')"
+      <div onclick="showLightbox('${im.key}','${im.label} — ${m.cognome||''} ${m.nome||''}')"
            style="cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid #e8e0d0;width:80px;height:80px;flex-shrink:0;background:#f5f0e8;display:flex;align-items:center;justify-content:center;position:relative;"
            title="${im.label}">
-        <img src="${im.src.substring(0,6000)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.innerHTML='<span style=\'font-size:0.6rem;text-align:center;padding:4px;color:#999;\'>${im.label}<br>⚠️ Errore</span>'">
+        <img src="${window._imgReg[im.key]||''}" style="width:100%;height:100%;object-fit:cover;"
+             onerror="this.parentNode.innerHTML='<span style=\\'font-size:0.6rem;text-align:center;padding:4px;color:#999;\\'>${im.label}<br>⚠️</span>'">
         <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);color:white;font-size:0.55rem;text-align:center;padding:2px;">${im.label}</div>
       </div>
     `).join('');
-    const noDoc = imgs.length === 0 ? '<span style="font-size:0.75rem;color:#bbb;font-style:italic;">Nessun file caricato</span>' : '';
-    const loadBtn = window._fbReady ? `<button onclick="loadGuestDocs('${g.id}')" title="Ricarica da Firebase" style="background:none;border:1px solid #ccc;border-radius:5px;padding:2px 7px;font-size:0.68rem;cursor:pointer;color:var(--muted);">🔄</button>` : '';
-    const contractBtn = hasContract ? `<button onclick="exportContractToFile('${g.id}')" style="background:var(--teal);color:white;border:none;padding:3px 10px;border-radius:5px;font-size:0.72rem;cursor:pointer;font-family:Inter,sans-serif;">📄 PDF</button>` : '';
+    const contractThumb = contractKey ? `
+      <div onclick="showLightbox('${contractKey}','📄 Contratto — ${m.cognome||''} ${m.nome||''}')"
+           style="cursor:pointer;border-radius:8px;border:2px solid #e8e0d0;width:80px;height:80px;flex-shrink:0;background:#f5f0e8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"
+           title="Contratto firmato">
+        <span style="font-size:1.6rem;">📄</span>
+        <span style="font-size:0.58rem;color:#666;text-align:center;">Contratto</span>
+      </div>` : '';
+    const noDoc = (!imgs.length && !contractKey) ? '<span style="font-size:0.75rem;color:#bbb;font-style:italic;">Nessun file caricato</span>' : '';
+    const loadBtn = window._fbReady ? `<button onclick="loadGuestDocsAndRefresh('${g.id}');setTimeout(()=>renderDocs(),2000);" title="Ricarica da Firebase" style="background:none;border:1px solid #ccc;border-radius:5px;padding:2px 7px;font-size:0.68rem;cursor:pointer;color:var(--muted);">🔄</button>` : '';
     return `
       <div style="padding:0.85rem;border-bottom:1.5px solid #f0ebe0;" id="docrow-${g.id}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.4rem;">
@@ -5432,13 +5563,10 @@ function renderDocs(){
             <strong style="font-size:0.88rem;">${m.cognome||'?'} ${m.nome||''}</strong>
             <span style="margin-left:0.5rem;color:var(--muted);font-size:0.72rem;">${g.arrivo||''} → ${g.partenza||''} · ${g.property==='lovenest'?'❤️ Love Nest':'🐢 Tartaruga'}</span>
           </div>
-          <div style="display:flex;gap:0.3rem;align-items:center;">
-            ${loadBtn}
-            ${contractBtn}
-          </div>
+          <div style="display:flex;gap:0.3rem;align-items:center;">${loadBtn}</div>
         </div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-start;">
-          ${thumbs || noDoc}
+          ${thumbs}${contractThumb}${noDoc}
         </div>
       </div>
     `;
@@ -5450,24 +5578,54 @@ async function loadGuestDocs(guestId){
   const g = DB.guests.find(x=>x.id===guestId);
   if(!g) return;
   const year = (g.arrivo||new Date().getFullYear().toString()).substring(0,4);
+  const docId = g._firebaseId || guestId;
   try{
-    const snap = await window._fb.db.collection('checkins').doc(year)
-      .collection('guests').doc(guestId)
-      .collection('documents').get();
-    if(snap.empty){ alert('Nessun documento in Firebase per questo ospite'); return; }
-    snap.forEach(doc => {
-      const data = doc.data();
-      const slot = data.slot;
-      const base64 = data.base64;
-      if(!base64) return;
-      if(!g.main) g.main = {};
-      if(slot === 'selfie')   g.main.selfie    = base64;
-      if(slot === 'docF')     g.main.docFronte = base64;
-      if(slot === 'docR')     g.main.docRetro  = base64;
-    });
+    // 1. Recupera il documento principale (contiene firma, _contractHtml, ecc.)
+    const mainSnap = await window._fb.db.collection('checkins').doc(year)
+      .collection('guests').doc(docId).get();
+    if(mainSnap.exists){
+      const data = mainSnap.data();
+      // Sincronizza campi non presenti nel DB locale
+      if(data.main){
+        if(!g.main) g.main = {};
+        if(data.main.selfie    && !g.main.selfie)     g.main.selfie    = data.main.selfie;
+        if(data.main.fotoSelfie && !g.main.fotoSelfie) g.main.fotoSelfie = data.main.fotoSelfie;
+        if(data.main.docFronte && !g.main.docFronte)  g.main.docFronte = data.main.docFronte;
+        if(data.main.docRetro  && !g.main.docRetro)   g.main.docRetro  = data.main.docRetro;
+        if(data.main.firma     && !g.main.firma)      g.main.firma     = data.main.firma;
+      }
+      if(data._contractHtml && !g._contractHtml) g._contractHtml = data._contractHtml;
+      if(data.contractUrl   && !g.contractUrl)   g.contractUrl   = data.contractUrl;
+      if(data.tuyaPin       && !g.tuyaPin)       g.tuyaPin       = data.tuyaPin;
+      if(data.manualPin     && !g.manualPin)      g.manualPin     = data.manualPin;
+      if(data.adminApproved !== undefined)        g.adminApproved = data.adminApproved;
+    }
+
+    // 2. Recupera subcollection documenti (fallback per vecchi check-in)
+    try{
+      const snap = await window._fb.db.collection('checkins').doc(year)
+        .collection('guests').doc(docId)
+        .collection('documents').get();
+      if(!snap.empty){
+        snap.forEach(doc => {
+          const data = doc.data();
+          const slot = data.slot;
+          const base64 = data.base64;
+          if(!base64 || !slot) return;
+          if(!g.main) g.main = {};
+          if(slot === 'selfie'    && !g.main.selfie)     g.main.selfie    = base64;
+          if(slot === 'docF'      && !g.main.docFronte)  g.main.docFronte = base64;
+          if(slot === 'docR'      && !g.main.docRetro)   g.main.docRetro  = base64;
+          if(slot === 'firma'     && !g.main.firma)      g.main.firma     = base64;
+          if(slot === 'contract'  && !g._contractHtml)   g._contractHtml  = base64;
+        });
+      }
+    }catch(e2){ /* subcollection potrebbe non esistere */ }
+
     dbSave();
-    renderDocs(); // refresh
-  }catch(e){ alert('Errore Firebase: '+e.message); }
+  }catch(e){
+    console.warn('loadGuestDocs error:', e.message);
+  }
 }
 
 
