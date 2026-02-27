@@ -671,7 +671,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif;
     <div class="topbar-txt"><p id="ckPropName">Love Nest Siena</p><strong data-t="ckTitle">Check-in Online</strong></div>
   </div>
   <!-- SCELTA MODALITÀ — piccola e discreta sopra il form -->
-  <div id="modeSwitchBar" style="display:flex;gap:8px;padding:10px 16px 0;background:var(--white);">
+  <div id="modeSwitchBar" style="display:flex;gap:8px;padding:10px 16px 0;background:var(--white);position:relative;z-index:5;">
     <button id="tabOnline" onclick="selectMode('online')"
       style="flex:1;padding:9px 12px;border-radius:20px;border:1.5px solid var(--gold);background:var(--gold);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;">
       &#128187; Online
@@ -722,17 +722,18 @@ html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif;
         </div>
       </div>
 
-      <!-- NOTTI -->
+      <!-- DATE CHECK-IN / CHECK-OUT -->
       <div class="row2" style="margin-bottom:10px;">
         <div class="fg">
-          <label data-t="lNotti">Notti <span class="req">*</span></label>
-          <input type="number" id="fNotti" min="1" max="30" value="2">
+          <label data-t="lArrivo">Check-in <span class="req">*</span></label>
+          <input type="date" id="fArrivo" onchange="calcCheckout()">
         </div>
         <div class="fg">
-          <label data-t="lArrivo">Data arrivo <span class="req">*</span></label>
-          <input type="date" id="fArrivo">
+          <label data-t="lPartenza">Check-out <span class="req">*</span></label>
+          <input type="date" id="fPartenza" onchange="calcNotti()">
         </div>
       </div>
+      <input type="hidden" id="fNotti" value="1">
 
       <!-- CONTATORE OSPITI -->
       <div class="sdiv" data-t="grpComp">Composizione gruppo</div>
@@ -744,7 +745,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif;
       </div>
 
       <div class="gctr-row">
-        <div><div class="gctr-lbl" data-t="adults">Adulti</div><div class="gctr-sub" data-t="adultsAge">14+ anni</div></div>
+        <div><div class="gctr-lbl" data-t="adults">Adulti</div></div>
         <div class="gctr">
           <button class="gctr-btn" onclick="chg('adults',-1)">&#8722;</button>
           <span class="gctr-num" id="cAdults">2</span>
@@ -993,24 +994,18 @@ html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif;
     </div>
   </div>
 
-  <!-- STEP 3: TASSA DI SOGGIORNO -->
+  <!-- STEP 3: 
   <div class="ck-step" id="ckS3" style="overflow-y:auto;flex:1;padding-bottom:20px;">
     <div class="ck-card">
-      <div class="ck-card-title" data-t="s3title">Tassa di soggiorno</div>
-      <div class="ck-card-sub" id="taxSourceNote">Solo per prenotazioni Booking.com</div>
+      <div class="ck-card-title" data-t="s3title"></div>
+      
 
-      <div id="taxBookingBlock">
-        <div class="tax-panel">
-          <div class="tax-head" data-t="taxHead">&#128202; Riepilogo calcolo</div>
-          <div class="tax-row"><span data-t="taxAdulti">Adulti soggetti</span><span id="txAdulti">—</span></div>
-          <div class="tax-row"><span data-t="taxEsenti">Esenti (neonati 0–2 anni)</span><span id="txEsenti">—</span></div>
-          <div class="tax-row"><span data-t="taxTariffaLbl">Tariffa/persona/notte</span><span id="txTariffa">—</span></div>
-          <div class="tax-row"><span data-t="taxNottiLbl">Notti</span><span id="txNotti">—</span></div>
-          <div class="tax-total">
-            <span class="tax-total-lbl" data-t="taxTot">Totale</span>
-            <span class="tax-total-val" id="txTotale">€ 0,00</span>
-          </div>
-          <p class="tax-note" data-t="taxNota">* I minori del nucleo familiare sono esenti. Imposta stabilita dal Comune.</p>
+      
+          
+          
+          
+          
+          
         </div>
 
         <div class="fg" style="margin-bottom:12px;">
@@ -1038,11 +1033,9 @@ html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif;
         </div>
       </div>
 
-      <div id="taxAirbnbBlock" style="display:none;">
-        <div class="infobadge">&#127968; <span data-t="airbnbTaxNote">Le prenotazioni Airbnb includono gi&agrave; la tassa di soggiorno nella tariffa. Nessun pagamento aggiuntivo richiesto.</span></div>
+      
       </div>
-      <div id="taxDirectBlock" style="display:none;">
-        <div class="infobadge">&#128273; <span data-t="directTaxNote">Per prenotazioni dirette la tassa di soggiorno verr&agrave; concordata con l'host.</span></div>
+      
       </div>
 
       <div class="ck-nav">
@@ -1250,10 +1243,7 @@ var TR = {
     lNumDoc:'Numero documento', lEmissione:'Data emissione', lScadenza:'Data scadenza', lEnte:'Ente rilasciante',
     docFronte:'&#128196; Fronte documento', docRetro:'&#128196; Retro documento', docSelfie:'&#129327; Selfie con documento',
     uzTap:'Tocca per fotografare o caricare', uzSelfie:'Scatta selfie tenendo il documento visibile', uzSelfieNote:"Necessario per la verifica dell'host",
-    s3title:'Tassa di soggiorno',
-    taxHead:'&#128202; Riepilogo calcolo', taxAdulti:'Adulti soggetti', taxEsenti:'Esenti (minori nucleo)',
-    taxTariffaLbl:'Tariffa/persona/notte', taxNottiLbl:'Notti', taxTot:'Totale',
-    taxNota:'* Solo i neonati (0–2 anni) sono esenti. Bambini e adulti pagano la tassa. Imposta stabilita dal Comune.',
+    s3title:'',
     payMethodLbl:'Metodo di pagamento', poCash:"Contanti all\u0027arrivo",
     revolutNote:'<strong>Paga con Revolut</strong>Riceverai un link di pagamento sicuro.',
     cashNote:"Pagherai la tassa in contanti all'arrivo. L'host fornirà ricevuta.",
@@ -1378,7 +1368,7 @@ function selSource(src) {
   if (src === 'booking') noteEl.textContent = 'Solo per prenotazioni Booking.com';
   else if (src === 'airbnb') noteEl.textContent = 'Prenotazione Airbnb';
   else noteEl.textContent = 'Prenotazione diretta';
-  calcTax();
+  
 }
 
 // ── FAMILY TOGGLE ─────────────────────────────
@@ -1388,7 +1378,7 @@ function toggleFamily() {
   document.getElementById('childrenRow').style.display = APP.isFamily ? 'flex' : 'none';
   document.getElementById('infantsRow').style.display = APP.isFamily ? 'flex' : 'none';
   if (!APP.isFamily) { APP.children = 0; APP.infants = 0; document.getElementById('cChildren').textContent = '0'; var inf = document.getElementById('cInfants'); if(inf) inf.textContent = '0'; }
-  calcTax();
+  
 }
 
 // ── COUNTERS ──────────────────────────────────
@@ -1397,25 +1387,11 @@ function chg(type, delta) {
   APP[type] = Math.max(min, APP[type] + delta);
   var idMap = {adults:'cAdults', children:'cChildren', infants:'cInfants'};
   var el = document.getElementById(idMap[type]); if(el) el.textContent = APP[type];
-  calcTax();
+  
 }
 
 // ── TAX CALC ──────────────────────────────────
-function calcTax() {
-  var nights = parseInt(document.getElementById('fNotti').value) || APP.nights;
-  APP.nights = nights;
-  var rate = PROP_DATA[APP.prop].rate;
-  var exempt = APP.isFamily ? APP.infants : 0;
-  var taxable = APP.adults + (APP.isFamily ? APP.children : 0);
-  var total = taxable * nights * rate;
 
-  var el; 
-  el = document.getElementById('txAdulti');   if (el) el.textContent = taxable + ' × ' + nights + ' = ' + (taxable * nights);
-  el = document.getElementById('txEsenti');   if (el) el.textContent = exempt;
-  el = document.getElementById('txTariffa');  if (el) el.textContent = '€ ' + rate.toFixed(2).replace('.',',');
-  el = document.getElementById('txNotti');    if (el) el.textContent = nights;
-  el = document.getElementById('txTotale');   if (el) el.textContent = '€ ' + total.toFixed(2).replace('.',',');
-}
 
 // ── PAYMENT ───────────────────────────────────
 function selPay(m) {
@@ -1625,7 +1601,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnS2Back').addEventListener('click', function() { showScreen('s1'); });
   // S2 → S3
   document.getElementById('btnS2Go').addEventListener('click', function() {
-    updateCKTopbar(); showScreen('s3'); APP.ckStep = 1; updateProgress(); calcTax(); setTimeout(checkGroupMemberUI, 100);
+    updateCKTopbar(); showScreen('s3'); APP.ckStep = 1; updateProgress();  setTimeout(checkGroupMemberUI, 100);
   });
   // S3 back → S2
   document.getElementById('btnCKBack').addEventListener('click', function() { showScreen('s2'); });
@@ -1639,15 +1615,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Demo: accetta qualsiasi codice che inizia con TR-
     if (code.match(/^TR-[A-Z0-9]{4}$/)) {
       errEl.style.display = 'none';
-      updateCKTopbar(); showScreen('s3'); APP.ckStep = 1; updateProgress(); calcTax(); setTimeout(checkGroupMemberUI, 100);
+      updateCKTopbar(); showScreen('s3'); APP.ckStep = 1; updateProgress();  setTimeout(checkGroupMemberUI, 100);
     } else {
       errEl.style.display = 'block';
     }
   });
 
   // Prop cards
-  document.getElementById('pcLN').addEventListener('click', function() { selProp('lovenest'); calcTax(); });
-  document.getElementById('pcTT').addEventListener('click', function() { selProp('tartaruga'); calcTax(); });
+  document.getElementById('pcLN').addEventListener('click', function() { selProp('lovenest');  });
+  document.getElementById('pcTT').addEventListener('click', function() { selProp('tartaruga');  });
 
   // Source badges
   document.querySelectorAll('.sel-src').forEach(function(el) {
@@ -1658,7 +1634,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('familyToggle').addEventListener('click', toggleFamily);
 
   // Notti change
-  document.getElementById('fNotti').addEventListener('input', calcTax);
+  document.getElementById('fNotti').addEventListener('input', calcNotti);
 
   // Lang buttons
   document.querySelectorAll('.lb').forEach(function(btn) {
@@ -1666,7 +1642,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Init
-  calcTax();
+  
   setLang('it');
 });
 
@@ -1679,7 +1655,7 @@ function fillContract(tpl) {
   var tipoDoc = (document.getElementById('fTipoDoc') ||{value:''}).value||'\u2014';
   var numDoc  = (document.getElementById('fNumDoc')  ||{value:''}).value||'\u2014';
   var arr     = (document.getElementById('fArrivo')  ||{value:''}).value;
-  var notti   = parseInt((document.getElementById('fNotti')||{value:'2'}).value)||2;
+  var notti   = parseInt((document.getElementById('fNotti')||{value:'1'}).value)||1;
   var arrDate = arr ? new Date(arr) : new Date();
   var parDate = new Date(arrDate); parDate.setDate(parDate.getDate()+notti);
   var fmt = function(d){ return d.toLocaleDateString('it-IT'); };
@@ -1754,7 +1730,6 @@ function buildCheckinData() {
     note:(document.getElementById('fNote')||{value:''}).value,
     oraArrivo:(document.getElementById('fOraArr')||{value:''}).value,
     payMethod:APP.payMethod,
-    taxTotal:(document.getElementById('txTotale')||{textContent:'\u20ac 0,00'}).textContent,
     hasFront:APP.uploads.front, hasBack:APP.uploads.back, hasSelfie:APP.uploads.selfie,
     frontData:APP.uploads.frontData||null,
     backData:APP.uploads.backData||null,
@@ -1797,8 +1772,7 @@ function notifyAdmin(data) {
   var s=Object.assign({},defaults,stored);
   var propLabel=data.prop==='lovenest'?'Love Nest Siena':'La Tartaruga';
   var arrDate=data.arrivo?new Date(data.arrivo+'T12:00'):new Date();
-  var taxInfo=data.source==='airbnb'?'Inclusa da Airbnb':
-    (data.taxTotal||'\u2014')+' \u2014 '+(data.payMethod==='revolut'?'Link Revolut':'Contanti all\u0027arrivo');
+  var taxInfo='';
   if(s.ejService&&s.ejTemplate&&s.ejKey&&s.ejEmail) {
     var params={
       to_email:s.ejEmail, guest_name:data.guestName||'\u2014',
@@ -1878,6 +1852,58 @@ function updateGroupProgress() {
 }
 
 
+
+function calcCheckout() {
+  var arr = document.getElementById('fArrivo');
+  var par = document.getElementById('fPartenza');
+  if (!arr || !arr.value) return;
+  if (!par.value) {
+    var d = new Date(arr.value);
+    d.setDate(d.getDate() + 1);
+    par.value = d.toISOString().split('T')[0];
+  }
+  calcNotti();
+}
+
+function calcNotti() {
+  var arr = document.getElementById('fArrivo');
+  var par = document.getElementById('fPartenza');
+  var notti = document.getElementById('fNotti');
+  if (!arr || !arr.value || !par || !par.value) return;
+  var d1 = new Date(arr.value);
+  var d2 = new Date(par.value);
+  var diff = Math.round((d2 - d1) / 86400000);
+  if (diff > 0 && notti) { notti.value = diff;  }
+}
+
+function selectMode(mode) {
+  var tabOnline   = document.getElementById('tabOnline');
+  var tabPresence = document.getElementById('tabPresence');
+  var presenceNote = document.getElementById('presenceNote');
+
+  if (mode === 'online') {
+    tabOnline.style.background    = 'var(--gold)';
+    tabOnline.style.color         = '#fff';
+    tabOnline.style.borderColor   = 'var(--gold)';
+    tabOnline.style.fontWeight    = '700';
+    tabPresence.style.background  = '#fff';
+    tabPresence.style.color       = 'var(--mid)';
+    tabPresence.style.borderColor = 'var(--stone)';
+    tabPresence.style.fontWeight  = '600';
+    if (presenceNote) presenceNote.style.display = 'none';
+  } else {
+    tabPresence.style.background  = 'var(--gold)';
+    tabPresence.style.color       = '#fff';
+    tabPresence.style.borderColor = 'var(--gold)';
+    tabPresence.style.fontWeight  = '700';
+    tabOnline.style.background    = '#fff';
+    tabOnline.style.color         = 'var(--mid)';
+    tabOnline.style.borderColor   = 'var(--stone)';
+    tabOnline.style.fontWeight    = '600';
+    if (presenceNote) presenceNote.style.display = 'block';
+  }
+  if (typeof APP !== 'undefined') APP.mode = mode;
+}
 </script>
 
   <!-- DEMO TEST -->
